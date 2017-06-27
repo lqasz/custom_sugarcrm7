@@ -1,0 +1,104 @@
+({
+
+    extendsFrom: 'RecordlistView',
+    initialize: function (options) {
+
+        // this._super("initialize", [options]);
+
+        app.view.invokeParent(this, {type: 'view', name: 'recordlist', method: 'initialize', args:[options]});
+        var self = this;
+        //add listener for custom button
+        this.context.on('list:makeproject:fire', this.addtoproject, this);
+
+        // tylko JJ może tworzyć projekty w RMS
+        if(App.user.id !== "144c39bf-ccc3-65ec-2023-5407f7975b91"){
+            $('<style>'+
+              '.single .btn-group .btn.dropdown-toggle { display: none !important; }'+
+             // '.dataTable>thead>tr>th>span { display: none; }'+
+              '</style>').appendTo('head');
+        }
+
+        this.collection.on('data:sync:complete', function() {
+            this.render_colors();
+        }, this);
+    },
+
+    render_colors : function() {
+        setTimeout(
+            function() {
+                $("tr[name^='AC_FeeProposal']").each(function () { //loop over each row
+                    if ($(this).find('div[data-original-title="Closed Won"]').length > 0) { //check value of TD
+                        $(this).find($('td')).each(function () {
+                            $(this).css("background-color", "#70b933");
+                        });
+                    } else if($(this).find('div[data-original-title="Prospecting"]').length > 0) {
+                        $(this).find($('td')).each(function () {
+                            $(this).css("background-color", "#26C8FE");
+                        });
+                    }
+                    // else if ($(this).find('div[data-original-title="Green"]').length > 0) {
+                    //     $(this).find($('td')).each(function () {
+                    //         $(this).css("background-color", "#C3F8B5");
+                    //     });
+                    // } else if ($(this).find('div[data-original-title="Orange"]').length > 0) {
+                    //     $(this).find($('td')).each(function () {
+                    //         $(this).css("background-color", "#FFCF8F");
+                    //     });
+                    // } else if ($(this).find('div[data-original-title="Yellow"]').length > 0) {
+                    //     $(this).find($('td')).each(function () {
+                    //         $(this).css("background-color", "#FAFE8E");
+                    //     });
+                    // }
+                });
+            }, 
+        1000);
+    },
+    _initEvents: function() {
+        this._super('_initEvents');
+        this.on('list:addtoproject:fire', this.addtoproject, this);
+        return this;
+    },
+    addtoproject : function(model) {
+        console.log('ddd');
+        console.log('ddd'+model );
+        var self = this;
+
+        var name = Handlebars.Utils.escapeExpression(app.utils.getRecordName(model)).trim();
+        // var context = app.lang.getModuleName(model.module).toLowerCase() + ' ' + name;
+        var context = app.lang.getModuleName(model.module).toLowerCase() + ' ' + name;
+        var jestID = model.toString().split("/");
+
+        var idCSV = '';
+        var selector = 'AC_FeeProposal';
+
+        window.location.href = '#bwc/index.php?module=Project&action=EditView&return_module=Project&return_action=DetailView&feeid='+jestID[1]+"&feename=" + name;
+
+        // console.log('ddd'+jestID[1] + ' name ' + name);
+
+        // $.ajax({
+        //     url: 'index.php?module=CSTM_ANIMALS&action=ADD_TO_CIRCUS',
+        //     type: 'POST',
+        //     data: {uid: idCSV},
+        //     success: function(errorResponse) {
+        //         if(errorResponse != '') {
+        //             app.alert.show('bad-add-to-circus', {
+        //                 level: 'error',
+        //                 messages: errorResponse,
+        //                 autoClose: false
+        //             });
+        //         }
+        //     }
+        // });
+    },
+
+    render: function() {
+        var self = this;
+        this._super('render');
+
+        _.each(app.user.attributes.roles, function(role) {
+            if(role == "Fee-No-Access" || role == "Fee_access") {
+                $(document).find('a[name="create_button"]').addClass('hide');
+            }
+        });
+    },
+})

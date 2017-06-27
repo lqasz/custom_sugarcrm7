@@ -1,0 +1,152 @@
+
+<table class="table table-striped dataTable">
+<thead>
+    <tr class="single">
+            <th data-fieldname="severity" data-orderby="">
+                <div>
+                        <span>
+                            Type
+                        </span>
+                </div>
+            </th>
+            <th data-fieldname="name" data-orderby="">
+                <div>
+                        <span>
+                            Subject/Name
+                        </span>
+                </div>
+            </th>
+
+            <th data-fieldname="is_read" data-orderby="" tabindex="-1">
+                <div>
+                        <span>
+                            Documents
+                        </span>
+                </div>
+            </th>
+
+            <th data-fieldname="supplier" data-orderby="" tabindex="-1">
+                <div>
+                        <span>
+                            Supplier
+                        </span>
+                </div>
+            </th>
+
+            <th data-fieldname="netto" data-orderby="" tabindex="-1">
+                <div>
+                        <span>
+                            Netto
+                        </span>
+                </div>
+            </th>
+
+            <th data-fieldname="parent_name" data-orderby="">
+                <div>
+                    <div data-draggable="true" class="ui-draggable" style="position: relative;">
+                        <span>
+                            Confirmation
+                        </span>
+                </div>
+            </th>
+
+    </tr>
+    {{#if this.notifications }}{{#notEq this.notifications.length "0"}}
+    {{#each this.notifications}}
+        {{#notEq this.is_read 1}}
+        <tr name="Notifications_{{this.id}}">
+            <td data-type="severity">
+                <span class="label label-{{#match this.severity 'invoice'}}important{{/match}}{{#match this.severity 'holidays'}}success{{/match}}{{#match this.severity 'information'}}info{{/match}}{{#match this.severity 'education'}}info{{/match}}{{#match this.severity 'notification'}}notification{{/match}} ellipsis_inline">
+                {{this.severity}}</span>
+            </td>
+            {{! information to na przykład activityLog a notification to chat, są szersze o jedną kolumnę przezto usuwamy ją dalej}}
+            <td data-type="name" {{#match this.severity 'information'}} title="{{this.description}}" colspan="2" {{/match}} {{#match this.severity 'notification'}} colspan="2" {{/match}}>
+                <span class="list">
+                     {{#match this.severity 'holidays'}}
+                        {{#match this.confirmation 0}}
+                            <a href="#AC_Holiday/{{this.parent_id}}/edit" target="_blank" class="btn-link">{{this.name}}</a>
+                        {{/match}}
+                        {{#match this.confirmation 1}}
+                            <a href="#AC_Holiday/{{this.parent_id}}" target="_blank" class="btn-link">{{this.name}}</a>
+                        {{/match}}
+                     {{/match}}
+                     {{#match this.severity 'education'}}
+                        <button data-action="show-dailyquestion" data-id="{{this.parent_id}}" data-notification_id="{{this.id}}" data-type="{{this.parent_type}}" class="dailyquestion btn-link">{{this.name}}</button>
+                     {{/match}}
+                     {{#match this.severity 'invoice'}}
+                        <a href="#AC_Invoices/{{this.parent_id}}" target="_blank" class="btn-link">{{this.name}}</a>
+                     {{/match}}
+                     {{#match this.severity 'information'}}
+                        <span class="notification_description">{{this.name}}</span> {{! class="btn-link" mruszkowski 2708}}
+                     {{/match}}
+                     {{#match this.severity 'notification'}}
+                        <span class="btn-link" data-remove="false" data-id="{{this.id}}" data-action="confirm-information"><a href="#{{this.parent_type}}{{#notEq this.parent_id null}}/{{this.parent_id}}{{/notEq}}" >{{this.name}}</a></span>
+                     {{/match}}
+                </span>
+            </td>
+            {{#notEq this.severity 'notification'}}{{#notEq this.severity 'information'}}
+                <td data-type="parent">
+                     <span class="list">
+                        {{#match this.severity 'invoice'}}
+                            {{#each this.ac_invoices_notes_1}}<a data-name="scans" class="unread" data-invoiceid="{{../../parent_id}}" data-noteid="{{this.noteID}}" data-action="show-invoice" class="btn-link mini-pdf review">[F]</a>{{/each}}
+                            {{#each this.ac_invoices_notes_5}}<a data-name="agreement" class="unread" data-invoiceid="{{../../parent_id}}" data-noteid="{{this.noteID}}" data-action="show-invoice" class="btn-link mini-pdf review">[U]</a>{{/each}}
+                            {{#each this.ac_invoices_notes_3}}<a data-name="work_completed" class="unread" data-invoiceid="{{../../parent_id}}" data-noteid="{{this.noteID}}"  data-action="show-invoice" class="btn-link mini-pdf review">[P]</a>{{/each}}
+                            {{#each this.ac_invoices_notes_2}}<a data-name="warranties" class="unread" data-invoiceid="{{../../parent_id}}" data-noteid="{{this.noteID}}" data-action="show-invoice" class="btn-link mini-pdf review">[G]</a>{{/each}}
+                            {{#each this.ac_invoices_notes_4}}<a data-name="bioz_bhp" class="unread" data-invoiceid="{{../../parent_id}}" data-noteid="{{this.noteID}}" data-action="show-invoice" class="btn-link mini-pdf review">[O]</a>{{/each}}
+                        {{/match}}
+                     </span>
+                </td> 
+            {{/notEq}}{{/notEq}}
+            <td data-type="read">
+               <span class="list">
+                {{#match this.severity 'invoice'}}
+                    {{this.account}}
+                {{/match}}
+               </span>
+           </td>
+           <td data-type="read">
+               <span class="list">
+                {{#match this.severity 'invoice'}}
+                    {{this.netto}}
+                {{/match}}    
+               </span>
+           </td>
+            <td data-type="read">
+               <span class="list">
+                 {{!--   {{formatDate this.date_entered}} --}}
+                   {{#match this.confirmation 1 }}
+                       {{#match this.severity 'invoice'}}
+                           {{#match this.name 'F-NW'}}
+                               <button data-id="{{this.id}}" data-parentid="{{this.parent_id}}" data-action="not-my-invoice" disabled class="btn btn-danger not-mine">Not mine</button>
+                           {{/match}}
+                           {{#notMatch this.name 'F-NW'}}
+                               <button data-id="{{this.id}}" data-parentid="{{this.parent_id}}" data-action="confirm-invoice" disabled class="btn btn-danger">Confirm</button>
+                           {{/notMatch}}
+                       {{/match}}
+                       {{#match this.severity 'holidays'}}
+                               <button data-id="{{this.id}}" data-parentid="{{this.parent_id}}" data-action="confirm-notification" class="btn btn-danger">Confirm</button>
+                       {{/match}}
+                       {{#match this.severity 'information'}}
+                               <button data-id="{{this.id}}" data-parentid="{{this.parent_id}}" data-remove="true" data-action="confirm-information" class="btn btn-danger">Confirm</button>
+                       {{/match}}
+                       {{#match this.severity 'notification'}}
+                               <button data-id="{{this.id}}" data-parentid="{{this.parent_id}}" data-action="confirm-notification" class="btn btn-danger">Confirm</button>
+                       {{/match}}
+                   {{/match}}
+               </span>
+           </td>
+        </tr>
+        {{/notEq}}
+    {{/each}}
+    {{/notEq}}{{else}}
+        <tr><td colspan="4">You haven't got any notifications.</td></tr>
+    {{/if}}
+    <tr>
+        <th data-target="alert-container" class="alert alert-warning hide" colspan="6">
+            <div data-target="alert"></div>
+        </th>
+    </tr>
+    </thead>
+</table>
+<ul>
+</ul>

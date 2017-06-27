@@ -1,0 +1,256 @@
+<style type="text/css">
+    .span6 .revenue-input {
+        width: 90%;
+    }
+
+    .span3 .revenue-input {
+        width: 80%;
+    }
+
+    .span3 .revenue-input {
+        width: 80%;
+    }
+
+    #project-revenue a[data-dashletaction="editClicked"] {
+        display: block !important;
+    }
+
+    #saveRevenue { 
+      float: right;
+      padding-right: 15px;
+      padding-left: 15px;
+    }
+
+    .minus-annex, #plusAnnex { 
+      font-size: 25px; 
+      margin-right: 10px;
+      float: right !important;
+    }
+
+    #cancelRevenue { float: right;  }
+
+    .annexes-sum {
+      background-color: #DDD;
+      color: black;
+    }
+
+    .total-summary {
+      background-color: #ACA8A8;
+      color: white;
+    }
+
+    .red-color { 
+      color: red;
+    }
+
+    .green-color {
+      color: green;
+    }
+
+    #project-revenue {
+      max-height: none;
+      height: auto !important;
+    }
+
+    .sidebar-content .thumbnail.dashlet:not(.collapsed) {
+      max-height: none;
+      height: auto !important;
+    }
+
+    .minus-annex .fa-minus { color: red; }
+</style>
+
+<div class="forecast-details">
+
+<!--    <div class="row-fluid">
+        <strong class="span12">
+            Project revenue:
+        </strong>
+    </div>-->
+
+      <div class="row-fluid">
+          <span class="span6">
+              Agreement revenue:
+          </span>
+          {{#match edit true}}
+              <span class="span6">
+                  <input type="text" class="revenue-input" id="agreement-revenue" placeholder="Value" value="{{agreementValue}}"/>
+              </span>
+          {{/match}}
+          {{#notMatch edit true}}
+              <span id="agreement-revenue" class="span3">
+                  {{agreementValue}} PLN
+              </span>
+          {{/notMatch}}
+      </div>
+
+      <div class="row-fluid">
+          <span class="span6">
+              Predicted project costs:
+          </span>
+          {{#match edit true}}
+              <span class="span6">
+                  <input type="text" class="revenue-input" id="project-costs" placeholder="Value" value="{{projectCosts}}"/>
+              </span>
+          {{/match}}
+          {{#notMatch edit true}}
+              <span id="project-costs" class="span3">
+                  {{projectCosts}} PLN
+              </span>
+          {{/notMatch}}
+      </div>
+
+      <div class="row-fluid">
+          <span class="span6">
+              Profit margin:
+          </span>
+          <span id="profit-margin" class="span3 {{#match delta.profitMargin false}}red-color{{/match}}
+                                    {{#match delta.profitMargin true}}green-color{{/match}}">
+              {{profitMargin}} PLN
+          </span>
+          <span id="procent-profit-margin" class="span3">
+              {{procentProfitMargin}} %
+          </span>
+      </div>
+
+      <div id="agreementAnnexes" class="row-fluid">
+          <span class="{{#match edit true}}span5{{/match}}{{#notMatch edit true}}span6{{/notMatch}}">
+              Agreement annexes:
+          </span>
+          <span class="span5" style="margin: 0;"></span>
+          {{#match edit true}}<div id="plusAnnex" class="btn btn-invisible span1"><i class="fa fa-plus"></i></div>{{/match}}
+          {{#eachOptions annexModelJSON}}
+            {{#match ../edit true}}
+              <div class="agreement-annexes">
+                <span class="span3">
+                    <input type="text" data-id="value" class="revenue-input annex-value" placeholder="Value"  value="{{this.value.annexValue}}"/>
+                </span>
+                <span class="span7">
+                    <input type="text" data-id="description" class="revenue-input annex-description" placeholder="Description" value="{{this.value.annexDescription}}"/>
+                </span>
+                <div class="btn btn-invisible minus-annex span1"><i class="fa fa-minus"></i></div>
+              </div>
+            {{/match}}
+            {{#notMatch ../edit true}}
+              <div class="agreement-annexes">
+                <span class="span6">
+                    {{this.value.annexDescription}}:
+                </span>
+                <span class="span3">
+                    {{this.value.annexValue}} PLN
+                </span>
+              </div>
+            {{/notMatch}}
+          {{/eachOptions}}
+      </div>
+      {{#notMatch edit true}}
+        <div class="annexes-sum row-fluid">
+          <span class="span6">
+              Total of annexes:
+          </span>
+          <span class="span3">
+              {{annexesSum}} PLN
+          </span>
+        </div>
+      {{/notMatch}}
+
+      <div class="row-fluid">
+        <span class="span6">
+            TVO:
+        </span>
+            {{#match edit true}}
+                <span class="span3">
+                    <input type="text" class="revenue-input" id="tvo-amount" placeholder="Value" value="{{tvoValue}}"/>
+                </span>
+            {{/match}}
+            {{#notMatch edit true}}
+                <span id="tvo-amount" class="span3">
+                    {{tvoValue}} PLN
+                </span>
+            {{/notMatch}}
+      </div>
+
+      <div class="row-fluid">
+        <span class="span6">
+            CVO:
+        </span>
+            {{#match edit true}}
+                <span class="span3">
+                    <input type="text" class="revenue-input" id="cvo-amount" placeholder="Value" value="{{cvoValue}}"/>
+                </span>
+            {{/match}}
+            {{#notMatch edit true}}
+                <span id="cvo-amount" class="span3">
+                    {{cvoValue}} PLN
+                </span>
+            {{/notMatch}}
+      </div>
+
+      <div class="total-summary row-fluid">
+        <span class="span6">
+            Total summary revenue:
+        </span>
+        <span id="total-amount" class="span3">
+          {{totalSummary}} PLN
+        </span>
+      </div>
+
+      <div class="row-fluid">
+          <span class="span6">
+              Other costs:
+          </span>
+          {{#match edit true}}
+              <span class="span6">
+                  <input type="text" class="revenue-input" id="other-costs" placeholder="Value" value="{{otherCosts}}"/>
+              </span>
+          {{/match}}
+          {{#notMatch edit true}}
+              <span id="other-costs" class="span3">
+                  {{otherCosts}} PLN
+              </span>
+          {{/notMatch}}
+      </div>
+
+      <div class="total-summary row-fluid">
+        <span class="span6">
+            Total summary costs:
+        </span>
+        <span id="total-costs" class="span3">
+          {{totalCosts}} PLN
+        </span>
+      </div>
+
+      <div class="row-fluid">
+        <span class="span6">
+            Final margin:
+        </span>
+        <span class="span3 {{#match delta.totalMargin false}}red-color{{/match}}
+                            {{#match delta.totalMargin true}}green-color{{/match}}">
+          {{totalMargin}} PLN
+        </span>
+        <span class="span3">
+          {{totalMarginProcent}} %
+        </span>
+      </div>
+
+      <div class="row-fluid">
+        <span class="span6">
+            Deviation of margin:
+        </span>
+        <span id="deviation-margin" class="span3 {{#match delta.marginDeviation false}}red-color{{/match}}
+                                    {{#match delta.marginDeviation true}}green-color{{/match}}">
+          {{marginDeviation}} %
+        </span>
+      </div>
+
+      {{#match edit true}}
+        <div class="row-fluid">
+          <span class="span10">
+              <a class="btn btn-primary" href="javascript:void(0);" id="cancelRevenue" name="cancelRevenue">Cancel</a>
+          </span>
+          <span class="span2">
+              <a class="btn btn-primary" href="javascript:void(0);" id="saveRevenue" name="saveRevenue">Save</a>
+          </span>
+        </div>
+      {{/match}}
+</div>

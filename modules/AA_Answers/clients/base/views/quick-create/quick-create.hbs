@@ -1,0 +1,73 @@
+<div class="modal hide quick-create">
+    <div class="modal-header">
+        {{!-- <a class="close" data-dismiss="modal"><i class="fa fa-times"></i></a> --}}
+        <a class="timer" >0</a>
+        <h3><i class="fa fa-book"></i>&nbsp;&nbsp;Daily Questions</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal" enctype="multipart/form-data" method="POST">
+            <fieldset>
+                <br /> 
+                    <div class="row-fluid control-group">
+                        <p class="question"> {{question.tresc}} </p> 
+                    </div>
+                
+                    {{#if question.type_of_question }} {{!-- jeżeli 0 to zamknięte --}}
+                        Otwarte pytanie
+                    {{else}}
+
+            
+                            {{#if question.a1}}
+                            <div class="row-fluid">
+                                <label class="radio">
+                                  <input type="radio" name="odp" class="odp" id="a1" value="1" /> 
+                                  {{question.a1}} 
+                                </label>
+                            </div>
+                            {{/if}}
+
+                            {{#if question.a2}}
+                            <div class="row-fluid">
+                                <label class="radio">
+                                  <input type="radio" name="odp" class="odp" id="a2" value="2" /> 
+                                  {{question.a2}} 
+                                </label>
+                            </div>
+                            {{/if}}
+
+                            {{#if question.a3}}
+                            <div class="row-fluid">
+                                <label class="radio">
+                                  <input type="radio" name="odp" class="odp" id="a3" value="3" /> 
+                                  {{question.a3}} 
+                                </label>
+                            </div>
+                            {{/if}}
+
+                            {{#if question.a4}}
+                            <div class="row-fluid">
+                                <label class="radio">
+                                  <input type="radio" name="odp" class="odp" id="a4" value="4" /> 
+                                  {{question.a4}} 
+                                </label>
+                            </div>
+                            {{/if}}
+                    {{/if}}
+                    <br />
+{{!--                 {{#each meta.panels}}
+                {{#each fields}}
+                <div class="row-fluid control-group">
+                <label class="span3">{{str this.label ../../this.model.module}}</label>
+                <div class="span9">{{field ../../this model=../../context.attributes.createModel template="edit"}}</div>
+                </div>
+                {{/each}}
+                {{/each}} --}}
+            </fieldset>
+        </form>
+    </div>
+    <div class="modal-footer">
+        {{#each meta.buttons}}
+        {{field ../this model=../createModel}}
+        {{/each}}
+    </div>
+</div>
