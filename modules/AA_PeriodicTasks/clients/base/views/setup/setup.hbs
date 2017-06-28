@@ -1,0 +1,300 @@
+<style type="text/css">
+	#PeriodicTasks .main-pane {
+		background: url("/styleguide/assets/img/texture/furley_bg.png");
+		font-family: ;
+	}
+	.periodic-tasks-labels,
+	.periodic-tasks { 
+		padding: 18px 18px 0 20px;
+	}
+	.task-center { text-align: center; }
+	.task-center:not(.default-width), .periodic-label:not(.default-width) {
+		width: 30px !important;
+	}
+	.periodic-label {
+		font-size: 11px;
+		text-align: center;
+	}
+	.position {
+	    color: #000;
+	    background-color: #AFBBC3;
+	}
+	.position h1 { text-align: center; }
+	.plus-button { margin-top: 6px; }
+	.plus, .periodic-tasks-pattern { margin: 0 !important; }
+    .periodic-tasks-panel,
+    .periodic-tasks-pattern-panel,
+    .periodic-tasks-example-panel {
+    	background: #fff;
+    	border: 1px solid #ddd;
+    	margin-top: 25px;
+    }
+    .periodic-tasks-example,
+    .periodic-tasks-pattern,
+    .periodic-tasks-header {
+    	padding: 12px;
+    }
+    .day-of-week, .day-of-month {
+        margin-right: 7px;
+    }
+    .minus .fa-times { color: red; }
+    .periodic-task, .periodic-tasks-labels { 
+    	padding: 7px; 
+    	padding-left: 30px;
+    }
+    .periodic-task:not(:last-child) {
+    	border-bottom: 1px solid #ddd;
+    }
+    .minus .fa-times:hover {
+    	color: darkred !important;
+    }
+    .periodic-tasks-header {
+    	text-align: center;
+    	font-size: 18px;
+    	background: #f6f6f6;
+    	border-bottom: 1px solid #ddd;
+    }
+</style>
+
+<div id="content">
+	<div class="row-fluid">
+		<div class="main-pane span12">
+			<div>
+				<div class="headerpane">
+					<h1>
+						<span class="record-cell" data-type="label">
+	                		<span class="table-cell-wrapper">
+	                    		<span class="index">
+	                        		<span class="list-headerpane">
+	                        			Periodic Tasks
+									</span>
+	                    		</span>
+	                		</span>
+	            		</span>
+	            		<div class="btn-toolbar pull-right">
+	            		{{#match edit false}}
+		            		<a class="btn btn-primary" href="javascript:void(0);" name="edit_button">
+		            			Edit
+		            		</a>
+		            	{{/match}}
+		            	{{#match edit true}}
+		            		<a class="btn btn-invisible btn-link" href="javascript:void(0);" name="cancel_button">
+		            			Cancel
+		            		</a>
+		            		<a class="btn btn-primary" href="javascript:void(0);" name="save_button">
+		            			Save
+		            		</a>
+		            	{{/match}}
+	            		</div>
+            		</h1>
+				</div>
+			</div>
+			<div>
+				<div class="main-content">
+					<div class="span12">
+						<div class="span1"></div>
+						<div class="span10 periodic-tasks-pattern-panel">
+							<div class="span12 periodic-tasks-header">
+								Dostępne reguły:
+							</div>
+							<div class="span12 periodic-tasks-pattern">
+								<div class="span4 periodic-title">
+									<b>Dzień tygodnia:</b>
+								</div>
+								<div class="span4 periodic-title">
+									<b>Dzień miesiąca:</b>
+								</div>
+								<div class="span3 periodic-title">
+									<b>Miesiąc / Kwartał:</b>
+								</div>
+								<div class="span12 pattern-tasks">
+									<ol>
+										<li class="span4">
+											<ul>
+												<li> * - bez reguły</li>
+												<li> 1 - poniedziałek</li>
+												<li> ...</li>
+												<li> 5 - piątek</li>
+												<li> 1-3 - od poniedziałku do środy</li>
+												<li> 1&3 - poniedziałek i środa</li>
+											</ul>
+										</li> 
+										<li class="span4">
+											<ul>
+												<li> * - codziennie</li>
+												<li> end, begin - koniec, początek np. miesiąca, kwartału</li>
+												<li> 1-25 - zakres dni od 1 do 25 dnia miesiąca</li>
+												<li> 25 - konkretny 25 dzień miesiąca</li>
+												<li> 15&end - ostatni i 15 dzień miesiąca</li>
+											</ul>
+										</li>
+										<li class="span4">
+											<ul>
+												<li> * - każdego miesiąca</li>
+												<li> 1 - styczeń</li>
+												<li> ...</li>
+												<li> 12 - grudzień</li>
+												<li> 3-6 - od marca do czerwca</li>
+												<li> q1 - 1 kwartał</li>
+												<li> q2 - 2 kwartał</li>
+												<li> q3 - 3 kwartał</li>
+												<li> q4 - 4 kwartał</li>
+												<li> q1&q3 - 1 i 2 kwartał</li>
+											</ul>
+										</li> 
+									</ol>
+								</div>
+							</div>
+						</div>
+						<div class="span1"></div>
+					</div>
+					<div class="span12 first">
+						<div class="span1"></div>
+						<div class="span10 periodic-tasks-example-panel">
+							<div class="span12 periodic-tasks-header">
+								Przykłady:
+							</div>
+							<div class="span12 periodic-tasks-example">	
+								<div class="span4">
+									<b>Przykład 1:</b><br/><br/>
+									Nazwa: Przykładowe zadanie cykliczne dla Asystentów<br/>
+									Dzień tygodnia: <b>*</b><br/>
+									Dzień miesiąca: <b>15</b><br/>
+									Miesiąc: <b>1-6</b><br/><br/>
+
+									<b>Znaczenie:</b> Zadanie jest skierowane do Asystentów <br/>każdego 15 dnia dla miesięcy od stycznia do czerwca
+								</div>
+								<div class="span4">
+									<b>Przykład 2:</b><br/><br/>
+									Nazwa: Przykładowe zadanie cykliczne dla Managerów<br/>
+									Dzień tygodnia: <b>2&3</b><br/>
+									Dzień miesiąca: <b>*</b><br/>
+									Miesiąc: <b>10</b><br/><br/>
+
+									<b>Znaczenie:</b> Zadanie jest skierowane do Managerów<br/> na wtorek i środę w październiku
+								</div>
+								<div class="span4">
+									<b>Przykład 3:</b><br/><br/>
+									Nazwa: Przykładowe zadanie cykliczne dla Senior Managerów<br/>
+									Dzień tygodnia: <b>*</b><br/>
+									Dzień miesiąca: <b>begin</b><br/>
+									Miesiąc: <b>*</b><br/><br/>
+
+									<b>Znaczenie:</b> Zadanie jest skierowane do Senior Managerów<br/> na początku każdego miesięca
+								</div>
+							</div>
+						</div>
+						<div class="span1"></div>
+					</div>
+					<div class="span12 first">
+						<div class="span1"></div>
+						<div class="span10">
+							<div class="span12 periodic-tasks-panel">
+								<div class="span12 periodic-tasks-header">
+									Zadania cykliczne:
+								</div>
+								<div class="span12 periodic-tasks-labels first">
+									<div class="span4 periodic-label default-width">
+										<b>Nazwa zadania</b>
+									</div>
+									<div class="span3">
+										<div class="span3 periodic-label default-width">
+											<b>Dzień tygodnia</b>
+										</div>
+										<div class="span3 periodic-label default-width">
+											<b>Dzień miesiąca</b>
+										</div>
+										<div class="span3 periodic-label default-width">
+											<b>Miesiąc/Kwartał</b>
+										</div>
+									</div>
+									<div class="span4">
+										<div class="span1 periodic-label"><b>PT</b></div>
+										<div class="span1 periodic-label"><b>QS</b></div>
+										<div class="span1 periodic-label"><b>IT</b></div>
+										<div class="span1 periodic-label"><b>FA</b></div>
+										<div class="span1 periodic-label"><b>DEV</b></div>
+										<div class="span1 periodic-label"><b>CT</b></div>
+										<div class="span1 periodic-label"><b>B</b></div>
+										{{#match edit true}}
+											<div class="span3 periodic-label">Usuń</div>
+										{{/match}}
+									</div>
+								</div>
+								<div class="periodic-tasks">
+									{{#eachOptions periodicTasks}}
+										<div class="span12 first" data-name="{{this.key}}">
+											<div class="span12 position">
+												<div class="span11">
+													<h1>{{this.value.label}}</h1>
+												</div>
+												<div class="span1 plus-button">
+												{{#match ../edit true}}
+													<div class="btn span5 plus">
+														<i class="fa fa-plus"></i>
+													</div>
+												{{/match}}
+												</div>
+											</div>
+											<div class="span12 periodic-tasks-content first">
+												{{#eachOptions this.value.tasks}}
+												<div class="span12 periodic-task first" data-id="{{this.key}}">
+							                        <div class="span4">
+							                        	{{#match ../../edit true}}
+							                            	<input type="text" class="span12" name="task_name" value="{{this.value.name}}" />
+							                        	{{/match}}
+							                        	{{#match ../../edit false}}
+							                            	{{this.value.name}}
+							                        	{{/match}}
+							                        </div>
+							                        <div class="span3">
+							                        	{{#match ../../edit true}}
+						                            		<input type="text" class="span3 time-period day-of-week" value="{{this.value.dayOfWeek}}" />
+						                            	{{/match}}
+						                            	{{#match ../../edit false}}
+							                            	<div class="span3 task-center default-width">
+							                            		{{this.value.dayOfWeek}}
+							                            	</div>
+							                        	{{/match}}
+										                {{#match ../../edit true}}
+						                            		<input type="text" class="span3 time-period day-of-month" value="{{this.value.dayOfMonth}}" />
+						                            	{{/match}}
+						                            	{{#match ../../edit false}}
+							                            	<div class="span3 task-center default-width">
+							                            		{{this.value.dayOfMonth}}
+							                            	</div>
+							                        	{{/match}}
+										                {{#match ../../edit true}}
+						                            		<input type="text" class="span3 time-period month" value="{{this.value.month}}" />
+						                            	{{/match}}
+						                            	{{#match ../../edit false}}
+							                            	<div class="span3 task-center default-width">
+							                            		{{this.value.month}}
+							                            	</div>
+							                        	{{/match}}
+							                        </div>
+							                        <div class="span4">
+							                            <div class="span1 task-center"><input {{#match ../../edit false}}disabled{{/match}} class="task-dep" value="pt" type="checkbox" {{#eachOptions this.value.departments}}{{#match this.value "pt"}}checked{{/match}}{{/eachOptions}}/></div>
+										                <div class="span1 task-center"><input {{#match ../../edit false}}disabled{{/match}} class="task-dep" value="qs" type="checkbox" {{#eachOptions this.value.departments}}{{#match this.value "qs"}}checked{{/match}}{{/eachOptions}}/></div>
+										                <div class="span1 task-center"><input {{#match ../../edit false}}disabled{{/match}} class="task-dep" value="it" type="checkbox" {{#eachOptions this.value.departments}}{{#match this.value "it"}}checked{{/match}}{{/eachOptions}}/></div>
+										                <div class="span1 task-center"><input {{#match ../../edit false}}disabled{{/match}} class="task-dep" value="fa" type="checkbox" {{#eachOptions this.value.departments}}{{#match this.value "fa"}}checked{{/match}}{{/eachOptions}}/></div>
+										                <div class="span1 task-center"><input {{#match ../../edit false}}disabled{{/match}} class="task-dep" value="dev" type="checkbox" {{#eachOptions this.value.departments}}{{#match this.value "dev"}}checked{{/match}}{{/eachOptions}}/></div>
+										                <div class="span1 task-center"><input {{#match ../../edit false}}disabled{{/match}} class="task-dep" value="ct" type="checkbox" {{#eachOptions this.value.departments}}{{#match this.value "ct"}}checked{{/match}}{{/eachOptions}}/></div>
+										                <div class="span1 task-center"><input {{#match ../../edit false}}disabled{{/match}} class="task-dep" value="b" type="checkbox" {{#eachOptions this.value.departments}}{{#match this.value "b"}}checked{{/match}}{{/eachOptions}}/></div>
+										                {{#match ../../edit true}}<div class="span3 btn btn-invisible minus"><i class="fa fa-times"></i></div>{{/match}}
+							                        </div>
+							                    </div>
+												{{/eachOptions}}
+											</div>
+										</div>
+									{{/eachOptions}}
+								</div>
+							</div>
+						</div>
+						<div class="span1"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
