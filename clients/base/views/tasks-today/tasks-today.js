@@ -1,31 +1,6 @@
-/*
- * Your installation or use of this SugarCRM file is subject to the applicable
- * terms available at
- * http://support.sugarcrm.com/06_Customer_Center/10_Master_Subscription_Agreements/.
- * If you do not agree to all of the applicable terms or do not have the
- * authority to bind the entity as an authorized representative, then do not
- * install or use this SugarCRM file.
- *
- * Copyright (C) SugarCRM Inc. All rights reserved.
- */
-/**
- * Active tasks dashlet takes advantage of the tabbed dashlet abstraction by
- * using its metadata driven capabilities to configure its tabs in order to
- * display information about tasks module.
- *
- * Besides the metadata properties inherited from Tabbed dashlet, Active tasks
- * dashlet also supports other properties:
- *
- * - {Array} overdue_badge field def to support overdue calculation, and showing
- *   an overdue badge when appropriate.
- *
- * @class View.Views.Base.ActiveTasksView
- * @alias SUGAR.App.view.views.BaseActiveTasksView
- * @extends View.Views.Base.TabbedDashletView
- */
 ({
     extendsFrom: 'TasksDashletBaseView',
-    id: 'tasks-today',
+    id: 'tasksToday',
 
     /**
      * {@inheritDoc}
@@ -142,8 +117,6 @@
                     },
                     error: function() {
                         console.log('-----------------------------------------------');
-                        console.log('Błąd, kod: 0ccbvt70');
-                        console.log('-----------------------------------------------');
                     }
                 });
             }, this)
@@ -158,56 +131,6 @@
      */
     _initTabs: function() {
         this._super("_initTabs");
-
-        // FIXME: since there's no way to do this metadata driven (at the
-        // moment) and for the sake of simplicity only filters with 'date_due'
-        // value 'today' are replaced by today's date
-        // var today = new Date();
-        // today.setHours(23, 59, 59);
-        // today.toISOString();
-
-        // _.each(_.pluck(_.pluck(this.tabs, 'filters'), 'date_due'), function(filter) {
-        //     _.each(filter, function(value, operator) {
-        //         if (value === 'today') {
-        //             filter[operator] = today;
-        //         }
-        //     });
-        // });
-    },
-
-    /**
-     * Create new record.
-     * < It will not be used! >
-     * @param {Event} event Click event.
-     * @param {Object} params
-     * @param {String} params.layout Layout name.
-     * @param {String} params.module Module name.
-     */
-    createRecord: function(event, params) {
-        if (this.module !== 'Home') {
-            this.createRelatedRecord(params.module, params.link);
-        } else {
-            var self = this;
-            app.drawer.open({
-                layout: 'create-actions',
-                context: {
-                    create: true,
-                    module: params.module
-                }
-            }, function(context, model) {
-                if (!model) {
-                    return;
-                }
-                self.context.resetLoadFlag();
-                self.context.set('skipFetch', false);
-                if (_.isFunction(self.loadData)) {
-                    self.loadData();
-                } else {
-                    self.context.loadData();
-                }
-            });
-        }
-
     },
 
     /**

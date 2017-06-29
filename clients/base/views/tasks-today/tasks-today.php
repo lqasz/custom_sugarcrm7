@@ -1,16 +1,5 @@
 <?php
 
-/*
- * Your installation or use of this SugarCRM file is subject to the applicable
- * terms available at
- * http://support.sugarcrm.com/06_Customer_Center/10_Master_Subscription_Agreements/.
- * If you do not agree to all of the applicable terms or do not have the
- * authority to bind the entity as an authorized representative, then do not
- * install or use this SugarCRM file.
- *
- * Copyright (C) SugarCRM Inc. All rights reserved.
- */
-
 $viewdefs['base']['view']['tasks-today'] = array(
     'dashlets' => array(
         array(
@@ -42,17 +31,6 @@ $viewdefs['base']['view']['tasks-today'] = array(
     ),
     'custom_toolbar' => array( 
         'buttons' => array(
-            // array(
-            //     'type' => 'dashletaction',
-            //     "css_class" => "btn btn-invisible minify",
-            //     "icon" => "fa-plus",
-            //     'action' => 'createRecord',
-            //     'params' => array(
-            //         'module' => 'Tasks',
-            //         'link' => 'tasks',
-            //     ),
-            //     "tooltip" => "LBL_CREATE_TASK",
-            // ),
             array(
                 "type" => "dashletaction",
                 "css_class" => "dashlet-toggle btn btn-invisible minify",
@@ -87,28 +65,6 @@ $viewdefs['base']['view']['tasks-today'] = array(
             ),
         ),
     ),
-    // 'panels' => array(
-    //     array(
-    //         'name' => 'panel_body',
-    //         'columns' => 2,
-    //         'labelsOnTop' => true,
-    //         'placeholders' => true,
-    //         'fields' => array(
-    //             array(
-    //                 'name' => 'visibility',
-    //                 'label' => 'LBL_DASHLET_CONFIGURE_MY_ITEMS_ONLY',
-    //                 'type' => 'enum',
-    //                 'options' => 'tasks_visibility_options',
-    //             ),
-    //             array(
-    //                 'name' => 'limit',
-    //                 'label' => 'LBL_DASHLET_CONFIGURE_DISPLAY_ROWS',
-    //                 'type' => 'enum',
-    //                 'options' => 'tasks_limit_options',
-    //             ),
-    //         ),
-    //     ),
-    // ),
     'tabs' => array(
         array(
             'active' => true,
@@ -148,15 +104,6 @@ $viewdefs['base']['view']['tasks-today'] = array(
                     'tooltip' => 'LBL_ACTIVE_TASKS_DASHLET_COMPLETE_TASK',
                     'acl_action' => 'edit',
                 ),
-                // array(
-                //     'type' => 'unlink-action',
-                //     'icon' => 'fa-chain-broken',
-                //     'css_class' => 'btn btn-mini',
-                //     'event' => 'tabbed-dashlet:unlink-record:fire',
-                //     'target' => 'view',
-                //     'tooltip' => 'LBL_UNLINK_BUTTON',
-                //     'acl_action' => 'edit',
-                // ),
             ),
             'overdue_badge' => array(
                 'name' => 'date_due',

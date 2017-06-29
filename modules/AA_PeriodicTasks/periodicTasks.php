@@ -88,23 +88,79 @@ if(isset($_GET['update']) && $_GET['update'] == 1) {
 
 function addNewTask($periodic_task_id, $task_data)
 {
+	$verification_array = array();
 	$db = DBManagerFactory::getInstance();
-	deleteTasks($periodic_task_id);
+	$quarter[1] = array(1, 2, 3);
+	$quarter[2] = array(4, 5, 6);
+	$quarter[3] = array(7, 8, 9);
+	$quarter[4] = array(10, 11, 12);
+	$current_date = date('Y-m-d');
+	$next_three_years = date('Y-m-d', strtotime('+3 years', strtotime($current_date)));
+	$days_diff = floor(strtotime($next_three_years) - strtotime($current_date)) / (60*60*24);
 	$period_array = getPeriodData(trim($task_data['dayOfWeek']), trim($task_data['dayOfMonth']), trim($task_data['month']));
+	deleteTasks($periodic_task_id);
+	dump($period_array);
 
-	$current_year = date('Y-m-d');
-	$next_year = date('Y-m-d', strtotime('+3 years', strtotime($current_year)));
+	$next_day = $current_date;
+	for($i = 0; $i < $days_diff; $i++) {
+		$next_day = date('Y-m-d', strtotime($next_day .' +1 days'));
+		$day_week = date('N', strtotime($next_day));
+		$day_month = date('j', strtotime($next_day));
+		$month = date('n', strtotime($next_day));
+		$year = date('Y', strtotime($next_day));
 
-	$divided_days = floor(strtotime($next_year) - strtotime($current_year)) / (60*60*24);
+		if(isset($period_array['day_of_week']['every'])) {
+			$verification_array['day_week']['add_task'] = 1;
+		} elseif(isset($period_array['day_of_week']['value']) && 
+			($period_array['day_of_week']['value'] == $day_week)) {
+			$verification_array['day_week']['add_task'] = 1;
+		} elseif(isset($period_array['day_of_week']['from_to'])) {
+			if($period_array['day_of_week']['from_to'][0][0] <= $day_week &&
+				$day_week < $period_array['day_of_week']['from_to'][0][1]) 
+			{
+				$verification_array['day_week']['add_task'] = 1;
+			}
+		} elseif(isset($period_array['day_of_week']['and'])) {
+			foreach($period_array['day_of_week']['and'][0] as $key => $value) {
+				if($value == $day_week) {
+					$verification_array['day_week']['add_task']['and'] = $day_week;
+				}
+			}
+		}
 
-	for($i=0; $i < $divided_days; $i++) { 
-		echo date('Y-m-d', strtotime('+1 days'));
+		if(isset($period_array['day_of_month']['every'])) {
+			$verification_array['day_month']['add_task'] = 1;
+		} elseif(isset($period_array['day_of_month']['value']) &&
+			($period_array['day_of_month']['value'] == $day_month)) {
+				$verification_array['day_month']['add_task'] = 1;
+		} elseif(isset($period_array['day_of_month']['text'])) {
+			if($period_array['day_of_month']['text'] == "begin" && $day_month == 1) {
+				$verification_array['day_month']['add_task'] = 1;
+			} elseif($period_array['day_of_month']['text'] == "end" && $day_month == cal_days_in_month(CAL_GREGORIAN , $month , $year)) {
+				$verification_array['day_month']['add_task'] = 1;
+			}
+		} elseif(isset($period_array['day_of_month']['from_to'])) {
+			if($period_array['day_of_month']['from_to'][0][0] <= $day_month &&
+				$day_month < $period_array['day_of_month']['from_to'][0][1]) 
+			{
+				$verification_array['day_month']['add_task'] = 1;
+			}
+		} elseif(isset($period_array['day_of_month']['and'])) {
+
+			foreach($period_array['day_of_month']['and'][0] as $key => $value) {
+				if($value == $day_month) {
+					$verification_array['day_month']['add_task']['and'] = $day_month;
+				}
+			}
+		}
+
+		if(isset($verification_array['day_week']) || isset($verification_array['day_month'])) {
+			dump($verification_array);
+		}
+
+		unset($verification_array['day_week']);
+		unset($verification_array['day_month']);
 	}
-	// $task_bean = BeanFactory::newBean('Tasks');
-	// $task_bean->new_with_id = true;
-	// $task_bean->id = create_guid();
-	// $task_bean->name = $task_data['name'];
-
 }
 
 function deleteTasks($periodic_task_id)
@@ -128,7 +184,8 @@ function getPeriodData($day_of_week, $day_of_month, $month)
 	$stage['month'] = getSimpleStages($month);
 
 	if($day_of_month == "end" || $day_of_month == "begin") {
-		$stage['day_of_month']['value'] = $day_of_month;
+		$stage['day_of_month'] = array();
+		$stage['day_of_month']['text'] = $day_of_month;
 	}
 
 	if(empty($stage['month'])) {
@@ -166,5 +223,13 @@ function getSimpleStages($period)
 	}
 
 	return $stage;
+}
+
+function createTask()
+{
+	// $task_bean = BeanFactory::newBean('Tasks');
+	// $task_bean->new_with_id = true;
+	// $task_bean->id = create_guid();
+	// $task_bean->name = $task_data['name'];
 }
 ?>

@@ -1,26 +1,11 @@
-{{!--
-/*
- * Your installation or use of this SugarCRM file is subject to the applicable
- * terms available at
- * http://support.sugarcrm.com/06_Customer_Center/10_Master_Subscription_Agreements/.
- * If you do not agree to all of the applicable terms or do not have the
- * authority to bind the entity as an authorized representative, then do not
- * install or use this SugarCRM file.
- *
- * Copyright (C) SugarCRM Inc. All rights reserved.
- */
---}}
-
 <div class="tab-pane active">
     <table class="table table-striped dataTable">
             <thead>
                 <tr>
                 <th class="name"> <span>Subject</span> </th>
                 <th class="parent_name" > <span>Related to</span> </th>
-                {{!-- <th class="created_by" > <span>Created by</span> </th>  --}}
                 <th class="priority" > <span>Priority</span> </th>
                 <th class="due_date" > <span>Due date</span> </th>
-                {{!-- <th class="status" > <span>Status</span> </th> --}}
                 <th class="tasks_actions"><span></span></th>
                 </tr>
             </thead>
@@ -51,12 +36,6 @@
                                     {{fieldValue this "priority"}}
                                 </div></span></td>
 
-
-                                {{!-- <td><span class="list"><div class="ellipsis_inline" data-placement="bottom" title="" data-original-title="">   --}}
-                                    {{!-- <a href="#{{buildRoute module="Employees" id=attributes.created_by action="detail"}}"></a> --}}
-                                    {{!-- {{fieldValue this "user_name"}}{{fieldValue this "user_last"}} --}}
-                                {{!-- </div></span></td> --}}
-
                                 <td class="dashlet_date_td"><span class="list"><div class="ellipsis_inline" data-placement="bottom" >  
                                    {{formatDate attributes.date_due dateOnly="true"}} 
                                 </div></span></td>
@@ -76,7 +55,6 @@
                             {{/each}}
                 {{else}}
                     <tr><td colspan="5">You haven't got any tasks.</td></tr>
-                    {{!-- <div class="block-footer">{{str "LBL_NO_DATA_AVAILABLE" this.module}}</div> --}}
                 {{/if}} 
         </tbody>
     </table>

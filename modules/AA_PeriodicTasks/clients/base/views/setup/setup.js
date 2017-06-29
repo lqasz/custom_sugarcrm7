@@ -38,11 +38,11 @@
 
         _.each(this.periodicTasks, function(positionData, position) {
             _.each(positionData.tasks, function(task, taskID) {
+                self.periodicTasks[position].tasks[taskID].update = 0;
+
                 if(task.name == "" || task.deleted == 1) {
                     delete self.periodicTasks[position].tasks[taskID];
                 }
-
-                self.periodicTasks[position].tasks[taskID].update = 0;
             });
         });
     },
@@ -55,7 +55,7 @@
                         '<div class="span4">'+
                             '<input type="text" class="span12" name="task_name"/>'+
                         '</div>'+
-                        '<div class="span3">'+
+                        '<div class="span4">'+
                             self.returnDayOfWeekField()+
                         '</div>'+
                         '<div class="span4">'+
@@ -191,8 +191,8 @@
     },
 
     returnDayOfWeekField() {
-        return '<input type="text" class="span3 time-period day-of-week" value="*"/>'+
-                '<input type="text" class="span3 time-period day-of-month" value="*"/>'+
-                '<input type="text" class="span3 time-period month" value="*"/>';
+        return '<input type="text" class="span4 time-period day-of-week" value="*"/>'+
+                '<input type="text" class="span4 time-period day-of-month" value="*"/>'+
+                '<input type="text" class="span4 time-period month" value="*"/>';
     },
 })
