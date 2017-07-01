@@ -47,6 +47,50 @@
         });
     },
 
+    validateModel: function() {
+        var self = this,
+            callBack = {
+                "error": "",
+                "validation": true
+            };
+
+        _.each(this.periodicTasks, function(positionData, position) {
+            _.each(positionData.tasks, function(task, taskID) {
+                if(_.isEmpty(task.departments)) {
+                    callBack.validation = false;
+                    callBack.error = "departments";
+                } else {
+                    callBack.validation = false;
+                    callBack.error = "departments";
+
+                    _.each(task.departments, function(value, key) {
+                        if(value != undefined) {
+                            callBack.validation = true;
+                            callBack.error = "";
+                        }
+                    });
+                }
+
+                if(task.name.trim() == "") {
+                    callBack.validation = false;
+                    callBack.error = "name";
+                }
+
+                if(task.dayOfWeek.trim() == "" || task.dayOfMonth.trim() == "" || task.month.trim() == "") {
+                    callBack.validation = false;
+                    callBack.error = "periods";
+                } else {
+                    if(task.dayOfWeek != "*" && task.dayOfMonth != "*") {
+                        callBack.validation = false;
+                        callBack.error = "wrong_periods";
+                    }
+                }
+            });
+        });
+
+        return callBack;
+    },
+
     addClicked: function(event) {
         var self = this,
             unique = App.utils.generateUUID(),
@@ -134,10 +178,11 @@
             departments = self.periodicTasks[position].tasks[($task.data()).id].departments;
 
         if(!_.isEmpty(departments)) {
-            if(departments.indexOf(value) == -1) {
+            var index = departments.indexOf(value);
+            if(index == -1) {
                 self.periodicTasks[position].tasks[($task.data()).id].departments.push(value);
             } else {
-                delete self.periodicTasks[position].tasks[($task.data()).id].departments[value];
+                delete self.periodicTasks[position].tasks[($task.data()).id].departments[index];
             }
         } else {
             self.periodicTasks[position].tasks[($task.data()).id].departments.push(value);
@@ -150,18 +195,43 @@
     saveClicked: function() {
         var self = this;
 
-        $.ajax({
-            url: 'index.php?entryPoint=periodicTasks&update=1',
-            type: 'POST',
-            data: {
-                JSONperiodicTasks: self.periodicTasks,
-            },
-            success: function(data) {
-                self.edit = false;
-                self.cleanModel();
-                self.render();
-            },
-        });
+        if(self.validateModel().validation) {
+            // $.ajax({
+            //     url: 'index.php?entryPoint=periodicTasks&update=1',
+            //     type: 'POST',
+            //     data: {
+            //         JSONperiodicTasks: self.periodicTasks,
+            //     },
+            //     success: function(data) {
+            //         self.edit = false;
+            //         self.cleanModel();
+            //         self.render();
+            //     },
+            // });
+        } else {
+            var message = "";
+
+            switch(self.validateModel().error) {
+                case 'name':
+                    message = "Pole `Nazwa zadania` nie może być puste";
+                break;
+                case 'departments':
+                    message = "Musisz wybrać conajmniej jeden departament";
+                break;
+                case 'periods':
+                    message = "Wszystkie pola związane z cyklem zadań muszą być wypełnine";
+                break;
+                case 'wrong_periods':
+                    message = "Pole `Dzień tygonia` i pole `Dzień miesiąca` nie mogą mieć jednocześnie zdefiniowanej reguły";
+                break;
+            }
+
+            app.alert.show('message-id', {
+                level: 'confirmation',
+                messages: message,
+                autoClose: false,
+            });
+        }
     },
 
     editClicked: function() {
@@ -186,7 +256,7 @@
                 '<div class="span1 task-center"><input class="task-dep" value="fa" type="checkbox"/></div>'+
                 '<div class="span1 task-center"><input class="task-dep" value="dev" type="checkbox"/></div>'+
                 '<div class="span1 task-center"><input class="task-dep" value="ct" type="checkbox"/></div>'+
-                '<div class="span1 task-center"><input class="task-dep" value="b" type="checkbox"/></div>'+
+                '<div class="span1 task-center"><input class="task-dep" value="board" type="checkbox"/></div>'+
                 '<div class="span3 btn btn-invisible minus"><i class="fa fa-times"></i></div>';
     },
 
