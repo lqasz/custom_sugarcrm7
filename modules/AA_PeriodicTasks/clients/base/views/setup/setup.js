@@ -192,22 +192,31 @@
         self.periodicTasks[position].tasks[($task.data()).id].update = 1;
     },
 
-    saveClicked: function() {
+    saveClicked: function(event) {
         var self = this;
 
+        $(event.currentTarget).attr("disabled", "disabled");
+        $('a[name="cancel_button"]').attr("disabled", "disabled");
+
+        $('#alerts').append('<div id="loadingPane">'+
+                                '<div id="loadingIcon">'+
+                                    '<i class="fa fa-spinner fa-spin fa-2x pull-left"></i> Generating'+
+                                '</div>'+
+                            '</div>');
         if(self.validateModel().validation) {
-            // $.ajax({
-            //     url: 'index.php?entryPoint=periodicTasks&update=1',
-            //     type: 'POST',
-            //     data: {
-            //         JSONperiodicTasks: self.periodicTasks,
-            //     },
-            //     success: function(data) {
-            //         self.edit = false;
-            //         self.cleanModel();
-            //         self.render();
-            //     },
-            // });
+            $.ajax({
+                url: 'index.php?entryPoint=periodicTasks&update=1',
+                type: 'POST',
+                data: {
+                    JSONperiodicTasks: self.periodicTasks,
+                },
+                success: function(data) {
+                    self.edit = false;
+                    self.cleanModel();
+                    $('#loadingPane').remove();
+                    self.render();
+                },
+            });
         } else {
             var message = "";
 

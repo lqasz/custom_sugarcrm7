@@ -5,11 +5,25 @@ if(isset($_GET['update']) && $_GET['update'] == 1) {
 	$period_tasks_array = array();
 	$periodic_tasks = json_decode(json_encode($_POST['JSONperiodicTasks']), true);
 
+	$holidays = array();
+	$holidays_year = date("Y");
+	for($i = 0; $i <= 2; $i++) {
+		$page = file_get_contents('http://www.kalendarzswiat.pl/swieta/wolne_od_pracy/'.$holidays_year);
+	    $matches = array();
+
+	    preg_match_all('#data-date *= *["\']?([^"\']*)#is', $page, $matches);
+
+	    foreach($matches[1] as $key => $value) {
+	    	$holidays[date('Y-m-d', strtotime($value))] = 1;
+	    }
+	    $holidays_year++;
+	}
+
 	foreach($periodic_tasks as $position => $position_data) {
 		foreach($position_data['tasks'] as $task_id => $task_data) {
 			if($task_data['deleted'] == 1) {
 				$db->query("UPDATE `aa_tenants` SET `deleted`=1 WHERE `id`='{$task_id}'");
-				$period_tasks_array['toDelete'] = $task_id;
+				$period_tasks_array['toDelete'][] = $task_id;
 			} elseif($task_data['update'] == 1) {
 				$periodic_count = $db->query("SELECT `id` FROM `aa_tenants` WHERE `id` = '{$task_id}'");
 
@@ -29,6 +43,12 @@ if(isset($_GET['update']) && $_GET['update'] == 1) {
 					$db->query("INSERT INTO `aa_tenants_cstm`(`id_c`, `day_of_week_c`, `day_of_month_c`, `month_quarter_c`, `responsible_c`, `departments_c`) VALUES('{$task_id}', '{$task_data['dayOfWeek']}', '{$task_data['dayOfMonth']}', '{$task_data['month']}', '{$position}', '{$departments}')");
 				}
 			}
+		}
+	}
+
+	if(!empty($period_tasks_array['toDelete'])) {
+		foreach($period_tasks_array['toDelete'] as $task_id) {
+			deleteTasks($task_id);
 		}
 	}
 
@@ -97,8 +117,8 @@ function addNewTask($periodic_task_id, $task_data)
 	$quarter[4] = array(10, 11, 12);
 	$verification_array = array();
 	$current_date = date('Y-m-d');
-	$next_three_years = date('Y-m-d', strtotime('+3 years', strtotime($current_date)));
-	$days_diff = floor(strtotime($next_three_years) - strtotime($current_date)) / (60*60*24);
+	$next_two_years = date('Y-m-d', strtotime('+2 years', strtotime($current_date)));
+	$days_diff = floor(strtotime($next_two_years) - strtotime($current_date)) / (60*60*24);
 	$period_array = getPeriodData(trim($task_data['dayOfWeek']), trim($task_data['dayOfMonth']), trim($task_data['month']));
 	deleteTasks($periodic_task_id);
 
@@ -167,6 +187,7 @@ function addNewTask($periodic_task_id, $task_data)
 			}
 		} elseif(isset($period_array['month']['quarter'])) {
 			$value = $period_array['month']['quarter'][0][0];
+			
 			if(in_array($month, $quarter[$value])) {
 				$verification_array['month']['add_task']['and'] = 1;	
 			}
@@ -178,7 +199,20 @@ function addNewTask($periodic_task_id, $task_data)
 			}
 		}
 
-		if(isset($verification_array['day_week']) && isset($verification_array['day_month']) && isset($verification_array['month'])) {
+		if(isset($verification_array['day_week']) && 
+			isset($verification_array['day_month']) && 
+			isset($verification_array['month'])
+		) {
+			if($day_week == 6) {
+				$next_day = date('Y-m-d', strtotime($next_day .' +2 days'));
+			} elseif($day_week == 7) {
+				$next_day = date('Y-m-d', strtotime($next_day .' +1 days'));
+			}
+
+			if(isset($holidays[$next_day])) {
+				$next_day = date('Y-m-d', strtotime($next_day .' +1 days'));
+			}
+
 			createTask($periodic_task_id, $task_data, $next_day);
 		}
 
@@ -213,15 +247,13 @@ function getPeriodData($day_of_week, $day_of_month, $month)
 		$stage['day_of_month']['text'] = $day_of_month;
 	}
 
-	if(!empty($stage['month'])) {
-		if(strstr($month, 'q')) {
-			if(strpos($month, "&")) {
-				$stage['month'] = array();
-				preg_match_all('!\d+!', $month, $stage['month']['quarter_and']);
-			} else {
-				$stage['month'] = array();
-				preg_match_all('!\d+!', $month, $stage['month']['quarter']);
-			}
+	if(strstr($month, 'q')) {
+		if(strpos($month, "&")) {
+			$stage['month'] = array();
+			preg_match_all('!\d+!', $month, $stage['month']['quarter_and']);
+		} else {
+			$stage['month'] = array();
+			preg_match_all('!\d+!', $month, $stage['month']['quarter']);
 		}
 	}	
 
@@ -287,10 +319,9 @@ function createTask($periodic_task_id, $task_data, $date)
 			$task_bean->parent_id = $user['d_id'];
 			$task_bean->assigned_user_id = $user['u_id'];
 			$task_bean->parent_type = "AA_Departments";
-
 			$task_bean->save();
 
-			$db->query("INSERT INTO `periodictasks_tasks` VALUES('".$task_bean->id."', '".$periodic_task_id."')");
+			$db->query("INSERT INTO `periodictasks_tasks` VALUES('".$periodic_task_id."', '".$task_bean->id."')");
 		}
 	}
 }
