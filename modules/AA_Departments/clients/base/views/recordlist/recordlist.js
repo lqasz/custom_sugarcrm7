@@ -6,10 +6,10 @@
         app.view.invokeParent(this, {type: 'view', name: 'recordlist', method: 'initialize', args:[options]});
 
         var self = this;
+        // get all departments to the model
         self.collection.on('data:sync:complete', function() {
             app.api.call('GET', 'index.php?entryPoint=getData&rebuildDepList=1', null,{
                 success: _.bind(function(data) {
-                    console.info(data);
                     self.departments = data;
                     self.render();
                 })
@@ -25,7 +25,7 @@
         var self = this;
         if(!_.isEmpty(self.departments)) {
             $("tr[name^='AA_Departments']").each(function () {
-                var departmentID = $(this).attr('name').split('AA_Departments_')[1];
+                var departmentID = $(this).attr('name').split('AA_Departments_')[1]; // get department id
 
                 $(this).css("border", "none");
                 $(this).html(self.generateFields(departmentID));
@@ -33,6 +33,10 @@
         }
     },
 
+    /**
+     * Function create new row view for each department
+     * @param departmentID
+     */
     generateFields: function(departmentID) {
         var departmentName = (this.collection.where({id: departmentID}))[0].get("name"),
             string = '<td style="text-align: left; padding: 0; background: #fff;">'+
