@@ -1,5 +1,7 @@
 ({
     id: 'PeriodicTasks',
+
+    // some usefull events
     events: _.extend({}, this.events, {
         'click .plus': 'addClicked',
         'click .minus': 'minusClicked',
@@ -11,8 +13,8 @@
         'click .task-dep': 'setRelatedDepartments',
     }),
     
-    edit: false,
-    periodicTasks: {},
+    edit: false, // for rendering template
+    periodicTasks: {}, // main model
 
     initialize: function(options) {
         this._super('initialize', [options]);
@@ -23,6 +25,9 @@
         this._super('render');
     },
 
+    /*
+     * Fetch all data from db to the model
+     */
     fetchModel: function() {
         var self = this;
         app.api.call('GET', 'index.php?entryPoint=periodicTasks&getTasks=1', null,{
@@ -30,9 +35,12 @@
                 self.periodicTasks = data;
                 self.render();
             })
-        });
+        }); // call
     },
 
+    /*
+     * Delete `bad` records from model
+     */
     cleanModel: function() {
         var self = this;
 
@@ -43,10 +51,14 @@
                 if(task.name == "" || task.deleted == 1) {
                     delete self.periodicTasks[position].tasks[taskID];
                 }
-            });
-        });
+            }); // each
+        }); // each
     },
 
+    /*
+     * Check for the data correctness
+     * @return validation message
+     */
     validateModel: function() {
         var self = this,
             callBack = {
@@ -68,7 +80,7 @@
                             callBack.validation = true;
                             callBack.error = "";
                         }
-                    });
+                    }); // each
                 }
 
                 if(task.name.trim() == "") {
@@ -85,12 +97,15 @@
                         callBack.error = "wrong_periods";
                     }
                 }
-            });
-        });
+            }); // each
+        }); // each
 
         return callBack;
     },
 
+    /*
+     * Add new row to the view and new record to the model
+     */
     addClicked: function(event) {
         var self = this,
             unique = App.utils.generateUUID(),
@@ -109,10 +124,12 @@
         
         $(event.currentTarget).parent().parent().next('.periodic-tasks-content').append(string);
 
+        // create new record
         if(_.isEmpty(self.periodicTasks[newRowData.name].tasks)) {
             self.periodicTasks[newRowData.name].tasks = {};
         }
 
+        // set parameters to default
         self.periodicTasks[newRowData.name].tasks[unique] = {
             'name': '',
             'dayOfWeek': '*',
@@ -125,6 +142,9 @@
         };
     },
 
+    /*
+     * Remove row from the view and set model`s delete flag to true
+     */
     minusClicked: function(event) {
         var self = this,
             $task = $(event.currentTarget).parent().parent(),
@@ -139,6 +159,9 @@
         $task.remove();
     },
 
+    /*
+     * Set record`s task name
+     */
     setTaskName: function(event) {
         var self = this,
             $task = $(event.currentTarget).parent().parent(),
@@ -149,6 +172,9 @@
         self.periodicTasks[position].tasks[($task.data()).id].name = $(event.currentTarget).val();
     },
 
+    /*
+     * Set record`s time period
+     */
     setTimePeriod: function(event) {
         var self = this,
             $element = $(event.currentTarget),
@@ -169,6 +195,9 @@
         self.periodicTasks[position].tasks[($task.data()).id].update = 1;
     },
 
+    /*
+     * Set record`s related departments where task can appear
+     */
     setRelatedDepartments: function(event) {
         var self = this,
             $element = $(event.currentTarget),
@@ -180,18 +209,21 @@
         if(!_.isEmpty(departments)) {
             var index = departments.indexOf(value);
             if(index == -1) {
-                self.periodicTasks[position].tasks[($task.data()).id].departments.push(value);
+                self.periodicTasks[position].tasks[($task.data()).id].departments.push(value); // add to model action
             } else {
-                delete self.periodicTasks[position].tasks[($task.data()).id].departments[index];
+                delete self.periodicTasks[position].tasks[($task.data()).id].departments[index]; // delete from model action
             }
         } else {
-            self.periodicTasks[position].tasks[($task.data()).id].departments.push(value);
+            self.periodicTasks[position].tasks[($task.data()).id].departments.push(value); // add to model action
         }
 
         self.periodicTasks[position].tasks[($task.data()).id].new = 0;
         self.periodicTasks[position].tasks[($task.data()).id].update = 1;
     },
 
+    /*
+     * Functon run validation and save model to db
+     */
     saveClicked: function(event) {
         var self = this;
 
@@ -203,12 +235,14 @@
                                     '<i class="fa fa-spinner fa-spin fa-2x pull-left"></i> Generating'+
                                 '</div>'+
                             '</div>');
+
+        // run validation
         if(self.validateModel().validation) {
             $.ajax({
                 url: 'index.php?entryPoint=periodicTasks&update=1',
                 type: 'POST',
                 data: {
-                    JSONperiodicTasks: self.periodicTasks,
+                    JSONperiodicTasks: self.periodicTasks, // all data
                 },
                 success: function(data) {
                     self.edit = false;
@@ -220,6 +254,7 @@
         } else {
             var message = "";
 
+            // get message
             switch(self.validateModel().error) {
                 case 'name':
                     message = "Pole `Nazwa zadania` nie może być puste";
@@ -235,6 +270,7 @@
                 break;
             }
 
+            // show alert box
             app.alert.show('message-id', {
                 level: 'confirmation',
                 messages: message,
@@ -243,11 +279,17 @@
         }
     },
 
+    /*
+     * Set view option and render the view
+     */
     editClicked: function() {
         this.edit = true;
         this.render();
     },
 
+    /*
+     * Set view option, clean model and render the view
+     */
     cancelClicked: function() {
         this.edit = false;
         this.cleanModel();
@@ -258,6 +300,9 @@
         this._super('_renderHtml');
     },
 
+    /*
+     * @return departments view in html
+     */
     returnDepartmentsField() {
         return '<div class="span1 task-center"><input class="task-dep" value="pt" type="checkbox"/></div>'+
                 '<div class="span1 task-center"><input class="task-dep" value="qs" type="checkbox"/></div>'+
@@ -269,6 +314,9 @@
                 '<div class="span3 btn btn-invisible minus"><i class="fa fa-times"></i></div>';
     },
 
+    /*
+     * @return period view in html
+     */
     returnDayOfWeekField() {
         return '<input type="text" class="span4 time-period day-of-week" value="*"/>'+
                 '<input type="text" class="span4 time-period day-of-month" value="*"/>'+
