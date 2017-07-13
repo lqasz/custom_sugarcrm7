@@ -23,6 +23,7 @@
     countner2: 0,
     number: null,
     documents: {},
+    attachments: {},
             
     /**
      * Constructor
@@ -41,28 +42,21 @@
         $(document).on("click", "i.notes-arrows", function(event) {
             event.preventDefault();
             event.stopPropagation();
-            var documentNumber = self.number,
-                documentsMap = self.documents;
-
-            console.info("Event");
-            console.info(documentsMap);
 
             // get number of current document
-            documentNumber = (self.number == null) ? _.indexOf(documentsMap.others, documentsMap.selected) : self.number;
+            self.number = (self.number == null) ? _.indexOf(self.documents.others, self.documents.selected) : self.number;
             
             // move right or left to another document
             if($(event.currentTarget).hasClass('right-arrow')) {
-                documentNumber = (documentNumber == documentsMap.others.length - 1) ? 0 : ++documentNumber;
+                self.number = (self.number == self.documents.others.length - 1) ? 0 : ++self.number;
             } else {
-                documentNumber = (documentNumber == 0) ? documentsMap.others.length - 1 : --documentNumber;
+                self.number = (self.number == 0) ? self.documents.others.length - 1 : --self.number;
             }
 
-            self.number = documentNumber;
-            console.info(documentNumber);
-
+            self.number = self.number;
             // show selected document
             var $iFrame = $('#review_pdf iframe'),
-                $noteElement = self.$el.find('a[data-noteid="'+ documentsMap.others[documentNumber] +'"]');
+                $noteElement = $('a[data-noteid="'+ self.documents.others[self.number] +'"]');
 
             // add class to attachment
             if(!$noteElement.hasClass('read')) {
@@ -70,8 +64,8 @@
                 $noteElement.addClass("read");
             }
 
-            self.removeDisable(documentsMap.invoiceID); // eneable confirm button
-            $iFrame.attr('src', 'https://'+ window.location.hostname +'/rest/v10/Notes/'+documentsMap.others[documentNumber]+'/file/filename?force_download=0&platform=base&noteShare=1');
+            self.removeDisable(self.documents.invoiceID); // eneable confirm button
+            $iFrame.attr('src', 'https://'+ window.location.hostname +'/rest/v10/Notes/'+self.documents.others[self.number]+'/file/filename?force_download=0&platform=base&noteShare=1');
         });
     },
 
@@ -313,12 +307,14 @@
         // api to fetch all notification related to the user
         app.api.call('post', 'index.php?entryPoint=getNotifications&getAll=1&userID='+user_id+"&random"+Date.now(), null, {
             success: _.bind(function (data) {
-                if (data.length > 0 && self.stopRefreshing == false) {
+                if (!_.isEmpty(data.notifications) && self.stopRefreshing == false) {
                     if (self.disposed) {  // bez tego generuje błędy kiedy element został wygenerowany w innym view a to jego kopia                       
                         return;                         
-                    }    
+                    }
+                       
                     self._scheduleReload(self.autoRefresh);
-                    self.notifications = data;
+                    self.notifications = data.notifications;
+                    self.attachments = data.attachments;
                     self.render();
                 }
             }, this),
@@ -330,36 +326,33 @@
     },
 
     showInvoice: function(event) {
-        var self = this;
         event.preventDefault();
         event.stopPropagation();
-        self._scheduleReloadStop();
-        self.documents = {};
-        self.stopRefreshing = true;
-
-        var counter = 0,
+        var self = this,
+            counter = 0,
             element = self.$(event.currentTarget),
             data = element.data(),
             invoice_id = data.invoiceid,
             note_id = data.noteid,
-            relation_name = data.name;
+            notif_id = ((element.parent().parent().parent()).data()).notifid;
         
+        self._scheduleReloadStop();
+        self.documents = {};
+        self.stopRefreshing = true;
+
         element.addClass('read');
         element.removeClass('unread');
         self.removeDisable(invoice_id);
 
-        self.documents.others = [];
+        self.documents.others = self.attachments[notif_id][invoice_id];
         self.documents.selected = note_id;
         self.documents.invoiceID = invoice_id;
 
-        self.$el.find('a[data-invoiceid="'+ invoice_id +'"]').each(function(i) {
-            counter++;
-            self.documents.others[i] = $(this).data().noteid;
-        });
-
-        console.info(self.documents);
-
-        if(counter > 1) {
+        console.info("notif_id: ", notif_id);
+        console.info("invoice_id: ", invoice_id);
+        console.info("attachments: ", self.attachments);
+        console.info("documents: ", self.documents.others);
+        if(self.documents.others.length > 1) {
             $('.dashboard').append('<div id="review_background"><div id="review_pdf"><i class="fa fa-chevron-left fa-4x notes-arrows left-arrow"></i><iframe id="review_iframe" title="PDF in an i-Frame" frameborder="1" scrolling="auto" height="100%" width="100%" ></iframe><i class="fa fa-chevron-right fa-4x notes-arrows right-arrow"></i></div></div>');
         } else {
             $('.dashboard').append('<div id="review_background"><div id="review_pdf"><iframe id="review_iframe" title="PDF in an i-Frame" frameborder="1" scrolling="auto" height="100%" width="100%" ></iframe></div></div>');
@@ -375,20 +368,21 @@
     },
 
     enableConfirm: function(invoice_id) {
-        var counter = 0;
-        this.$el.find('a[data-invoiceid="'+ invoice_id +'"]').each(function(i) {
+        var counter = 0,
+            $element = $('a[data-invoiceid="'+ invoice_id +'"]');
+        $element.each(function(i) {
             if($(this).hasClass('read')) {
                 counter++;
             }
         });
 
         this._scheduleReloadStop();
-        return this.$el.find('a[data-invoiceid="'+ invoice_id +'"]').length == counter;
+        return $element.length == counter;
     },
 
     removeDisable: function(invoice_id) {
         if(this.enableConfirm(invoice_id)) {
-            this.$el.find('button[data-parentid="'+ invoice_id +'"]').each(function(iii){
+            $('button[data-parentid="'+ invoice_id +'"]').each(function(iii){
                 $(this).removeAttr('disabled');
             });
         }

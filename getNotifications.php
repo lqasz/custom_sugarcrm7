@@ -17,7 +17,7 @@ $current_user = BeanFactory::getBean('Users');
 $db = DBManagerFactory::getInstance();
 $exType = 0;
 $notifications = array();
-$invoices = array();
+$attachments = array();
 $answer=array();
 
 if(isset($_GET['getAll']) && $_GET['getAll'] == 1){
@@ -39,6 +39,7 @@ if(isset($_GET['getAll']) && $_GET['getAll'] == 1){
         WHERE
             n.assigned_user_id='{$userID}'
             AND n.is_read=0
+            AND n.deleted=0
         ORDER BY
             n.date_entered DESC
         ";
@@ -76,12 +77,12 @@ if(isset($_GET['getAll']) && $_GET['getAll'] == 1){
                     UNION ALL
                     SELECT 'ac_invoices_notes_5' as Rel, ac_invoices_notes_5notes_idb as noteID, ac_invoices_notes_5ac_invoices_ida as invoiceID
                     FROM ac_invoices_notes_5_c nn
-                    WHERE ac_invoices_notes_5ac_invoices_ida='{$invoice_id}' AND nn.deleted=0
-                    ";
+                    WHERE ac_invoices_notes_5ac_invoices_ida='{$invoice_id}' AND nn.deleted=0";
                 // echo $q2.'<br /><br />';
                 $r2 = $db->query($q2);
                 while($row2 = $db->fetchByAssoc($r2)){
-                   $row[$row2['Rel']][] = $row2;
+                    $row[$row2['Rel']][] = $row2;
+                    $attachments[$row['id']][$row['parent_id']][] = $row2['noteID'];
                 }
 
                 $q3 = "SELECT IF(multiproject_c = 1 AND multiproject_part_c = 0, nett_c, nett1_c) AS netto FROM ac_invoices_cstm WHERE id_c = '{$row['parent_id']}'";
@@ -100,9 +101,10 @@ if(isset($_GET['getAll']) && $_GET['getAll'] == 1){
             }
 
 
-            $notifications[] = $row;
-
+            $notifications['notifications'][] = $row;
         }
+        $notifications['attachments'] = $attachments;
+        
         $exType = 2;
 }else{
     $answer = array("status"=>0);

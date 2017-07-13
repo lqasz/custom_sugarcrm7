@@ -54,7 +54,7 @@
     {{#if this.notifications }}{{#notEq this.notifications.length "0"}}
     {{#each this.notifications}}
         {{#notEq this.is_read 1}}
-        <tr name="Notifications_{{this.id}}">
+        <tr name="Notifications_{{this.id}}" data-notifid="{{this.id}}">
             <td data-type="severity">
                 <span class="label label-{{#match this.severity 'invoice'}}important{{/match}}{{#match this.severity 'holidays'}}success{{/match}}{{#match this.severity 'information'}}info{{/match}}{{#match this.severity 'education'}}info{{/match}}{{#match this.severity 'notification'}}notification{{/match}} ellipsis_inline">
                 {{this.severity}}</span>
@@ -64,7 +64,7 @@
                 <span class="list">
                      {{#match this.severity 'holidays'}}
                         {{#match this.confirmation 0}}
-                            <a href="#AC_Holiday/{{this.parent_id}}/edit" target="_blank" class="btn-link">{{this.name}}</a>
+                            <a href="#AC_Holiday/{{this.parent_id}}" target="_blank" class="btn-link">{{this.name}}</a>
                         {{/match}}
                         {{#match this.confirmation 1}}
                             <a href="#AC_Holiday/{{this.parent_id}}" target="_blank" class="btn-link">{{this.name}}</a>
