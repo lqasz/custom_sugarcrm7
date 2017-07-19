@@ -53,7 +53,7 @@ array (
           array (
             'name' => 'panel_body',
             'label' => 'LBL_RECORD_BODY',
-            'columns' => 3,
+            'columns' => 4,
             'labelsOnTop' => true,
             'placeholders' => true,
             'newTab' => false,
@@ -63,24 +63,36 @@ array (
               0 => 
               array (
                 'name' => 'date_start_c',
-                'span' => 4,
+                'span' => 3,
               ),
               1 => 
               array (
                 'name' => 'date_end_c',
-                'span' => 4,
+                'span' => 3,
               ),
               2 => 
               array (
                 'name' => 'assigned_user_name',
                 'link' => false,
-                'span' => 4,
+                'span' => 3,
               ),
               3 => 
+              array (
+                'name' => 'department_c',
+                'link' => false,
+                'span' => 3,
+              ),
+              4 => 
               array (
                 'name' => 'subordinates_c',
                 'label' => 'LBL_SUBORDINATES',
                 'span' => 12,
+              ),
+              5 => 
+              array (
+                'name' => 'project_c',
+                'link' => false,
+                'span' => 6,
               ),
             ),
           ),
