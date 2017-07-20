@@ -7,7 +7,10 @@
         'blur .slider-text': 'setSliderValue',
         'click a[name="cancel_button"]': 'cancelClicked',
         'click .add-project': 'addProjectRow',
-        'keydown .project-name': 'searchProjectByName',
+        'keyup .project-name': 'searchProjectByName',
+        'focus .project-name': 'searchProjectByName',
+        'click .project-item': 'setProjectItem',
+        // 'focusout .project-name': 'closeProjectList',
     }),
 
 	initialize: function(options) {
@@ -51,7 +54,7 @@
 					procentText = "";
 
 				if(self.view == "edit") {
-					projectText = '<div class="span3"><input class="project-name" type="text" value="'+projectName+'" /></div>';
+					projectText = '<div class="span3 test"><input class="project-name" type="text" value="'+projectName+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
 					procentText = '<div class="span3"><input class="slider" type="range" value="'+procent+'" /></div><div class="span1"><input type="text" class="slider-text" value="'+procent+'" /></div>';
 				} else {
 					projectText = '<div class="span7 first">'+projectName+'</div>';
@@ -71,7 +74,7 @@
 	},
 
 	addProjectRow: function(e) {
-		var projectText = '<div class="span3"><input type="text" value="" /></div>',
+		var projectText = '<div class="span3"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
 			procentText = '<div class="span3"><input class="slider" type="range" value="0" /></div><div class="span1"><input type="text" class="slider-text" value="0"/></div>',
 			string = '<li class="span12 first"><div class="span12 project-row">'+projectText+procentText+'</div></li>';
 
@@ -83,6 +86,23 @@
 		$element.parent().parent().find('.slider-text').val($element.val());
 	},
 
+	setProjectItem: function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		var $element = $(e.currentTarget);
+
+		$element.parent().next('.project-name').val($element.text());
+		$element.parent().addClass('hide');
+	},
+
+	closeProjectList: function(e) {
+		var $list = $(e.currentTarget).find('.select2-results');
+
+		$list.html("");
+		$list.addClass('hide');
+	},
+
 	setSliderValue: function(e) {
 		var $element = $(e.currentTarget);
 		$element.parent().parent().find('.slider').val($element.val());
@@ -90,24 +110,36 @@
 
 	searchProjectByName: function(e) {
 		var results = [],
-			toSearch = $(e.currentTarget).val();
+			$input = $(e.currentTarget),
+			toSearch = $input.val(),
+			$list = $input.next('.select2-results');
+
+		$list.html("");
 
 		var objects = {
-			"0": "170113", 
-			"1": "170050", 
-			"2": "170033", 
-			"3": "170023", 
-			"4": "170103", 
+			"0": "170113",
+			"1": "170050",
+			"2": "170033",
+			"3": "170023",
+			"4": "170103",
 			"5": "170022"
 		};
 
 		for(key in objects) {
 			if(objects[key].indexOf(toSearch)!=-1) {
-				results.push(objects);
+				results.push(objects[key]);
 			}
 		}
 
-		console.info(results);
+		if(!_.isEmpty(results)) {
+			_.each(results, function(el) {
+				var listItem = '<li class="project-item">'+el+'</li>';
+				$list.append(listItem);
+			});
+
+			$input.addClass('big-element');
+			$list.removeClass('hide');
+		}
 	},
 
 	editClicked: function() {

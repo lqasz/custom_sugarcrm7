@@ -88,12 +88,6 @@ array (
                 'label' => 'LBL_SUBORDINATES',
                 'span' => 12,
               ),
-              5 => 
-              array (
-                'name' => 'project_c',
-                'link' => false,
-                'span' => 6,
-              ),
             ),
           ),
         ),
