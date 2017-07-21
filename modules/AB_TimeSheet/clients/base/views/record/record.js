@@ -170,13 +170,14 @@
     		self.updatedData[employeeName] = [];
     		$parent.find('.project-row').each(function(j, el) {
     			var projectName = $(el).find('.project-name').val(),
-    				procent = $(el).find('.procent-value').val();
+    				procent = $(el).find('.procent-value').val(),
+    				object = {};
 
-    			self.updatedData[employeeName].push({
-    				'projectName': projectName,
-    				'procent': procent
-    			});
+    			object[projectName] = procent;
+    			self.updatedData[employeeName].push(object);
     		});
     	});
+
+    	console.info(self.updatedData);
     },
 })
