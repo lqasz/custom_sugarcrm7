@@ -1,6 +1,9 @@
 ({
   	extendsFrom: "RecordView",
-  	teamMembers: [],
+  	dataFetched: [],
+  	updatedData: [],
+  	listOfProjects: [],
+
   	view: undefined,
   	events: _.extend({}, this.events, {
         'change .slider': 'setSliderTextValue',
@@ -10,6 +13,7 @@
         'keyup .project-name': 'searchProjectByName',
         'focus .project-name': 'searchProjectByName',
         'click .project-item': 'setProjectItem',
+        'keyup .project-item': 'moveOverProjectItem',
         // 'focusout .project-name': 'closeProjectList',
     }),
 
@@ -19,8 +23,15 @@
 		this.view = options.context.get("action");
 		var self = this;
 		self.collection.on('data:sync:complete', function() {
-			self.teamMembers = JSON.parse(self.model.get("subordinates_c"));
-			self.model.trigger('rebuildFields');
+			self.dataFetched = JSON.parse(self.model.get("subordinates_c"));
+
+			// get all data from db
+            app.api.call('GET', 'index.php?entryPoint=getData&getAllProjects=1', null,{
+                success: _.bind(function(data) {
+                    self.listOfProjects = data;
+                    self.model.trigger('rebuildFields'); // trigger event in model
+                })
+            });
 		}, self);
 
 		self.model.on('rebuildFields', function() {
@@ -31,7 +42,7 @@
 	render: function() {
 		this._super('render');
 
-		if(!_.isEmpty(this.teamMembers)) {
+		if(!_.isEmpty(this.dataFetched)) {
 			$('.record-cell[data-name="subordinates_c"]').html(this.rebuildSubordinatiesField());
 		}
 	},
@@ -40,9 +51,9 @@
 		var self = this,
 			string = '<div class="span12"><table class="span12">';
 		
-		_.each(self.teamMembers, function(el, user) {
+		_.each(self.dataFetched, function(el, user) {
 			string += '<tr class="span12 first"><td>';
-			string += '<div class="span12"><div class="ellipsis_inline span7">'+user+'</div>';
+			string += '<div class="span12" data-name="employee-name"><div class="ellipsis_inline span7">'+user+'</div>';
 			
 			if(self.view == "edit") { string += '<div class="span1 first"><a class="add-project"><i class="fa-plus fa"></i></a></div>'; }
 
@@ -54,8 +65,8 @@
 					procentText = "";
 
 				if(self.view == "edit") {
-					projectText = '<div class="span3 test"><input class="project-name" type="text" value="'+projectName+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
-					procentText = '<div class="span3"><input class="slider" type="range" value="'+procent+'" /></div><div class="span1"><input type="text" class="slider-text" value="'+procent+'" /></div>';
+					projectText = '<div class="span7" data-name="project-name"><input class="project-name" type="text" value="'+projectName+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
+					procentText = '<div class="span3"><input class="slider" type="range" value="'+procent+'" /></div><div class="span1" data-name="procent"><input type="text" class="slider-text procent-value" value="'+procent+'" /></div>';
 				} else {
 					projectText = '<div class="span7 first">'+projectName+'</div>';
 					procentText = '<div class="span4 first">'+procent+'%</div>';
@@ -74,7 +85,7 @@
 	},
 
 	addProjectRow: function(e) {
-		var projectText = '<div class="span3"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
+		var projectText = '<div class="span7"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
 			procentText = '<div class="span3"><input class="slider" type="range" value="0" /></div><div class="span1"><input type="text" class="slider-text" value="0"/></div>',
 			string = '<li class="span12 first"><div class="span12 project-row">'+projectText+procentText+'</div></li>';
 
@@ -92,7 +103,7 @@
 
 		var $element = $(e.currentTarget);
 
-		$element.parent().next('.project-name').val($element.text());
+		$element.parent().parent().find('.project-name').val($element.text());
 		$element.parent().addClass('hide');
 	},
 
@@ -116,18 +127,9 @@
 
 		$list.html("");
 
-		var objects = {
-			"0": "170113",
-			"1": "170050",
-			"2": "170033",
-			"3": "170023",
-			"4": "170103",
-			"5": "170022"
-		};
-
-		for(key in objects) {
-			if(objects[key].indexOf(toSearch)!=-1) {
-				results.push(objects[key]);
+		for(key in this.listOfProjects) {
+			if(this.listOfProjects[key].indexOf(toSearch)!=-1) {
+				results.push(this.listOfProjects[key]);
 			}
 		}
 
@@ -140,6 +142,10 @@
 			$input.addClass('big-element');
 			$list.removeClass('hide');
 		}
+	},
+
+	moveOverProjectItem: function(e) {
+		console.info(e)
 	},
 
 	editClicked: function() {
@@ -155,6 +161,22 @@
     },
 
     saveClicked: function() {
-    	
+    	var self = this;
+
+    	$('div[data-name="employee-name"]').each(function(i, that) {
+    		var employeeName = $(that).find('.ellipsis_inline').text(),
+    			$parent = $(that).parent().parent();
+
+    		self.updatedData[employeeName] = [];
+    		$parent.find('.project-row').each(function(j, el) {
+    			var projectName = $(el).find('.project-name').val(),
+    				procent = $(el).find('.procent-value').val();
+
+    			self.updatedData[employeeName].push({
+    				'projectName': projectName,
+    				'procent': procent
+    			});
+    		});
+    	});
     },
 })
