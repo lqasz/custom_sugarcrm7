@@ -1,7 +1,7 @@
 ({
   	extendsFrom: "RecordView",
-  	dataFetched: [],
-  	updatedData: [],
+  	dataFetched: {},
+  	updatedData: {},
   	listOfProjects: [],
 
   	view: undefined,
@@ -23,12 +23,13 @@
 		this.view = options.context.get("action");
 		var self = this;
 		self.collection.on('data:sync:complete', function() {
-			self.dataFetched = JSON.parse(self.model.get("subordinates_c"));
 
 			// get all data from db
-            app.api.call('GET', 'index.php?entryPoint=getData&getAllProjects=1', null,{
+            app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheetData=1&time_sheet_id='+self.model.get('id'), null,{
                 success: _.bind(function(data) {
-                    self.listOfProjects = data;
+                	console.info(data);
+                	self.dataFetched = data.time_sheet;
+                    self.listOfProjects = data.projects;
                     self.model.trigger('rebuildFields'); // trigger event in model
                 })
             });
@@ -49,52 +50,69 @@
 
 	rebuildSubordinatiesField: function() {
 		var self = this,
-			string = '<div class="span12"><table class="span12">';
+			string = '';
 		
-		_.each(self.dataFetched, function(el, user) {
-			string += '<tr class="span12 first"><td>';
-			string += '<div class="span12" data-name="employee-name"><div class="ellipsis_inline span7">'+user+'</div>';
+		_.each(self.dataFetched.data, function(el, userID) {
+			string += '<div class="span12 first">';
+			string += '<div class="span12 first" data-name="employee-name" data-id="'+userID+'"><div class="ellipsis_inline span7">'+self.dataFetched.users[userID]+'</div>';
 			
-			if(self.view == "edit") { string += '<div class="span1 first"><a class="add-project"><i class="fa-plus fa"></i></a></div>'; }
+			if(self.view == "edit") { string += '<div class="span1 first"><a data-id="'+userID+'" class="add-project"><i class="fa-plus fa"></i></a></div>'; }
 
 			string += '</div><div class="span12 first">';
 			string += '<ul class="project-list">';
 
-			_.each(el, function(procent, projectName) {
+			_.each(el, function(projectData, projectID) {
 				var projectText = "",
 					procentText = "";
 
 				if(self.view == "edit") {
-					projectText = '<div class="span7" data-name="project-name"><input class="project-name" type="text" value="'+projectName+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
-					procentText = '<div class="span3"><input class="slider" type="range" value="'+procent+'" /></div><div class="span1" data-name="procent"><input type="text" class="slider-text procent-value" value="'+procent+'" /></div>';
+					projectText = '<div class="span7" data-name="project-name"><input class="project-name" type="text" value="'+self.listOfProjects[projectID]+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
+					procentText = '<div class="span3"><input class="slider" type="range" value="'+projectData.value+'" /></div><div class="span1" data-name="procent"><input type="text" class="slider-text procent-value" value="'+projectData.value+'" /></div>';
 				} else {
-					projectText = '<div class="span7 first">'+projectName+'</div>';
-					procentText = '<div class="span4 first">'+procent+'%</div>';
+					projectText = '<div class="span7 first">'+self.listOfProjects[projectID]+'</div>';
+					procentText = '<div class="span3 first">'+projectData.value+'%</div>';
 				}
 
-				string += '<li class="span12 first"><div class="span12 project-row">'+projectText+procentText+'</div></li>';
+				string += '<li class="span12 first"><div data-id="'+projectID+'" data-userid="'+userID+'" class="span12 project-row">'+projectText+procentText+'</div></li>';
 			});
 
 			string += '</ul>';
 			string += '</div>';
-			string += '</td></tr>';
+			string += '</div>';
 		});
 
-		string += '</table></div>';
 		return string;
 	},
 
 	addProjectRow: function(e) {
 		var projectText = '<div class="span7"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
-			procentText = '<div class="span3"><input class="slider" type="range" value="0" /></div><div class="span1"><input type="text" class="slider-text" value="0"/></div>',
-			string = '<li class="span12 first"><div class="span12 project-row">'+projectText+procentText+'</div></li>';
+			procentText = '<div class="span3"><input disabled class="slider" type="range" value="0" /></div><div class="span1"><input disabled type="text" class="slider-text" value="0"/></div>';
+		
+		var projectData = $(e.currentTarget).data(),
+			string = '<li class="span12 first" data-userid="'+projectData.id+'"><div class="span12 project-row">'+projectText+procentText+'</div></li>';
 
 		$(e.currentTarget).parent().parent().parent().find('.project-list').append(string);
 	},
 
 	setSliderTextValue: function(e) {
 		var $element = $(e.currentTarget);
-		$element.parent().parent().find('.slider-text').val($element.val());
+			$element.parent().parent().find('.slider-text').val($element.val()),
+			projectData = ($element.parent().parent().parent()).data(),
+			object = {};
+
+		object['deleted'] = 0;
+		object['value'] = $element.val();
+
+		if(!_.isEmpty(this.dataFetched.data[projectData.userid])) {
+			if(!_.isEmpty(this.dataFetched.data[projectData.userid][projectData.id])) {
+				object['updated'] = 1;
+			}
+			
+			this.dataFetched.data[projectData.userid][projectData.id] = object;
+		} else {
+			this.dataFetched.data[projectData.userid] = {};
+			this.dataFetched.data[projectData.userid][projectData.id] = object;
+		}
 	},
 
 	setProjectItem: function(e) {
@@ -103,8 +121,13 @@
 
 		var $element = $(e.currentTarget);
 
+		$element.parent().parent().parent().find('.slider').removeAttr('disabled');
+		$element.parent().parent().parent().find('.slider-text').removeAttr('disabled');
 		$element.parent().parent().find('.project-name').val($element.text());
 		$element.parent().addClass('hide');
+
+		var projectID = Object.keys(this.listOfProjects).find(key => this.listOfProjects[key] === $element.text());
+		$element.parent().parent().parent().parent().attr('data-id', projectID);
 	},
 
 	closeProjectList: function(e) {
@@ -116,7 +139,14 @@
 
 	setSliderValue: function(e) {
 		var $element = $(e.currentTarget);
-		$element.parent().parent().find('.slider').val($element.val());
+			$element.parent().parent().find('.slider').val($element.val()),
+			projectData = ($element.parent().parent().parent()).data(),
+			object = {};
+
+		object[projectData.id] = {};
+		object[projectData.id]['deleted'] = 0;
+		object[projectData.id]['value'] = $element.val();
+		this.dataFetched.data[projectData.userid] = object;
 	},
 
 	searchProjectByName: function(e) {
@@ -163,21 +193,35 @@
     saveClicked: function() {
     	var self = this;
 
-    	$('div[data-name="employee-name"]').each(function(i, that) {
-    		var employeeName = $(that).find('.ellipsis_inline').text(),
-    			$parent = $(that).parent().parent();
+    	console.info("dataFetched: ", self.dataFetched);
+    	// $('div[data-name="employee-name"]').each(function(i, that) {
+    	// 	var employeeName = $(that).find('.ellipsis_inline').text(),
+    	// 		$parent = $(that).parent().parent();
 
-    		self.updatedData[employeeName] = [];
-    		$parent.find('.project-row').each(function(j, el) {
-    			var projectName = $(el).find('.project-name').val(),
-    				procent = $(el).find('.procent-value').val(),
-    				object = {};
+    	// 	var iter = 0;
+    	// 	self.updatedData[employeeName] = {};
+    	// 	$parent.find('.project-row').each(function(j, el) {
+    	// 		var projectName = $(el).find('.project-name').val(),
+    	// 			procent = $(el).find('.procent-value').val(),
+    	// 			object = {};
 
-    			object[projectName] = procent;
-    			self.updatedData[employeeName].push(object);
-    		});
-    	});
+    	// 		object[projectName] = procent;
+    	// 		self.updatedData[employeeName][iter] = object;
 
-    	console.info(self.updatedData);
+    	// 		iter++;
+    	// 	});
+    	// });
+
+    	// $.ajax({
+     //        url: 'index.php?entryPoint=getData&updateTimeSheet=1&time_sheet_id='+ self.model.get('id')+'&noCache='+ (new Date().getTime()),
+     //        type: 'POST',
+     //        data: {
+     //        	updated: self.updatedData,
+     //        },
+     //        success: function(data) {
+     //            self.view = "detail";
+     //            self._super('saveClicked');
+     //        },
+     //    }); // ajax
     },
 })
