@@ -63,24 +63,24 @@ array (
               0 => 
               array (
                 'name' => 'date_start_c',
-                'span' => 3,
+                'span' => 2,
               ),
               1 => 
               array (
                 'name' => 'date_end_c',
-                'span' => 3,
+                'span' => 2,
               ),
               2 => 
               array (
                 'name' => 'assigned_user_name',
                 'link' => false,
-                'span' => 3,
+                'span' => 4,
               ),
               3 => 
               array (
                 'name' => 'department_c',
                 'link' => false,
-                'span' => 3,
+                'span' => 4,
               ),
               4 => 
               array (

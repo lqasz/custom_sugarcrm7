@@ -10,6 +10,7 @@
         'blur .slider-text': 'setSliderValue',
         'click a[name="cancel_button"]': 'cancelClicked',
         'click .add-project': 'addProjectRow',
+        'click .remove-project': 'removeProjectRow',
         'keyup .project-name': 'searchProjectByName',
         'focus .project-name': 'searchProjectByName',
         'click .project-item': 'setProjectItem',
@@ -62,18 +63,20 @@
 			string += '<ul class="project-list">';
 
 			_.each(el, function(projectData, projectID) {
-				var projectText = "",
-					procentText = "";
+				if(_.isEmpty(projectData.deleted)) {	
+					var projectText = "",
+						procentText = "";
 
-				if(self.view == "edit") {
-					projectText = '<div class="span7" data-name="project-name"><input class="project-name" type="text" value="'+self.listOfProjects[projectID]+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
-					procentText = '<div class="span3"><input class="slider" type="range" value="'+projectData.value+'" /></div><div class="span1" data-name="procent"><input type="text" class="slider-text procent-value" value="'+projectData.value+'" /></div>';
-				} else {
-					projectText = '<div class="span7 first">'+self.listOfProjects[projectID]+'</div>';
-					procentText = '<div class="span3 first">'+projectData.value+'%</div>';
+					if(self.view == "edit") {
+						projectText = '<div class="span7" data-name="project-name"><input class="project-name" type="text" value="'+self.listOfProjects[projectID]+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
+						procentText = '<div class="span3"><input class="slider" type="range" value="'+projectData.value+'" /></div><div class="span1" data-name="procent"><input type="text" class="slider-text procent-value" value="'+projectData.value+'" /></div>';
+					} else {
+						projectText = '<div class="span7 first">'+self.listOfProjects[projectID]+'</div>';
+						procentText = '<div class="span3 first">'+projectData.value+'%</div>';
+					}
+
+					string += '<li class="span12 first"><div data-id="'+projectID+'" data-userid="'+userID+'" class="span12 project-row">'+projectText+procentText+'</div></li>';
 				}
-
-				string += '<li class="span12 first"><div data-id="'+projectID+'" data-userid="'+userID+'" class="span12 project-row">'+projectText+procentText+'</div></li>';
 			});
 
 			string += '</ul>';
@@ -85,13 +88,28 @@
 	},
 
 	addProjectRow: function(e) {
-		var projectText = '<div class="span7"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
-			procentText = '<div class="span3"><input disabled class="slider" type="range" value="0" /></div><div class="span1"><input disabled type="text" class="slider-text" value="0"/></div>';
-		
 		var projectData = $(e.currentTarget).data(),
-			string = '<li class="span12 first" data-userid="'+projectData.id+'"><div class="span12 project-row">'+projectText+procentText+'</div></li>';
+			projectText = '<div class="span7"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
+			procentText = '<div class="span3"><input disabled class="slider" type="range" value="0" /></div><div class="span1"><input disabled type="text" class="slider-text" value="0"/></div>',
+			deleteIcon = '<div class="span1"><a data-id="'+projectData.id+'" class="remove-project"><i class="fa-remove fa red-color"></i></a></div>',
+			string = '<li class="span12 first" data-userid="'+projectData.id+'"><div class="span12 project-row">'+projectText+procentText+deleteIcon+'</div></li>';
 
 		$(e.currentTarget).parent().parent().parent().find('.project-list').append(string);
+	},
+
+	removeProjectRow: function(e) {
+		var $projectRow = $(e.currentTarget).parent().parent().parent(),
+			projectData = $projectRow.data();
+
+		if('id' in projectData) {
+			var object = {
+				'deleted': 1
+			};
+
+			this.dataFetched.data[projectData.userid][projectData.id] = object;
+		}
+
+		$projectRow.remove();
 	},
 
 	setSliderTextValue: function(e) {
