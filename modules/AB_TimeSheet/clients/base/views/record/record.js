@@ -54,7 +54,7 @@
 			string = '';
 		
 		_.each(self.dataFetched.data, function(el, userID) {
-			string += '<div class="span12 first">';
+			string += '<div class="span12 first user-records">';
 			string += '<div class="span12 first" data-name="employee-name" data-id="'+userID+'"><div class="ellipsis_inline span7">'+self.dataFetched.users[userID]+'</div>';
 			
 			if(self.view == "edit") { string += '<div class="span1 first"><a data-id="'+userID+'" class="add-project"><i class="fa-plus fa"></i></a></div>'; }
@@ -63,7 +63,7 @@
 			string += '<ul class="project-list">';
 
 			_.each(el, function(projectData, projectID) {
-				if(_.isEmpty(projectData.deleted)) {	
+				if(_.isEmpty(projectData.deleted) && projectData.deleted == 0) {	
 					var projectText = "",
 						procentText = "";
 
@@ -75,7 +75,7 @@
 						procentText = '<div class="span3 first">'+projectData.value+'%</div>';
 					}
 
-					string += '<li class="span12 first"><div data-id="'+projectID+'" data-userid="'+userID+'" class="span12 project-row">'+projectText+procentText+'</div></li>';
+					string += '<li class="span12 first timesheet-row"><div data-id="'+projectID+'" data-userid="'+userID+'" class="span12 project-row">'+projectText+procentText+'</div></li>';
 				}
 			});
 
@@ -92,13 +92,13 @@
 			projectText = '<div class="span7"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
 			procentText = '<div class="span3"><input disabled class="slider" type="range" value="0" /></div><div class="span1"><input disabled type="text" class="slider-text" value="0"/></div>',
 			deleteIcon = '<div class="span1"><a data-id="'+projectData.id+'" class="remove-project"><i class="fa-remove fa red-color"></i></a></div>',
-			string = '<li class="span12 first" data-userid="'+projectData.id+'"><div class="span12 project-row">'+projectText+procentText+deleteIcon+'</div></li>';
+			string = '<li class="span12 first timesheet-row" data-userid="'+projectData.id+'"><div class="span12 project-row">'+projectText+procentText+deleteIcon+'</div></li>';
 
-		$(e.currentTarget).parent().parent().parent().find('.project-list').append(string);
+		$(e.currentTarget).parents('.user-records').find('.project-list').append(string);
 	},
 
 	removeProjectRow: function(e) {
-		var $projectRow = $(e.currentTarget).parent().parent().parent(),
+		var $projectRow = $(e.currentTarget).parents('.timesheet-row'),
 			projectData = $projectRow.data();
 
 		if('id' in projectData) {
@@ -114,8 +114,8 @@
 
 	setSliderTextValue: function(e) {
 		var $element = $(e.currentTarget);
-			$element.parent().parent().find('.slider-text').val($element.val()),
-			projectData = ($element.parent().parent().parent()).data(),
+			$element.parents('.project-row').find('.slider-text').val($element.val()),
+			projectData = ($element.parents('.timesheet-row')).data(),
 			object = {};
 
 		object['deleted'] = 0;
@@ -139,13 +139,13 @@
 
 		var $element = $(e.currentTarget);
 
-		$element.parent().parent().parent().find('.slider').removeAttr('disabled');
-		$element.parent().parent().parent().find('.slider-text').removeAttr('disabled');
-		$element.parent().parent().find('.project-name').val($element.text());
+		$element.parents('.project-row').find('.slider').removeAttr('disabled');
+		$element.parents('.project-row').find('.slider-text').removeAttr('disabled');
+		$element.parents('.project-row').find('.project-name').val($element.text());
 		$element.parent().addClass('hide');
 
 		var projectID = Object.keys(this.listOfProjects).find(key => this.listOfProjects[key] === $element.text());
-		$element.parent().parent().parent().parent().attr('data-id', projectID);
+		$element.parents('.timesheet-row').attr('data-id', projectID);
 	},
 
 	closeProjectList: function(e) {
@@ -157,8 +157,8 @@
 
 	setSliderValue: function(e) {
 		var $element = $(e.currentTarget);
-			$element.parent().parent().find('.slider').val($element.val()),
-			projectData = ($element.parent().parent().parent()).data(),
+			$element.parents('.project-row').find('.slider').val($element.val()),
+			projectData = ($element.parents('.timesheet-row')).data(),
 			object = {};
 
 		object[projectData.id] = {};
