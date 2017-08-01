@@ -3,10 +3,10 @@
 // be automatically rebuilt in the future.
 $hook_version = 1;
 $hook_array = Array();
-// position, file, function
+// // position, file, function
 
-$hook_array['after_save'] = Array();
-$hook_array['after_save'][] = Array(1,'manageCalls','custom/modules/Calls/customlogic.php','Calls_CustomLogic','manageCalls',);
-$hook_array['after_save'][] = Array(2,'setBasicData','custom/modules/Calls/customlogic.php','Calls_CustomLogic','setBasicData',);
+// $hook_array['after_save'] = Array();
+// $hook_array['after_save'][] = Array(1,'manageCalls','custom/modules/Calls/customlogic.php','Calls_CustomLogic','manageCalls',);
+// $hook_array['after_save'][] = Array(2,'setBasicData','custom/modules/Calls/customlogic.php','Calls_CustomLogic','setBasicData',);
 
 ?>

@@ -88,7 +88,6 @@ array (
               1 => 
               array (
                 'name' => 'name',
-                'readonly' => true,
               ),
             ),
           ),
@@ -105,36 +104,20 @@ array (
             array (
               0 => 
               array (
-                'name' => 'date_of_call_c',
-                'label' => 'LBL_DATE_OF_CALL',
+                'name' => 'prospects_calls_1_name',
               ),
               1 => 
               array (
-                'name' => 'date_of_next_call_c',
-                'label' => 'LBL_DATE_OF_NEXT_CALL',
+                'name' => 'date_of_call_c',
+                'label' => 'LBL_DATE_OF_CALL',
               ),
               2 => 
-              array (
-                'name' => 'target_status_c',
-                'label' => 'LBL_TARGET_STATUS',
-              ),
-              3 => 
-              array (
-                'name' => 'date_of_meeting_c',
-                'label' => 'LBL_DATE_OF_MEETING',
-              ),
-              4 => 
               array (
                 'name' => 'description',
                 'placeholder' => 'ustalenia, dalsze kroki - opis rozmowy',
                 'rows' => 3,
                 'span' => 12,
               ),
-              5 => 
-              array (
-                'name' => 'prospects_calls_1_name',
-              ),
-              6 => 'assigned_user_name',
             ),
           ),
         ),
