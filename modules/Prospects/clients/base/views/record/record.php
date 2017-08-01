@@ -60,9 +60,17 @@ array (
               ),
               3 => 
               array (
-                'type' => 'divider',
+                'type' => 'rowaction',
+                'event' => 'button:audit_button:click',
+                'name' => 'audit_button',
+                'label' => 'LNK_VIEW_CHANGE_LOG',
+                'acl_action' => 'view',
               ),
               4 => 
+              array (
+                'type' => 'divider',
+              ),
+              5 => 
               array (
                 'type' => 'rowaction',
                 'event' => 'button:delete_button:click',
@@ -150,18 +158,15 @@ array (
               array (
                 'name' => 'website_c',
                 'label' => 'LBL_WEBSITE',
-                'placeholder' => 'Required',
               ),
               3 => 
               array (
                 'name' => 'title',
-                'placeholder' => 'Required',
               ),
               4 => 'phone_mobile',
               5 => 
               array (
                 'name' => 'department',
-                'placeholder' => 'Required',
               ),
               6 => 'phone_work',
               7 => 
@@ -192,8 +197,8 @@ array (
               ),
               12 => 
               array (
-                'name' => 'birthdate',
-                'label' => 'LBL_BIRTHDATE',
+                'name' => 'contacts_c',
+                'label' => 'LBL_CONTACTS',
               ),
               13 => 
               array (
@@ -220,13 +225,13 @@ array (
               ),
               14 => 
               array (
-                'name' => 'hobby_c',
-                'label' => 'LBL_HOBBY',
+                'name' => 'birthdate',
+                'label' => 'LBL_BIRTHDATE',
               ),
               15 => 
               array (
-                'name' => 'assigned_user_name',
-                'link' => false,
+                'name' => 'hobby_c',
+                'label' => 'LBL_HOBBY',
               ),
               16 => 
               array (
@@ -235,8 +240,8 @@ array (
               ),
               17 => 
               array (
-                'name' => 'date_of_first_call_c',
-                'label' => 'LBL_DATE_OF_FIRST_CALL',
+                'name' => 'assigned_user_name',
+                'link' => false,
               ),
               18 => 
               array (
@@ -249,10 +254,18 @@ array (
               ),
               19 => 
               array (
+                'name' => 'date_of_first_call_c',
+                'label' => 'LBL_DATE_OF_FIRST_CALL',
+                'span' => 6,
+              ),
+              20 => 
+              array (
                 'name' => 'lead_was_created_c',
                 'label' => 'LBL_LEAD_WAS_CREATED',
                 'readonly' => true,
-                'span' => 6,
+              ),
+              21 => 
+              array (
               ),
             ),
           ),

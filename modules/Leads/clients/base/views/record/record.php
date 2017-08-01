@@ -131,49 +131,13 @@ array (
           ),
           1 => 
           array (
-            'newTab' => true,
-            'panelDefault' => 'expanded',
-            'name' => 'LBL_RECORDVIEW_PANEL1',
-            'label' => 'LBL_RECORDVIEW_PANEL1',
-            'columns' => 2,
-            'labelsOnTop' => 1,
-            'placeholders' => 1,
-            'fields' => 
-            array (
-              0 => 'status',
-              1 => 
-              array (
-                'name' => 'data_of_first_meeting_c',
-                'label' => 'LBL_DATA_OF_FIRST_MEETING',
-              ),
-              2 => 
-              array (
-                'name' => 'description',
-                'span' => 6,
-              ),
-              3 => 
-              array (
-                'name' => 'date_entered',
-                'comment' => 'Date record created',
-                'studio' => 
-                array (
-                  'portaleditview' => false,
-                ),
-                'readonly' => true,
-                'label' => 'LBL_DATE_ENTERED',
-                'span' => 6,
-              ),
-            ),
-          ),
-          2 => 
-          array (
             'name' => 'panel_body',
             'label' => 'LBL_RECORD_BODY',
             'columns' => 2,
             'labels' => true,
             'labelsOnTop' => true,
             'placeholders' => true,
-            'newTab' => true,
+            'newTab' => false,
             'panelDefault' => 'expanded',
             'fields' => 
             array (
@@ -181,29 +145,25 @@ array (
               array (
                 'name' => 'accounts_leads_1_name',
               ),
-              1 => 'title',
-              2 => 
-              array (
-                'name' => 'assigned_user_name',
-                'link' => false,
-              ),
-              3 => 
+              1 => 
               array (
                 'name' => 'client_position_c',
                 'label' => 'LBL_CLIENT_POSITION',
               ),
-              4 => 'website',
+              2 => 'website',
+              3 => 'title',
+              4 => 'phone_mobile',
               5 => 
               array (
                 'name' => 'department',
               ),
-              6 => 'phone_mobile',
+              6 => 'phone_work',
               7 => 
               array (
                 'name' => 'linkedin_c',
                 'label' => 'LBL_LINKEDIN',
               ),
-              8 => 'phone_work',
+              8 => 'email',
               9 => 
               array (
                 'type' => 'url',
@@ -211,7 +171,11 @@ array (
                 'comment' => 'The facebook name of the user',
                 'label' => 'LBL_FACEBOOK',
               ),
-              10 => 'email',
+              10 => 
+              array (
+                'name' => 'contacts_c',
+                'label' => 'LBL_CONTACTS',
+              ),
               11 => 
               array (
                 'type' => 'url',
@@ -219,21 +183,10 @@ array (
               ),
               12 => 
               array (
-                'name' => 'birthdate',
-                'comment' => 'The birthdate of the contact',
-                'label' => 'LBL_BIRTHDATE',
-              ),
-              13 => 
-              array (
-                'name' => 'hobby_c',
-                'label' => 'LBL_HOBBY',
-              ),
-              14 => 
-              array (
                 'name' => 'buildings_c',
                 'label' => 'LBL_BUILDINGS',
               ),
-              15 => 
+              13 => 
               array (
                 'name' => 'primary_address',
                 'type' => 'fieldset',
@@ -256,16 +209,27 @@ array (
                   ),
                 ),
               ),
-              16 => 
-              array (
-                'name' => 'contacts_c',
-                'label' => 'LBL_CONTACTS',
-              ),
-              17 => 
+              14 => 
               array (
                 'name' => 'refered_by',
                 'comment' => 'Identifies who refered the lead',
                 'label' => 'LBL_REFERED_BY',
+              ),
+              15 => 
+              array (
+                'name' => 'assigned_user_name',
+                'link' => false,
+              ),
+              16 => 
+              array (
+                'name' => 'birthdate',
+                'comment' => 'The birthdate of the contact',
+                'label' => 'LBL_BIRTHDATE',
+              ),
+              17 => 
+              array (
+                'name' => 'hobby_c',
+                'label' => 'LBL_HOBBY',
               ),
               18 => 
               array (
@@ -274,6 +238,24 @@ array (
               ),
               19 => 
               array (
+                'name' => 'date_entered',
+                'comment' => 'Date record created',
+                'studio' => 
+                array (
+                  'portaleditview' => false,
+                ),
+                'readonly' => true,
+                'label' => 'LBL_DATE_ENTERED',
+              ),
+              20 => 
+              array (
+                'name' => 'description',
+                'span' => 6,
+              ),
+              21 => 
+              array (
+                'name' => 'status',
+                'span' => 6,
               ),
             ),
           ),

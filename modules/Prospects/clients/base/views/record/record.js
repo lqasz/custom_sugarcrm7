@@ -31,10 +31,8 @@
             prefill = app.data.createBean('Leads');
         prefill.copy(this.model);
 
-        prefill.set("website", self.model.get("website_c"));
         prefill.set("accounts_leads_1_name", self.model.get("accounts_prospects_1_name"));
         prefill.set("accounts_leads_1accounts_ida", self.model.get("accounts_prospects_1accounts_ida"));
-        prefill.set("from_target_c", true);
 
         app.drawer.open({
             layout: 'create-actions',
