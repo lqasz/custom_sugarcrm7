@@ -63,23 +63,27 @@ array (
               0 => 
               array (
                 'name' => 'date_start_c',
+                'readonly' => true,
                 'span' => 2,
               ),
               1 => 
               array (
                 'name' => 'date_end_c',
+                'readonly' => true,
                 'span' => 2,
               ),
               2 => 
               array (
                 'name' => 'assigned_user_name',
                 'link' => false,
+                'readonly' => true,
                 'span' => 4,
               ),
               3 => 
               array (
                 'name' => 'department_c',
                 'link' => false,
+                'readonly' => true,
                 'span' => 4,
               ),
               4 => 
@@ -97,5 +101,50 @@ array (
         ),
       ),
     ),
+  ),
+);
+
+$viewdefs[$module_name]['base']['view']['record']['buttons'] =
+array (
+  0 =>
+  array (
+    'type' => 'button',
+    'name' => 'cancel_button',
+    'label' => 'LBL_CANCEL_BUTTON_LABEL',
+    'css_class' => 'btn-invisible btn-link',
+    'showOn' => 'edit',
+  ),
+  1 =>
+  array (
+    'type' => 'rowaction',
+    'event' => 'button:save_button:click',
+    'name' => 'save_button',
+    'label' => 'LBL_SAVE_BUTTON_LABEL',
+    'css_class' => 'btn btn-primary',
+    'showOn' => 'edit',
+    'acl_action' => 'edit',
+  ),
+  2 =>
+  array (
+    'type' => 'actiondropdown',
+    'name' => 'main_dropdown',
+    'primary' => true,
+    'showOn' => 'view',
+    'buttons' =>
+    array (
+      0 =>
+      array (
+        'type' => 'rowaction',
+        'event' => 'button:edit_button:click',
+        'name' => 'edit_button',
+        'label' => 'LBL_EDIT_BUTTON_LABEL',
+        'acl_action' => 'edit',
+      ),
+    ),
+  ),
+  3 =>
+  array (
+    'name' => 'sidebar_toggle',
+    'type' => 'sidebartoggle',
   ),
 );
