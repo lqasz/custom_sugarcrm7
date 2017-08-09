@@ -336,26 +336,26 @@
                     }
                 });
 
-                self.oldTimeSheet = _.filter(self.collection.models, function(model){
-                    if(model.get('severity')==='time sheet'){
-                        lastReviewDate = new Date(model.get('date_entered'));
-                        lastReviewDate.setHours(0, 0, 0, 0);
+                // self.oldTimeSheet = _.filter(self.collection.models, function(model){
+                //     if(model.get('severity')==='time sheet'){
+                //         lastReviewDate = new Date(model.get('date_entered'));
+                //         lastReviewDate.setHours(0, 0, 0, 0);
 
-                        if(lastReviewDate.getTime() < now.getTime()) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                });
+                //         if(lastReviewDate.getTime() < now.getTime()) {
+                //             return true;
+                //         } else {
+                //             return false;
+                //         }
+                //     } else {
+                //         return false;
+                //     }
+                // });
 
-                if(self.oldTimeSheet.length > 0) {
-                    self.stopPulling();
-                    self.showTimeSheetView(self.oldTimeSheet[0]);
-                    self.render();
-                }
+                // if(self.oldTimeSheet.length > 0) {
+                //     self.stopPulling();
+                //     self.showTimeSheetView(self.oldTimeSheet[0]);
+                //     self.render();
+                // }
 
                 if(self.oldOne.length>0) {
                     self.stopPulling();
@@ -595,7 +595,15 @@
         TimeSheetPanel = Backbone.View.extend({
             dataFetched: {},
             listOfProjects: [],
-            events:{'click #saveButton':'saveClicked'},
+            events: {
+                'blur .slider-text': 'setSliderValue',
+                'click #saveButtonMonit':'saveClicked',
+                'click .add-project-monit': 'addProjectRow',
+                'click .remove-project-monit': 'removeProjectRow',
+                'click .project-monit-item': 'setProjectItem',
+                'focus .project-monit-name': 'searchProjectByName',
+                'keyup .project-monit-name': 'searchProjectByName',
+            },
 
             initialize: function() {
                 var self = this;
@@ -633,7 +641,7 @@
                                     '</div>'+
                                 '</div>'+
                                 '<div class="modal-footer">'+
-                                    '<button id="saveButton" class="btn btn-primary">save</button>'+
+                                    '<button id="saveButtonMonit" class="btn btn-primary">Save</button>'+
                                 '</div>';
 
                     $('#timeSheetPanel').html(html);
@@ -645,17 +653,179 @@
                     string = '';
                 
                 _.each(self.dataFetched.data, function(timeSheet, userID) {
-                    string += '<div class="span12 first user-records">';
-                    string += '<div class="span7 first" data-name="employee-name" data-userid="'+userID+'">'+self.dataFetched.users[userID]+'</div>';
-                    string += '<div class="span1 first"><a data-userid="'+userID+'" class="add-project"><i class="fa-plus fa"></i></a></div>';
-                    string += '</div>';
+                    string += '<div class="span12 first user-timesheets-monit">';
+                    string += '<div class="span12 first" data-name="employee-name" data-userid="'+userID+'"><div class="span8 first">'+self.dataFetched.users[userID]+'</div><div class="span1 first"><a data-userid="'+userID+'" class="add-project-monit"><i class="fa-plus fa"></i></a></div></div>';
+                    string += '<div class="span12 first projects-panel-monit"><ul class="project-list-monit">';
+                    
+                    _.each(timeSheet, function(projectData, timeSheetID) {
+                        var projectText = '<div class="span8" data-projectid="'+projectData.id+'"><input class="project-monit-name span12" type="text" value="'+self.listOfProjects[projectData.id]+'" /><ul class="first select2-results list-of-projects hide span7"></ul></div>',
+                            procentText = '<div class="span2"><input class="slider-text span12" type="text" value="'+projectData.value+'"/></div>',
+                            deleteIcon = '<div class="span1"><a data-id="'+timeSheetID+'" class="remove-project-monit span12"><i class="fa-remove fa red-color"></i></a></div>';
+                        
+                        string += '<li class="span12 first timesheet-monit-row"><div data-id="'+timeSheetID+'" data-userid="'+userID+'" class="project-monit-row span12">'+projectText+procentText+deleteIcon+'</div></li>';
+                    });
+
+                    string += '</ul></div></div>';
                 });
 
                 return string;
             },
 
+            addProjectRow: function(e) {
+                var timeSheetID = app.utils.generateUUID(),
+                    projectData = $(e.currentTarget).data(),
+                    projectText = '<div class="span8"><input class="project-monit-name span12" type="text" value="" /><ul class="first select2-results list-of-projects hide span7"></ul></div>',
+                    procentText = '<div class="span2"><input disabled class="slider-text span12" type="text" value="0"/></div>',
+                    deleteIcon = '<div class="span1"><a data-id="'+timeSheetID+'" class="remove-project-monit span12"><i class="fa-remove fa red-color"></i></a></div>',
+                    string = '<li class="span12 first timesheet-monit-row"><div data-id="'+timeSheetID+'" data-userid="'+projectData.userid+'" class="project-monit-row span12">'+projectText+procentText+deleteIcon+'</div></li>';
+
+                $(e.currentTarget).parents('.user-timesheets-monit').find('.project-list-monit').append(string);
+
+                this.dataFetched.data[projectData.userid][timeSheetID] = {
+                    'id': '',
+                    'deleted': 0,
+                    'value': 0,
+                    'new': 1
+                };
+            },
+
+            removeProjectRow: function(e) {
+                var $projectRow = $(e.currentTarget).parents('.project-monit-row'),
+                    projectData = $projectRow.data();
+
+                if(this.dataFetched.data[projectData.userid][projectData.id]['new'] == undefined) {
+                    this.dataFetched.data[projectData.userid][projectData.id]['deleted'] = 1;
+                } else {
+                    delete this.dataFetched.data[projectData.userid][projectData.id];
+                }
+
+                $projectRow.parent().remove();
+            },
+
+            searchProjectByName: function(e) {
+                var results = [],
+                    $input = $(e.currentTarget),
+                    toSearch = $input.val(),
+                    $list = $input.next('.select2-results');
+
+                $list.html("");
+
+                for(key in this.listOfProjects) {
+                    if(this.listOfProjects[key].indexOf(toSearch)!=-1) {
+                        results.push(this.listOfProjects[key]);
+                    }
+                }
+
+                if(!_.isEmpty(results)) {
+                    _.each(results, function(el) {
+                        var listItem = '<li class="project-monit-item">'+el+'</li>';
+                        $list.append(listItem);
+                    });
+
+                    $input.addClass('big-element');
+                    $list.removeClass('hide');
+                }
+            },
+
+            setProjectItem: function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var $element = $(e.currentTarget),
+                    $parentElement = $element.parents('.project-monit-row'),
+                    projectData = $parentElement.data();
+
+                $parentElement.find('.slider-text').removeAttr('disabled');
+                $parentElement.find('.project-monit-name').val($element.text());
+                $element.parent().addClass('hide');
+
+                var projectID = Object.keys(this.listOfProjects).find(key => this.listOfProjects[key] === $element.text());
+                $element.parent().parent().attr('data-projectid', projectID);
+
+                if(this.dataFetched.data[projectData.userid][projectData.id]['new'] == undefined) {
+                    this.dataFetched.data[projectData.userid][projectData.id]['updated'] = 1;
+                }
+
+                this.dataFetched.data[projectData.userid][projectData.id]['id'] = projectID;
+            },
+
+            setSliderValue: function(e) {
+                var $element = $(e.currentTarget),
+                    $parentElement = $element.parents('.project-monit-row'),
+                    projectData = $parentElement.data();
+
+                if(this.dataFetched.data[projectData.userid][projectData.id]['new'] == undefined) {
+                    this.dataFetched.data[projectData.userid][projectData.id]['updated'] = 1;
+                }
+
+                this.dataFetched.data[projectData.userid][projectData.id]['value'] = $element.val();
+            },
+
             saveClicked: function() {
-                $('#timeSheetMonit').remove();
+                var self = this,
+                    error = {
+                        'users': "",
+                        'validation': true,
+                        'project': false,
+                    };
+
+                _.each(this.dataFetched.data, function(timeSheet, userID) {
+                    var sum = 0;
+                    _.each(timeSheet, function(projectData, timeSheetID) {
+                        if(projectData['deleted'] == 0) {
+                            sum += parseInt(projectData['value']);
+                        }
+
+                        if(sum > 100) {
+                            if(error['users'] != "") {
+                                error['users'] += " and ";
+                            }
+
+                            error['validation'] = false;
+                            error['users'] += self.dataFetched.users[userID];
+                        }
+
+                        if(_.isEmpty(projectData['id'])) {
+                            error['validation'] = false;
+                            error['project'] = true;
+                            error['users'] = '';
+                        }
+                    });
+                });
+
+                if(!error['validation'] && error['project'] == true) {
+                    app.alert.show('message-id', {
+                        level: 'confirmation',
+                        messages: 'Please choose a project',
+                        autoClose: false,
+                    });
+
+                    return;
+                }
+
+                if(!error['validation'] && error['users'] != "") {
+                    app.alert.show('message-id', {
+                        level: 'confirmation',
+                        messages: 'Sum couldn`t be greater then 100% for '+ error['users'],
+                        autoClose: false,
+                    });
+
+                    return;
+                }
+
+                console.info('updated: ', self.dataFetched.data);
+
+                $.ajax({
+                    url: 'index.php?entryPoint=getData&updateTimeSheet=1&time_sheet_id='+ model.get('parent_id') +'&noCache='+ (new Date().getTime()),
+                    type: 'POST',
+                    data: {
+                        updated: self.dataFetched.data,
+                        users: self.dataFetched.users,
+                    },
+                    success: function(data) {
+                        $('#timeSheetMonit').remove();
+                    },
+                }); // ajax
             },
         });
 
