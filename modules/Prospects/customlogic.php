@@ -42,8 +42,12 @@ class Prospects_CustomLogic
     	$db = DBManagerFactory::getInstance();
     	$get_contact_data = $db->query("SELECT `id` FROM `contacts` WHERE `deleted` = 0 AND `first_name` = '{$bean->first_name}' AND `last_name` = '{$bean->last_name}'");
 
+    	$GLOBALS['log']->fatal(print_r($bean, true));
+
     	if($db->getRowCount($get_contact_data) == 0) {
     		$contact_bean = BeanFactory::newBean('Contacts');
+    		$contact_bean->new_with_id = true;
+    		$contact_bean->id = create_guid();
     		$contact_bean->salutation = $bean->salutation;
     		$contact_bean->first_name = $bean->first_name;
     		$contact_bean->last_name = $bean->last_name;
@@ -57,6 +61,14 @@ class Prospects_CustomLogic
     		$contact_bean->description = $bean->description;
     		$contact_bean->primary_address_street = $bean->primary_address_street;
     		$contact_bean->primary_address_city = $bean->primary_address_city;
+
+    		for($i = 1; $i < 10; $i++) {
+    			if(!empty($bean->{'email'.$i})) {
+    				$contact_bean->{'email'.$i} = $bean->{'email'.$i};
+    			} else {
+    				break;
+    			}
+    		}
 
     		$contact_bean->save();
     	}
