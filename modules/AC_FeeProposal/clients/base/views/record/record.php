@@ -216,7 +216,8 @@ array (
               ),
               12 => 
               array (
-                'name' => 'sales_stage',
+                'name' => 'fcp_proposition_c',
+                'label' => 'LBL_FCP_PROPOSITION',
               ),
               13 => 
               array (
@@ -234,9 +235,7 @@ array (
               ),
               14 => 
               array (
-                'name' => 'date_of_implementation_c',
-                'placeholder' => 'Kwartał/Data',
-                'label' => 'LBL_DATE_OF_IMPLEMENTATION',
+                'name' => 'sales_stage',
               ),
               15 => 
               array (
@@ -245,14 +244,21 @@ array (
               ),
               16 => 
               array (
-                'name' => 'description',
-                'placeholder' => 'Szczegółowy opis oferty',
-                'span' => 6,
+                'name' => 'date_of_implementation_c',
+                'placeholder' => 'Kwartał/Data',
+                'label' => 'LBL_DATE_OF_IMPLEMENTATION',
               ),
               17 => 
               array (
+                'name' => 'opportunities_ac_feeproposal_1_name',
+              ),
+              18 => 
+              array (
                 'name' => 'leads_ac_feeproposal_1_name',
-                'span' => 6,
+              ),
+              19 => 
+              array (
+                'name' => 'description',
               ),
             ),
           ),

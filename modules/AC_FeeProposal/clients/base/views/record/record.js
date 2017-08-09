@@ -15,11 +15,6 @@
     console.log('jak ustawic ospobe odpowiedzialną');
     console.log(this.model);
 
-
-        $('<style>'+ 
-            '.subpanels-layout .subpanel-header .btn-toolbar {margin-top: 7px; display: none; } ' + 
-          '</style>').appendTo('head');
-
         // powinno być to napisane przy użyciu, ale nie ma czasu ;)
         // app.events.on("create:model:changed",this.createModelChanged,this);
         var self = this;
@@ -217,6 +212,10 @@ console.log(this.model.attributes);
         this._super('render');
 
         $('.subpanels-layout .subpanel-header .btn-toolbar').hide();
+
+        if(_.isEmpty(this.model.get("opportunities_ac_feeproposal_1_name"))) {
+            $('.record-cell[data-name="opportunities_ac_feeproposal_1_name"]').css("visibility", "hidden");
+        }
     },
     _dispose: function() {
         if (this.alert) {

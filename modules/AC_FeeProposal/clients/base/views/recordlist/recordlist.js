@@ -95,10 +95,19 @@
         var self = this;
         this._super('render');
 
-        _.each(app.user.attributes.roles, function(role) {
-            if(role == "Fee-No-Access" || role == "Fee_access") {
-                $(document).find('a[name="create_button"]').addClass('hide');
+        var filter = _.filter(app.user.attributes.roles, function(role) { 
+            if(role == "Assistant Dev" ||
+                role == "Assistant F&A" ||
+                role == "Assistant P&C" ||
+                role == "Junior Manager F&A" ||
+                role == "Junior Manager P&C" ||
+                role == "Junior Manager QS") {
+                return role;
             }
         });
+
+        if(filter.length > 0) {
+            $(document).find('a[name="create_button"]').addClass('hide');
+        }
     },
 })

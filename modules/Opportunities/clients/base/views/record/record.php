@@ -86,11 +86,7 @@ array (
               1 => 
               array (
                 'name' => 'name',
-                'related_fields' => 
-                array (
-                  0 => 'total_revenue_line_items',
-                  1 => 'closed_revenue_line_items',
-                ),
+                'readonly' => true,
               ),
               2 => 
               array (
@@ -113,7 +109,7 @@ array (
           array (
             'name' => 'panel_body',
             'label' => 'LBL_RECORD_BODY',
-            'columns' => 2,
+            'columns' => 3,
             'labels' => true,
             'labelsOnTop' => true,
             'placeholders' => true,
@@ -126,83 +122,100 @@ array (
                 'name' => 'pattern_c',
                 'label' => 'LBL_PATTERN',
                 'readonly' => true,
+                'span' => 6,
               ),
               1 => 
               array (
                 'name' => 'custom_c',
                 'label' => 'LBL_CUSTOM',
+                'span' => 6,
               ),
               2 => 
               array (
-                'name' => 'aa_buildings_opportunities_1_name',
-                'label' => 'LBL_AA_BUILDINGS_OPPORTUNITIES_1_FROM_AA_BUILDINGS_TITLE',
+                'name' => 'framework_c',
+                'label' => 'LBL_FRAMEWORK',
+                'span' => 2,
               ),
               3 => 
+              array (
+                'name' => 'canceled_c',
+                'label' => 'LBL_CANCELED',
+                'span' => 4,
+              ),
+              4 => 
               array (
                 'name' => 'responsible_c',
                 'studio' => 'visible',
                 'label' => 'LBL_RESPONSIBLE',
                 'link' => false,
-              ),
-              4 => 
-              array (
-                'name' => 'floor3_c',
-                'label' => 'LBL_FLOOR3',
+                'span' => 6,
               ),
               5 => 
+              array (
+                'name' => 'opportunities_aa_buildings_1_name',
+                'label' => 'LBL_OPPORTUNITIES_AA_BUILDINGS_1_FROM_AA_BUILDINGS_TITLE',
+                'span' => 6,
+              ),
+              6 => 
               array (
                 'name' => 'delegated_c',
                 'studio' => 'visible',
                 'label' => 'LBL_DELEGATED',
                 'link' => false,
-              ),
-              6 => 
-              array (
-                'name' => 'tenant_c',
-                'label' => 'LBL_TENANT',
+                'span' => 6,
               ),
               7 => 
+              array (
+                'name' => 'floors_c',
+                'label' => 'LBL_FLOORS',
+                'span' => 6,
+              ),
+              8 => 
               array (
                 'name' => 'supervisor_c',
                 'studio' => 'visible',
                 'label' => 'LBL_SUPERVISOR',
                 'link' => false,
+                'span' => 6,
               ),
-              8 => 
+              9 => 
+              array (
+                'name' => 'opportunities_accounts_1_name',
+                'span' => 6,
+              ),
+              10 => 
+              array (
+                'name' => 'service_c',
+                'label' => 'LBL_SERVICE',
+                'span' => 6,
+              ),
+              11 => 
               array (
                 'name' => 'account_name',
                 'related_fields' => 
                 array (
                   0 => 'account_id',
                 ),
+                'span' => 6,
               ),
-              9 => 
+              12 => 
               array (
-                'name' => 'service_c',
-                'label' => 'LBL_SERVICE',
+                'name' => 'probability',
+                'span' => 6,
               ),
-              10 => 
+              13 => 
               array (
                 'name' => 'date_closed',
                 'related_fields' => 
                 array (
                   0 => 'date_closed_timestamp',
                 ),
-              ),
-              11 => 'probability',
-              12 => 
-              array (
-                'name' => 'sales_stage',
-              ),
-              13 => 
-              array (
-                'name' => 'leads_opportunities_1_name',
+                'span' => 6,
               ),
               14 => 
               array (
-                'name' => 'description',
-                'placeholder' => 'Szczegółowy opis szansy',
-                'span' => 12,
+                'name' => 'leads_opportunities_1_name',
+                'span' => 6,
               ),
             ),
           ),

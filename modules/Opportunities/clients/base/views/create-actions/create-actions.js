@@ -72,7 +72,6 @@
                 model: model
             }
         }, _.bind(function(model) {
-        	$('input[name="name"]').val("dsadasdasd");
             if (!model) {
 
                 return;
@@ -88,12 +87,22 @@
     },
     _render: function() {
     	this._super('_render', []);
-    	$('span[data-name="name"]').css("display", "none"); 
+        $('span[data-name="name"]').css("display", "none");
+    	$('.record-cell[data-name="canceled_c"]').css("visibility", "hidden");
     },
     _dispose: function() {
         if (this.alert) {
             this.alert.getCloseSelector().off('click');
         }
         this._super('_dispose', []);
-    }
+    },
+    save: function() {
+        if(this.model.get('framework_c')) {
+            this.model.set('opportunity_type', 'framework');
+        } else {
+            this.model.set('opportunity_type', 'single');
+        }
+
+        this._super('save');
+    },
 })

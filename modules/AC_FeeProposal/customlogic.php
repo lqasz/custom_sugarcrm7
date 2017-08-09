@@ -82,8 +82,8 @@ class AC_FeeProposal_Customlogic {
 
     public function copyFolders($fee_name, $old_name, $update)
     {
-        $con = ssh2_connect('192.168.1.212', 2222);
-        $call = ssh2_auth_password($con , 'root', 'password');
+        $con = ssh2_connect('89.250.193.178', 2222);
+        $call = ssh2_auth_password($con , 'root', 'D0ntF0rg3tEv3r');
 
         $cmd = array();
         $cmd[] = "cd /volume1/01\ FEE\ PROPOSALS/";
@@ -102,6 +102,23 @@ class AC_FeeProposal_Customlogic {
 
         $stream = ssh2_exec($con, $commands);
         stream_set_blocking($stream, true);
+    }
+
+    public function cancelOpportunity(&$bean, $event, $arguments)
+    {
+        if($arguments['isUpdate'] != 1) {
+            $db = DBManagerFactory::getInstance();
+            $rel_opp_result = $db->query("SELECT `opportunities_ac_feeproposal_1opportunities_ida` FROM `opportunities_ac_feeproposal_1_c` WHERE `opportunities_ac_feeproposal_1ac_feeproposal_idb`='{$bean->id}'");
+
+            $rel_opp = $db->fetchByAssoc($rel_opp_result);
+            $opportunity_bean = BeanFactory::getBean('Opportunities', $rel_opp['opportunities_ac_feeproposal_1opportunities_ida']);
+
+            if($opportunity_bean->framework_c != 1 && $opportunity_bean->archive_c != 1) {
+                // $opportunity_bean->deleted = 1;
+                $opportunity_bean->archive_c = 1;
+                $opportunity_bean->save();
+            }
+        }
     }
 }
 ?>

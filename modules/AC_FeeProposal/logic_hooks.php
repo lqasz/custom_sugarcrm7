@@ -9,5 +9,5 @@ $hook_array['before_save'][] = Array(1, 'addNumber', 'custom/modules/AC_FeePropo
 
 $hook_array['after_save'] = Array();
 $hook_array['after_save'][] = Array(1, 'addFeesName', 'custom/modules/AC_FeeProposal/customlogic.php','AC_FeeProposal_Customlogic', 'addFeesName');
-
+$hook_array['after_save'][] = Array(2, 'cancelOpportunity', 'custom/modules/AC_FeeProposal/customlogic.php','AC_FeeProposal_Customlogic', 'cancelOpportunity');
 ?>
