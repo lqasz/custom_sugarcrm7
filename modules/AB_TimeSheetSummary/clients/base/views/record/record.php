@@ -74,10 +74,13 @@ array (
               3 => 
               array (
                 'name' => 'description',
-                'span' => 6,
+                'span' => 12,
               ),
               4 => 
               array (
+                'name' => 'responsible_dep_c',
+                'label' => 'LBL_RESPONSIBLE_DEP',
+                'css_class' => 'hide',
                 'span' => 6,
               ),
             ),
