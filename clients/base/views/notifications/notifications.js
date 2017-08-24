@@ -336,26 +336,26 @@
                     }
                 });
 
-                // self.oldTimeSheet = _.filter(self.collection.models, function(model){
-                //     if(model.get('severity')==='time sheet'){
-                //         lastReviewDate = new Date(model.get('date_entered'));
-                //         lastReviewDate.setHours(0, 0, 0, 0);
+                self.oldTimeSheet = _.filter(self.collection.models, function(model){
+                    if(model.get('severity')==='time sheet'){
+                        lastReviewDate = new Date(model.get('date_entered'));
+                        lastReviewDate.setHours(0, 0, 0, 0);
 
-                //         if(lastReviewDate.getTime() < now.getTime()) {
-                //             return true;
-                //         } else {
-                //             return false;
-                //         }
-                //     } else {
-                //         return false;
-                //     }
-                // });
+                        if(lastReviewDate.getTime() < now.getTime()) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                });
 
-                // if(self.oldTimeSheet.length > 0) {
-                //     self.stopPulling();
-                //     self.showTimeSheetView(self.oldTimeSheet[0]);
-                //     self.render();
-                // }
+                if(self.oldTimeSheet.length > 0) {
+                    self.stopPulling();
+                    self.showTimeSheetView(self.oldTimeSheet[0]);
+                    self.render();
+                }
 
                 if(self.oldOne.length>0) {
                     self.stopPulling();
@@ -631,10 +631,9 @@
             addPanel: function() {
                 if($('#limitInvoice').length == 0){
                     this.setElement($('body').append('<div id="timeSheetMonit"><div id="timeSheetPanel" class="modal"></div><div class="modal-backdrop"></div></div>') );
-                    var html = '<div class="modal-header"><h3><i class="fa fa-beer"></i>  Time Sheet</h3></div>'+
+                    var html = '<div class="modal-header"><h3><i class="fa fa-file-text-o"></i> '+model.get('description')+'</h3></div>'+
                                 '<div class="modal-body">'+
                                     '<div class="panel-main">'+
-                                        '<div class="row-fluid">'+model.get('description')+'</div>'+
                                         '<div class="row-fluid department-users">'
                                             +(this.addUsersForm())+
                                         '</div>'+
