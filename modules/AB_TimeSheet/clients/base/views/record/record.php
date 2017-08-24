@@ -62,31 +62,43 @@ array (
             array (
               0 => 
               array (
-                'name' => 'date_start_c',
+                'name' => 'sv_c',
                 'readonly' => true,
-                'span' => 2,
+                'span' => 3,
               ),
               1 => 
               array (
-                'name' => 'date_end_c',
+                'name' => 'rejected_c',
                 'readonly' => true,
-                'span' => 2,
+                'span' => 3,
               ),
               2 => 
+              array (
+                'name' => 'date_start_c',
+                'readonly' => true,
+                'span' => 3,
+              ),
+              3 => 
+              array (
+                'name' => 'date_end_c',
+                'readonly' => true,
+                'span' => 3,
+              ),
+              4 => 
               array (
                 'name' => 'assigned_user_name',
                 'link' => false,
                 'readonly' => true,
-                'span' => 4,
+                'span' => 6,
               ),
-              3 => 
+              5 => 
               array (
                 'name' => 'department_c',
                 'link' => false,
                 'readonly' => true,
-                'span' => 4,
+                'span' => 6,
               ),
-              4 => 
+              6 => 
               array (
                 'name' => 'subordinates_c',
                 'label' => 'LBL_SUBORDINATES',
@@ -99,52 +111,51 @@ array (
         array (
           'useTabs' => false,
         ),
+        'buttons' => 
+        array (
+          0 => 
+          array (
+            'type' => 'button',
+            'name' => 'cancel_button',
+            'label' => 'LBL_CANCEL_BUTTON_LABEL',
+            'css_class' => 'btn-invisible btn-link',
+            'showOn' => 'edit',
+          ),
+          1 => 
+          array (
+            'type' => 'rowaction',
+            'event' => 'button:save_button:click',
+            'name' => 'save_button',
+            'label' => 'LBL_SAVE_BUTTON_LABEL',
+            'css_class' => 'btn btn-primary',
+            'showOn' => 'edit',
+            'acl_action' => 'edit',
+          ),
+          2 => 
+          array (
+            'type' => 'actiondropdown',
+            'name' => 'main_dropdown',
+            'primary' => true,
+            'showOn' => 'view',
+            'buttons' => 
+            array (
+              0 => 
+              array (
+                'type' => 'rowaction',
+                'event' => 'button:edit_button:click',
+                'name' => 'edit_button',
+                'label' => 'LBL_EDIT_BUTTON_LABEL',
+                'acl_action' => 'edit',
+              ),
+            ),
+          ),
+          3 => 
+          array (
+            'name' => 'sidebar_toggle',
+            'type' => 'sidebartoggle',
+          ),
+        ),
       ),
     ),
-  ),
-);
-
-$viewdefs[$module_name]['base']['view']['record']['buttons'] =
-array (
-  0 =>
-  array (
-    'type' => 'button',
-    'name' => 'cancel_button',
-    'label' => 'LBL_CANCEL_BUTTON_LABEL',
-    'css_class' => 'btn-invisible btn-link',
-    'showOn' => 'edit',
-  ),
-  1 =>
-  array (
-    'type' => 'rowaction',
-    'event' => 'button:save_button:click',
-    'name' => 'save_button',
-    'label' => 'LBL_SAVE_BUTTON_LABEL',
-    'css_class' => 'btn btn-primary',
-    'showOn' => 'edit',
-    'acl_action' => 'edit',
-  ),
-  2 =>
-  array (
-    'type' => 'actiondropdown',
-    'name' => 'main_dropdown',
-    'primary' => true,
-    'showOn' => 'view',
-    'buttons' =>
-    array (
-      0 =>
-      array (
-        'type' => 'rowaction',
-        'event' => 'button:edit_button:click',
-        'name' => 'edit_button',
-        'label' => 'LBL_EDIT_BUTTON_LABEL',
-        'acl_action' => 'edit',
-      ),
-    ),
-  ),
-  3 =>
-  array (
-    'name' => 'sidebar_toggle',
-    'type' => 'sidebartoggle',
   ),
 );

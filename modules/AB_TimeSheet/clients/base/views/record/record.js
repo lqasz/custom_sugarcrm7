@@ -67,12 +67,12 @@
 						procentText = "";
 
 					if(self.view == "edit") {
-						projectText = '<div class="span4" data-name="project-name"><input class="project-name" type="text" value="'+self.listOfProjects[projectData.id]+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
-						procentText = '<div class="span3"><input class="slider" type="range" value="'+projectData.value+'" /></div><div class="span1" data-name="procent"><input type="text" class="slider-text procent-value" value="'+projectData.value+'" /></div>';
-						procentText += '<div class="span1"><a data-id="'+timeSheetID+'" class="remove-project"><i class="fa-remove fa red-color"></i></a></div>';
+						projectText = '<div class="span4 time-sheet-project-data" data-name="project-name"><input class="project-name" type="text" value="'+self.listOfProjects[projectData.id]+'" /><ul class="select2-results list-of-projects hide"></ul></div>';
+						procentText = '<div class="span3 time-sheet-range"><input class="slider" type="range" value="'+projectData.value+'" /></div><div class="span1 time-sheet-project-data" data-name="procent"><input type="text" class="slider-text procent-value" value="'+projectData.value+'" /></div>';
+						procentText += '<div class="span1 time-sheet-project-data"><a data-id="'+timeSheetID+'" class="remove-project"><i class="fa-remove fa red-color"></i></a></div>';
 					} else {
-						projectText = '<div class="span4" data-projectid="'+projectData.id+'">'+self.listOfProjects[projectData.id]+'</div>';
-						procentText = '<div class="span3"><input class="slider" type="range" value="'+projectData.value+'" disabled /></div><div class="span1">'+projectData.value+'%</div>';
+						projectText = '<div class="span4 time-sheet-project-data" data-projectid="'+projectData.id+'">'+self.listOfProjects[projectData.id]+'</div>';
+						procentText = '<div class="span3 time-sheet-range"><input class="slider" type="range" value="'+projectData.value+'" disabled /></div><div class="span1 time-sheet-project-data">'+projectData.value+'%</div>';
 					}
 
 					string += '<li class="span12 first timesheet-row"><div data-id="'+timeSheetID+'" data-userid="'+userID+'" class="span12 project-row">'+projectText+procentText+'</div></li>';
@@ -90,9 +90,9 @@
 	addProjectRow: function(e) {
 		var timeSheetID = app.utils.generateUUID(),
 			projectData = $(e.currentTarget).data(),
-			projectText = '<div class="span4"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
-			procentText = '<div class="span3"><input disabled class="slider" type="range" value="0" /></div><div class="span1"><input disabled type="text" class="slider-text" value="0"/></div>',
-			deleteIcon = '<div class="span1"><a data-id="'+timeSheetID+'" class="remove-project"><i class="fa-remove fa red-color"></i></a></div>',
+			projectText = '<div class="span4 time-sheet-project-data"><input class="project-name" type="text" value="" /><ul class="select2-results list-of-projects hide"></ul></div>',
+			procentText = '<div class="span3 time-sheet-range"><input disabled class="slider" type="range" value="0" /></div><div class="span1 time-sheet-project-data"><input disabled type="text" class="slider-text" value="0"/></div>',
+			deleteIcon = '<div class="span1 time-sheet-project-data"><a data-id="'+timeSheetID+'" class="remove-project"><i class="fa-remove fa red-color"></i></a></div>',
 			string = '<li class="span12 first timesheet-row"><div data-id="'+timeSheetID+'" data-userid="'+projectData.userid+'" class="span12 project-row">'+projectText+procentText+deleteIcon+'</div></li>';
 
 		$(e.currentTarget).parents('.user-records').find('.project-list').append(string);
@@ -267,8 +267,6 @@
 
             return;
     	}
-
-    	console.info('updated: '+ self.dataFetched.data);
 
     	$.ajax({
             url: 'index.php?entryPoint=getData&updateTimeSheet=1&time_sheet_id='+ self.model.get('id')+'&noCache='+ (new Date().getTime()),
