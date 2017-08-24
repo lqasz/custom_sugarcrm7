@@ -49,7 +49,7 @@ array (
           array (
             'name' => 'panel_body',
             'label' => 'LBL_RECORD_BODY',
-            'columns' => 2,
+            'columns' => 1,
             'labelsOnTop' => true,
             'placeholders' => true,
             'newTab' => false,
@@ -58,30 +58,7 @@ array (
             array (
               0 => 
               array (
-                'name' => 'assigned_user_name',
-                'span' => 12,
-              ),
-              1 => 
-              array (
-                'name' => 'accept_by_fa_c',
-                'label' => 'LBL_ACCEPT_BY_FA',
-              ),
-              2 => 
-              array (
-                'name' => 'accept_by_sv_c',
-                'label' => 'LBL_ACCEPT_BY_SV',
-              ),
-              3 => 
-              array (
                 'name' => 'description',
-                'span' => 12,
-              ),
-              4 => 
-              array (
-                'name' => 'responsible_dep_c',
-                'label' => 'LBL_RESPONSIBLE_DEP',
-                'css_class' => 'hide',
-                'span' => 6,
               ),
             ),
           ),

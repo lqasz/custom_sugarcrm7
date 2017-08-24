@@ -5,6 +5,7 @@
     'click .single': 'displayDepartmentTimeSheet',
     'click a[name=cancel_button]': 'cancelClicked',
     'click input[name="reject"]': 'rejectedClicked',
+    'click input[name="accept"]': 'acceptedClicked',
   }),
 
   dataFetched: undefined,
@@ -16,18 +17,11 @@
     var self = this;
     self.view = options.context.get("action");
     self.collection.on('data:sync:complete', function() {
-      var query = "";
-
-      if(self.model.get("responsible_dep_c") == "fa") {
-        query = "forFA";
-      } else if(self.model.get("responsible_dep_c") == "sv") {
-        query = "forSV";
-      }
-
       // get all data from db
-      app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheets=1&'+query, null,{
+      app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheets=1', null,{
         success: _.bind(function(data) {
           self.dataFetched = data;
+          console.info("data: ", data);
           self.model.trigger('rebuildFields'); // trigger event in model
         })
       });
@@ -41,12 +35,12 @@
   editClicked: function() {
     this.view = "edit";
     $('input[name="reject"]').removeAttr("disabled");
+    $('input[name="accept"]').removeAttr("disabled");
     this._super('editClicked');
   },
 
   render: function() {
     this._super('render');
-    $('.record-cell[data-name="responsible_dep_c"]').hide(0);
 
     if(!_.isEmpty(this.dataFetched)) {
       $('.record-cell[data-name="description"]').html(this.rebuildFields());
@@ -77,18 +71,49 @@
   displayDepartmentTimeSheet: function(e) {
     var self = this,
       html = '', 
-      department = ($(e.currentTarget).data()).dep_name;
+      department = ($(e.currentTarget).data()).dep_name,
+      disabled = (this.view == "edit") ? "" : "disabled";
 
     _.each(this.dataFetched[department], function(userData, userName) {
-      html += '<div class="span12 first">';
-      html += '<div class="span12 record-label"><b>'+userName+'</b></div>';
-      html += '<div class="span12 first">';
-
-      _.each(userData, function(data, iter) {
-        html += '<div class="span6 first">'+
-                  '<div class="record-label">'+
-                    'Project Name'+                  
+      html += '<div class="span12 first time-sheet-report">'+
+                '<div class="span4 record-label time-sheet-user-name">'+userName+'</div>'+
+                '<div class="span8">'+
+                  '<div class="span6 time-sheet-user-name">'+
+                    '<div class="span6 record-label" style="text-align: right;">Accept</div>'+
+                    '<div class="span6">'+
+                      '<span class="normal">'+
+                        '<span class="detail">'+
+                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="accept" '+disabled+' value="'+userName.accepted+'"/>'+
+                        '</span>'+
+                      '</span>'+
+                    '</div>'+
                   '</div>'+
+                  '<div class="span6 time-sheet-user-name">'+
+                    '<div class="span6 record-label" style="text-align: right;">Reject</div>'+
+                    '<div class="span6">'+
+                      '<span class="normal">'+
+                        '<span class="detail">'+
+                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="reject" '+disabled+' value="'+userName.rejected+'"/>'+
+                        '</span>'+
+                      '</span>'+
+                    '</div>'+
+                  '</div>'+
+                '</div>';
+
+      html += '<div class="span12 first time-sheet-header time-sheet-record">';
+      html += '<div class="span9 first record-label">'+
+                  'Project Name'+
+              '</div>';
+
+      html += '<div class="span3 record-label ">'+
+                'Value'+
+              '</div>';
+      html += '</div>';
+
+      _.each(userData.data, function(data, iter) {
+        html += '<div class="span12 first time-sheet-row time-sheet-record">';
+
+        html += '<div class="span9 first">'+
                   '<span class="normal">'+
                     '<span class="detail">'+
                       data['project']+
@@ -97,9 +122,6 @@
                 '</div>';
 
         html += '<div class="span3">'+
-                  '<div class="record-label">'+
-                    'Value'+                  
-                  '</div>'+
                   '<span class="normal">'+
                     '<span class="detail">'+
                       data['value']+
@@ -107,18 +129,7 @@
                   '</span>'+
                 '</div>';
 
-        var disabled = (self.view == "edit") ? "" : "disabled";
-
-        html += '<div class="span2">'+
-                  '<div class="record-label">'+
-                    'Reject'+                  
-                  '</div>'+
-                  '<span class="normal">'+
-                    '<span class="detail">'+
-                      '<input data-dep_name="'+department+'" data-user_name="'+userName+'" data-id="'+data['id']+'" type="checkbox" name="reject" '+ disabled +'/>'+
-                    '</span>'+
-                  '</span>'+
-                '</div>';
+        html += '</div>';
       });
 
       html += '</div>';
@@ -129,14 +140,37 @@
   },
 
   cancelClicked: function() {
-      this.view = "detail";
-      location.replace('http://'+window.location.hostname+'/#AB_TimeSheetSummary/'+this.model.get("id"));
+    this.view = "detail";
+    location.replace('http://'+window.location.hostname+'/#AB_TimeSheetSummary/'+this.model.get("id"));
   },
 
   rejectedClicked: function(e) {
     var data = $(e.currentTarget).data();
-    this.dataFetched[data.dep_name][data.user_name].rejected = 1;
 
-    console.info("data: ", this.dataFetched[data.dep_name][data.user_name]);
+    this.dataFetched[data.dep_name][data.user_name].accepted = 0;
+    this.dataFetched[data.dep_name][data.user_name].rejected = 1;
+  },
+
+  acceptedClicked: function(e) {
+    var data = $(e.currentTarget).data();
+
+    this.dataFetched[data.dep_name][data.user_name].accepted = 1;
+    this.dataFetched[data.dep_name][data.user_name].rejected = 0;
+  },
+
+  saveClicked: function() {
+    var self = this;
+
+    $.ajax({
+      url: 'index.php?entryPoint=getData&updateTimeSheetSummary=1&noCache='+ (new Date().getTime()),
+      type: 'POST',
+      data: {
+        updated: self.dataFetched,
+      },
+      success: function(data) {
+          self.view = "detail";
+          self._super('saveClicked');
+      },
+    }); // ajax
   },
 })
