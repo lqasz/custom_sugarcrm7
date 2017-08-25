@@ -21,7 +21,6 @@
       app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheets=1', null,{
         success: _.bind(function(data) {
           self.dataFetched = data;
-          console.info("data: ", data);
           self.model.trigger('rebuildFields'); // trigger event in model
         })
       });
@@ -75,25 +74,37 @@
       disabled = (this.view == "edit") ? "" : "disabled";
 
     _.each(this.dataFetched[department], function(userData, userName) {
+      var accept = (userData.accepted == 1) ? "checked" : "",
+          reject = (userData.rejected == 1) ? "checked" : "";
+
       html += '<div class="span12 first time-sheet-report">'+
-                '<div class="span4 record-label time-sheet-user-name">'+userName+'</div>'+
-                '<div class="span8">'+
-                  '<div class="span6 time-sheet-user-name">'+
+                '<div class="span3 record-label time-sheet-user-name">'+userName+'</div>'+
+                '<div class="span9 time-sheet-summary" style="height: 28px;">'+
+                  '<div class="span2 time-sheet-user-name">'+
                     '<div class="span6 record-label" style="text-align: right;">Accept</div>'+
                     '<div class="span6">'+
                       '<span class="normal">'+
                         '<span class="detail">'+
-                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="accept" '+disabled+' value="'+userName.accepted+'"/>'+
+                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="accept" '+disabled+' '+accept+'/>'+
                         '</span>'+
                       '</span>'+
                     '</div>'+
                   '</div>'+
-                  '<div class="span6 time-sheet-user-name">'+
+                  '<div class="span2 time-sheet-user-name">'+
                     '<div class="span6 record-label" style="text-align: right;">Reject</div>'+
                     '<div class="span6">'+
                       '<span class="normal">'+
                         '<span class="detail">'+
-                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="reject" '+disabled+' value="'+userName.rejected+'"/>'+
+                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="reject" '+disabled+' '+reject+'/>'+
+                        '</span>'+
+                      '</span>'+
+                    '</div>'+
+                  '</div>'+
+                  '<div class="span8 time-sheet-user-name hide rejected-text">'+
+                    '<div class="span12">'+
+                      '<span class="normal">'+
+                        '<span class="detail">'+
+                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="text" name="reject-text" '+disabled+' value="'+userData.rejectedText+'"/>'+
                         '</span>'+
                       '</span>'+
                     '</div>'+
@@ -147,8 +158,13 @@
   rejectedClicked: function(e) {
     var data = $(e.currentTarget).data();
 
+    console.info($(e.currentTarget).val());
+    $(e.currentTarget).parents('.time-sheet-summary').find('.rejected-text').removeClass('hide');
+
     this.dataFetched[data.dep_name][data.user_name].accepted = 0;
     this.dataFetched[data.dep_name][data.user_name].rejected = 1;
+
+    console.info("department: ", this.dataFetched[data.dep_name]);
   },
 
   acceptedClicked: function(e) {
@@ -156,6 +172,8 @@
 
     this.dataFetched[data.dep_name][data.user_name].accepted = 1;
     this.dataFetched[data.dep_name][data.user_name].rejected = 0;
+
+    console.info("department: ", this.dataFetched[data.dep_name]);
   },
 
   saveClicked: function() {
