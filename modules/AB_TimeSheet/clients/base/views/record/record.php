@@ -100,6 +100,13 @@ array (
               ),
               6 => 
               array (
+                'name' => 'rejected_text_c',
+                'label' => 'LBL_REJECTED_TEXT',
+                'readonly' => true,
+                'span' => 12,
+              ),
+              7 => 
+              array (
                 'name' => 'subordinates_c',
                 'label' => 'LBL_SUBORDINATES',
                 'span' => 12,
