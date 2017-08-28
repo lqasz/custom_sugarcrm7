@@ -6,6 +6,7 @@
     'click a[name=cancel_button]': 'cancelClicked',
     'click input[name="reject"]': 'rejectedClicked',
     'click input[name="accept"]': 'acceptedClicked',
+    'change input[name="reject-text"]': 'setRejectedText',
   }),
 
   dataFetched: undefined,
@@ -28,6 +29,7 @@
 
     self.model.on('rebuildFields', function() {
       self.render();
+      $('.single').first().click();
     });
   },
 
@@ -35,6 +37,7 @@
     this.view = "edit";
     $('input[name="reject"]').removeAttr("disabled");
     $('input[name="accept"]').removeAttr("disabled");
+    $('input[name="reject-text"]').removeAttr("disabled");
     this._super('editClicked');
   },
 
@@ -54,7 +57,7 @@
     var html = '<div class="span12 row-fluid panel_body">';
       
     html += '<div class="span4 first">';
-    html += '<div class="span12 record-label">Departments</div>';
+    html += '<div class="span12 record-label summary-label">Departments</div>';
     html += '<table id="timeSheetsTable" class="table table-striped dataTable">'
     _.each(this.dataFetched, function(timeSheet, department) {
       html += '<tr class="single" data-dep_name="'+department+'"><td><span class="list">'+department+'</span></td></tr>';
@@ -70,43 +73,52 @@
   displayDepartmentTimeSheet: function(e) {
     var self = this,
       html = '', 
-      department = ($(e.currentTarget).data()).dep_name,
-      disabled = (this.view == "edit") ? "" : "disabled";
+      department = ($(e.currentTarget).data()).dep_name;
 
     _.each(this.dataFetched[department], function(userData, userName) {
-      var accept = (userData.accepted == 1) ? "checked" : "",
-          reject = (userData.rejected == 1) ? "checked" : "";
+      var hide = "hide",
+          reject =  "",
+          accept = (userData.accepted == 1) ? "checked" : "",
+          disabled = (self.view == "detail") ? 'disabled="disabled"' : '',
+          rejectedText = (_.isEmpty(userData.rejected_text)) ? "" : userData.rejected_text;
+
+      if(userData.rejected == 1) {
+        reject = "checked";
+        hide = "";
+      }
 
       html += '<div class="span12 first time-sheet-report">'+
-                '<div class="span3 record-label time-sheet-user-name">'+userName+'</div>'+
-                '<div class="span9 time-sheet-summary" style="height: 28px;">'+
-                  '<div class="span2 time-sheet-user-name">'+
-                    '<div class="span6 record-label" style="text-align: right;">Accept</div>'+
-                    '<div class="span6">'+
-                      '<span class="normal">'+
-                        '<span class="detail">'+
-                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="accept" '+disabled+' '+accept+'/>'+
+                '<div class="span12 summary-label">'+
+                  '<div class="span3 record-label time-sheet-user-name">'+userName+'</div>'+
+                  '<div class="span9 time-sheet-summary" style="height: 28px;">'+
+                    '<div class="span2 time-sheet-user-name">'+
+                      '<div class="span6 record-label" style="text-align: right;">Accept</div>'+
+                      '<div class="span6">'+
+                        '<span class="normal">'+
+                          '<span class="detail">'+
+                            '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="accept" '+disabled+' '+accept+'/>'+
+                          '</span>'+
                         '</span>'+
-                      '</span>'+
+                      '</div>'+
                     '</div>'+
-                  '</div>'+
-                  '<div class="span2 time-sheet-user-name">'+
-                    '<div class="span6 record-label" style="text-align: right;">Reject</div>'+
-                    '<div class="span6">'+
-                      '<span class="normal">'+
-                        '<span class="detail">'+
-                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="reject" '+disabled+' '+reject+'/>'+
+                    '<div class="span2 time-sheet-user-name">'+
+                      '<div class="span6 record-label" style="text-align: right;">Reject</div>'+
+                      '<div class="span6">'+
+                        '<span class="normal">'+
+                          '<span class="detail">'+
+                            '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="checkbox" name="reject" '+disabled+' '+reject+'/>'+
+                          '</span>'+
                         '</span>'+
-                      '</span>'+
+                      '</div>'+
                     '</div>'+
-                  '</div>'+
-                  '<div class="span8 time-sheet-user-name hide rejected-text">'+
-                    '<div class="span12">'+
-                      '<span class="normal">'+
-                        '<span class="detail">'+
-                          '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="text" name="reject-text" '+disabled+' value="'+userData.rejectedText+'"/>'+
+                    '<div class="span8 time-sheet-user-name '+hide+' rejected-text">'+
+                      '<div class="span12">'+
+                        '<span class="normal">'+
+                          '<span class="detail">'+
+                            '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="text" name="reject-text" '+disabled+' value="'+rejectedText+'"/>'+
+                          '</span>'+
                         '</span>'+
-                      '</span>'+
+                      '</div>'+
                     '</div>'+
                   '</div>'+
                 '</div>';
@@ -158,26 +170,52 @@
   rejectedClicked: function(e) {
     var data = $(e.currentTarget).data();
 
-    console.info($(e.currentTarget).val());
-    $(e.currentTarget).parents('.time-sheet-summary').find('.rejected-text').removeClass('hide');
+    if(this.dataFetched[data.dep_name][data.user_name].rejected == 0) {
+      $(e.currentTarget).parents('.time-sheet-summary').find('.rejected-text').removeClass('hide');
+      $(e.currentTarget).parents('.time-sheet-summary').find('input[name="rejected-text"]').removeAttr('disabled');
 
-    this.dataFetched[data.dep_name][data.user_name].accepted = 0;
-    this.dataFetched[data.dep_name][data.user_name].rejected = 1;
+      console.info($(e.currentTarget).parents('.time-sheet-summary').find('input[name="rejected-text"]'));
+      this.dataFetched[data.dep_name][data.user_name].rejected = 1;
+    } else {
+      $(e.currentTarget).parents('.time-sheet-summary').find('.rejected-text').addClass('hide');
+      $(e.currentTarget).parents('.time-sheet-summary').find('input[name="rejected-text"]').attr('disabled', true);
 
-    console.info("department: ", this.dataFetched[data.dep_name]);
+      this.dataFetched[data.dep_name][data.user_name].rejected = 0;
+    }
   },
 
   acceptedClicked: function(e) {
     var data = $(e.currentTarget).data();
 
-    this.dataFetched[data.dep_name][data.user_name].accepted = 1;
-    this.dataFetched[data.dep_name][data.user_name].rejected = 0;
+    if(this.dataFetched[data.dep_name][data.user_name].accepted == 0) {
+      this.dataFetched[data.dep_name][data.user_name].accepted = 1;
+    } else {
+      this.dataFetched[data.dep_name][data.user_name].accepted = 0;
+    }
+  },
 
-    console.info("department: ", this.dataFetched[data.dep_name]);
+  setRejectedText: function(e) {
+    var data = $(e.currentTarget).data();
+
+    this.dataFetched[data.dep_name][data.user_name].rejected_text = $(e.currentTarget).val();
   },
 
   saveClicked: function() {
     var self = this;
+
+    _.each(this.dataFetched, function(users, projectTeam) {
+      _.each(users, function(userData, userName) {
+        if(userData.accepted == 1 && userData.rejected == 1) {
+          app.alert.show('message-id', {
+              level: 'confirmation',
+              messages: 'You had accepted and rejected '+ userName +' Time Sheet',
+              autoClose: false,
+          });
+
+          return;
+        }
+      });
+    });
 
     $.ajax({
       url: 'index.php?entryPoint=getData&updateTimeSheetSummary=1&noCache='+ (new Date().getTime()),
