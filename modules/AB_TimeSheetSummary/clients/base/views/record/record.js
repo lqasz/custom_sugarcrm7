@@ -72,7 +72,7 @@
 
   displayDepartmentTimeSheet: function(e) {
     var self = this,
-      html = '', 
+      html = '', iter = 0,
       department = ($(e.currentTarget).data()).dep_name;
 
     _.each(this.dataFetched[department], function(userData, userName) {
@@ -89,9 +89,11 @@
 
       html += '<div class="span12 first time-sheet-report">'+
                 '<div class="span12 summary-label">'+
-                  '<div class="span3 record-label time-sheet-user-name">'+userName+'</div>'+
-                  '<div class="span9 time-sheet-summary" style="height: 28px;">'+
-                    '<div class="span2 time-sheet-user-name">'+
+                  '<div class="span3 record-label time-sheet-user-name">'+userName+'</div>';
+      
+      if(iter == 0) {            
+        html +=  '<div class="span9 time-sheet-summary" style="height: 28px;">'+
+                    '<div class="span3 time-sheet-user-name">'+
                       '<div class="span6 record-label" style="text-align: right;">Accept</div>'+
                       '<div class="span6">'+
                         '<span class="normal">'+
@@ -101,7 +103,7 @@
                         '</span>'+
                       '</div>'+
                     '</div>'+
-                    '<div class="span2 time-sheet-user-name">'+
+                    '<div class="span3 time-sheet-user-name">'+
                       '<div class="span6 record-label" style="text-align: right;">Reject</div>'+
                       '<div class="span6">'+
                         '<span class="normal">'+
@@ -111,18 +113,19 @@
                         '</span>'+
                       '</div>'+
                     '</div>'+
-                    '<div class="span8 time-sheet-user-name '+hide+' rejected-text">'+
-                      '<div class="span12">'+
-                        '<span class="normal">'+
-                          '<span class="detail">'+
-                            '<input data-dep_name="'+department+'" data-user_name="'+userName+'" type="text" name="reject-text" '+disabled+' value="'+rejectedText+'"/>'+
-                          '</span>'+
-                        '</span>'+
-                      '</div>'+
-                    '</div>'+
                   '</div>'+
-                '</div>';
+                  '<div class="span12 time-sheet-user-name '+hide+' rejected-text first">'+
+                    '<div class="span12">'+
+                      '<span class="normal">'+
+                        '<span class="detail">'+
+                          '<textarea data-dep_name="'+department+'" data-user_name="'+userName+'" type="text" name="reject-text" '+disabled+' rows="3">'+rejectedText+'</textarea>'+
+                        '</span>'+
+                      '</span>'+
+                    '</div>'+
+                  '</div>';
+    }
 
+      html += '</div>';
       html += '<div class="span12 first time-sheet-header time-sheet-record">';
       html += '<div class="span9 first record-label">'+
                   'Project Name'+
@@ -157,6 +160,8 @@
 
       html += '</div>';
       html += '</div>';
+
+      iter++;
     });
 
     $('#timeSheetRecord').html(html);
@@ -171,14 +176,13 @@
     var data = $(e.currentTarget).data();
 
     if(this.dataFetched[data.dep_name][data.user_name].rejected == 0) {
-      $(e.currentTarget).parents('.time-sheet-summary').find('.rejected-text').removeClass('hide');
-      $(e.currentTarget).parents('.time-sheet-summary').find('input[name="rejected-text"]').removeAttr('disabled');
+      $(e.currentTarget).parents('.summary-label').find('.rejected-text').removeClass('hide');
+      $(e.currentTarget).parents('.summary-label').find('input[name="rejected-text"]').removeAttr('disabled');
 
-      console.info($(e.currentTarget).parents('.time-sheet-summary').find('input[name="rejected-text"]'));
       this.dataFetched[data.dep_name][data.user_name].rejected = 1;
     } else {
-      $(e.currentTarget).parents('.time-sheet-summary').find('.rejected-text').addClass('hide');
-      $(e.currentTarget).parents('.time-sheet-summary').find('input[name="rejected-text"]').attr('disabled', true);
+      $(e.currentTarget).parents('.summary-label').find('.rejected-text').addClass('hide');
+      $(e.currentTarget).parents('.summary-label').find('input[name="rejected-text"]').attr('disabled', true);
 
       this.dataFetched[data.dep_name][data.user_name].rejected = 0;
     }
@@ -222,6 +226,7 @@
       type: 'POST',
       data: {
         updated: self.dataFetched,
+        summaryID: self.model.get('id'),
       },
       success: function(data) {
           self.view = "detail";
