@@ -73,12 +73,20 @@
 					"weight" => 1,
 				),
 				"aa_persons" => array(
-					"label" => "Contact",
+					"label" => "Person",
 					"weight" => 1,
 				),
 				"project" => array(
 					"label" => "Project",
 					"weight" => 1,
+				),
+				"contacts" => array(
+					"label" => "Contacts",
+					"weight" => 0.5,
+				),
+				"accounts" => array(
+					"label" => "Companies",
+					"weight" => 0.5,
 				),
 			),
 
@@ -218,12 +226,20 @@
 					"weight" => 1,
 				),
 				"aa_persons" => array(
-					"label" => "Contact",
+					"label" => "Person",
 					"weight" => 1,
 				),
 				"project" => array(
 					"label" => "Project",
 					"weight" => 1,
+				),
+				"contacts" => array(
+					"label" => "Contact",
+					"weight" => 0.5,
+				),
+				"accounts" => array(
+					"label" => "Company",
+					"weight" => 0.5,
 				),
 			),
 
@@ -584,7 +600,7 @@
 				"aa_answers" => "Daily Questions"
 			),
 		),
-		"Senior Manger PC" => array(
+		"Senior Manager PC" => array(
 			"modules" => array(
 				"contacts" => array(
 					"label" => "Contacts",
