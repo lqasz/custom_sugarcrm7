@@ -18,17 +18,17 @@ class ModulesData
 	public function getUserActionsByModule($user, $module)
 	{
 		$sum = array(
-			"created" => 0,
-			"modified" => 0,
+			"Created" => 0,
+			"Modified" => 0,
 		);
 
 		$module_created_result = $this->db->query("SELECT COUNT(`id`) AS `count` FROM `$module` WHERE DATE(`date_entered`) = CURRENT_DATE AND `created_by`='{$user}'");
 		$row = $this->db->fetchByAssoc($module_created_result);
-		$sum['created'] += $row['count'];
+		$sum['Created'] += $row['count'];
 
 		$module_modified_result = $this->db->query("SELECT COUNT(`id`) AS `count` FROM `{$module}_audit` WHERE DATE(`date_created`) = CURRENT_DATE AND `created_by`='{$user}'");
 		$row = $this->db->fetchByAssoc($module_modified_result);
-		$sum['modified'] += $row['count'];
+		$sum['Modified'] += $row['count'];
 
 		return $sum;
 	}
