@@ -7,7 +7,8 @@ ini_set("display_errors", 1);
 */
 class ReportVisualization
 {
-	public $send_mail;
+	public $assistants;
+	public $managers;
 	private $users_html;
 
 	public function __construct($departments)
@@ -19,10 +20,7 @@ class ReportVisualization
 
 			if($previous != "1" && $previous != $dep_name) {
 				$content = $this->formatContentForDepartment($this->users_html['departments'][$dep_name], $dep_name);
-
-				echo $content;
-
-				$this->send_mail[$manager] = $content;
+				$this->managers[$manager] = $content;
 			}
 			$previous = $dep_name;
 		}
@@ -77,7 +75,7 @@ class ReportVisualization
 
 		$position = trim($user_data['position']);
 		if(preg_match("/Assistant/", $position) || preg_match("/Junior/", $position)) {
-			$this->send_mail[$user_data['email']] = $this->formatContentForUser($html, $user_data['user_name']);
+			$this->assistants[$user_data['email']] = $this->formatContentForUser($html, $user_data['user_name']);
 		}
 
 		return $html;
@@ -94,9 +92,9 @@ class ReportVisualization
 		unset($html["Tasks"]);
 		$content .= '<table>';
 		foreach($html as $module_name => $string) {
-			if($iter % 4 == 0) {
+			if($iter % 9 == 0) {
 				$content .= '<tr><td>'.$string.'</td>';
-			} elseif($iter % 4 != 3) {
+			} elseif($iter % 9 != 8) {
 				$content .= '<td>'.$string.'</td>';
 			} else {
 				$content .= '<td>'.$string.'</td></tr>';
@@ -118,7 +116,7 @@ class ReportVisualization
 			$content .= "<tr><td>". $this->formatContentForUser($html, $user_name) ."</td></tr>";
 		}
 
-		$content .= "<table>";
+		$content .= "</table>";
 		return $content;
 	}
 }
