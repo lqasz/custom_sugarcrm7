@@ -24,19 +24,52 @@ class TasksData
 		$this->tasks_type['today_tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$today}'");
 		$this->tasks_type['tomorrow_tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$tomorrow}'");
 		$this->tasks_type['next_tasks'] = $this->getTasks("AND DATE(`date_due`) > '{$tomorrow}'");
-		$this->tasks_type['created_tasks'] = $this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`');
-		$this->tasks_type['quick_tasks'] = $this->getTasks("", 'NOT', 0, 1);
+		$this->tasks_type['created_tasks'] = json_encode($this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`'));
+		$this->tasks_type['quick_tasks'] = json_encode($this->getTasks("", 'NOT', 0, 1));
 
-		$this->tasks_type['sum'] = $this->tasks_type['Overdue Tasks'] + $this->tasks_type['Today Tasks'] + $this->tasks_type['Tomorrow Tasks'] + $this->tasks_type['Next Tasks'];
+		$this->tasks_type['sum'] = $this->tasks_type['overdue_tasks']['all'] + $this->tasks_type['today_tasks']['all'] + $this->tasks_type['tomorrow_tasks']['all'] + $this->tasks_type['next_tasks']['all'];
 
-		$this->tasks_type['closed_tasks'] = $this->getTasks("AND DATE(`date_modified`) = '{$today}'", '');
-		$this->tasks_type['deleted_tasks'] = $this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1);
+		$this->tasks_type['overdue_tasks'] = json_encode($this->tasks_type['overdue_tasks']);
+		$this->tasks_type['today_tasks'] = json_encode($this->tasks_type['today_tasks']);
+		$this->tasks_type['tomorrow_tasks'] = json_encode($this->tasks_type['tomorrow_tasks']);
+		$this->tasks_type['next_tasks'] = json_encode($this->tasks_type['next_tasks']);
+
+		$this->tasks_type['closed_tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", ''));
+		$this->tasks_type['deleted_tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1));
+
+		$this->db->query("INSERT INTO `rms_report_tasks` VALUES(
+			'".create_guid()."', 
+			'{$user}',
+			CURRENT_TIMESTAMP,
+			'{$this->tasks_type['overdue_tasks']}',
+			'{$this->tasks_type['today_tasks']}',
+			'{$this->tasks_type['tomorrow_tasks']}',
+			'{$this->tasks_type['next_tasks']}',
+			'{$this->tasks_type['created_tasks']}',
+			'{$this->tasks_type['quick_tasks']}',
+			'{$this->tasks_type['closed_tasks']}',
+			'{$this->tasks_type['deleted_tasks']}',
+			'{$this->tasks_type['sum']}'
+			)");
+
+		$this->test();
+	}
+
+	public function test()
+	{
+		$rms_report = $this->db->query("SELECT * FROM `rms_report_tasks`");
+		while($row = $this->db->fetchByAssoc($rms_report)) {
+			echo "sdfsdsdf: ". json_decode($row['today_tasks'], true). "sdfdf";
+		}
+		die();
 	}
 
 	public function getTasks($where, $status='NOT', $deleted=0, $new_one=0, $user_activity='`assigned_user_id`')
 	{
-		$sum = 0;
-		$sql_tasks = "SELECT COUNT(`id`) AS `count` 
+		$sum = array(
+			"all" => 0
+		);
+		$sql_tasks = "SELECT COUNT(`id`) AS `count`, `parent_id`, `parent_type`
 						FROM `tasks` 
 							LEFT JOIN `tasks_cstm` 
 								ON(`id`=`id_c`) 
@@ -49,8 +82,9 @@ class TasksData
 								AND `every_month_c`=0 
 								AND `generated_c`=0 ";
 		$sql_tasks .= $where;
+		$sql_tasks .= "GROUP BY `parent_id`, `parent_type`";
 
-		$sql_periodic_tasks = "SELECT DISTINCT `name`
+		$sql_periodic_tasks = "SELECT DISTINCT `parent_id`, `parent_type`
 								FROM `tasks` 
 									LEFT JOIN `tasks_cstm` 
 										ON(`id` = `id_c`) 
@@ -65,18 +99,23 @@ class TasksData
 		$sql_periodic_tasks .= $where;
 
 		$result = $this->db->query($sql_tasks);
-		$row = $this->db->fetchByAssoc($result);
-		$sum += $row['count'];
+		while($row = $this->db->fetchByAssoc($result)) {
+			$parent_type_result = $this->db->query("SELECT `name` FROM `".strtolower($row['parent_type'])."` WHERE `id`='{$row['parent_id']}'");
+			$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
+
+			$sum[$row['parent_type']][$parent_type_row['name']] = $row['count'];
+			$sum['all'] += $row['count'];
+		}
 
 		$result = $this->db->query($sql_periodic_tasks);
-		$count = $this->db->getRowCount($result);
-		$sum += $count;
+		while($row = $this->db->fetchByAssoc($result)) {
+			$parent_type_result = $this->db->query("SELECT `name` FROM `".strtolower($row['parent_type'])."` WHERE `id`='{$row['parent_id']}'");
+			$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
+
+			$sum[$row['parent_type']][$parent_type_row['name']]++;
+			$sum['all']++;
+		}
 
 		return $sum;
-	}
-
-	public function getTasksByParentType($parent_type)
-	{
-		return $this->getTasks("AND `parent_type` LIKE '{$parent_type}'");
 	}
 }

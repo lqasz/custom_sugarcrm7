@@ -20,6 +20,7 @@ class ActivitiesData
 		$this->activities["Bugs"] = $this->getBugInformations();
 		$this->activities["Login"] = $this->getLoginToRMS();
 		$this->activities["Notifications"] = $this->getNotifications();
+		$this->activities["Chat"] = $this->getChatActivities();
 	}
 
 	public function getNotifications()
@@ -64,7 +65,6 @@ class ActivitiesData
 			}
 		}
 		
-		dump($sum);
 		return $sum;
 	}
 
@@ -79,5 +79,32 @@ class ActivitiesData
 		$row = $this->db->fetchByAssoc($result);
 
 		return $row['count'];
+	}
+
+	public function getChatActivities()
+	{	
+		$sum = 0;
+		$query = "SELECT COUNT(`id`) AS `count`
+					FROM `activities`
+					WHERE `activity_type`='post'
+						AND `created_by`='{$this->user}'
+						AND DATE(`date_entered`) = CURRENT_DATE";
+
+		$result = $this->db->query($query);
+		$row = $this->db->fetchByAssoc($result);
+
+		$sum += $row['count'];
+
+		$query = "SELECT COUNT(`id`) AS `count`
+					FROM `comments`
+					WHERE `created_by`='{$this->user}'
+						AND DATE(`date_entered`) = CURRENT_DATE";
+
+		$result = $this->db->query($query);
+		$row = $this->db->fetchByAssoc($result);
+
+		$sum += $row['count'];
+
+		return $sum;
 	}
 }
