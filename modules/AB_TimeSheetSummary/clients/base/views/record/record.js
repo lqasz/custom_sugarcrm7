@@ -19,7 +19,7 @@
     self.view = options.context.get("action");
     self.collection.on('data:sync:complete', function() {
       // get all data from db
-      app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheets=1', null,{
+      app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheets=1&sumary_id='+ self.model.get('id'), null,{
         success: _.bind(function(data) {
           self.dataFetched = data;
           self.model.trigger('rebuildFields'); // trigger event in model
@@ -60,7 +60,15 @@
     html += '<div class="span12 record-label summary-label">Departments</div>';
     html += '<table id="timeSheetsTable" class="table table-striped dataTable">'
     _.each(this.dataFetched, function(timeSheet, department) {
-      html += '<tr class="single" data-dep_name="'+department+'"><td><span class="list">'+department+'</span></td></tr>';
+      var rowClass = "time-sheet-inprocess";
+
+      if(timeSheet.data.accepted == 1) {
+        rowClass = "time-sheet-accepted";
+      } else if(timeSheet.data.rejected == 1) {
+        rowClass = "time-sheet-rejected";
+      }
+
+      html += '<tr class="single" data-dep_name="'+department+'"><td class="'+rowClass+'"><span class="list">'+department+'</span></td></tr>';
     });
 
     html += '</table>';
@@ -75,14 +83,14 @@
       html = '', iter = 0,
       department = ($(e.currentTarget).data()).dep_name;
 
-    _.each(this.dataFetched[department], function(userData, userName) {
+    _.each(this.dataFetched[department]['users'], function(userData, userName) {
       var hide = "hide",
           reject =  "",
-          accept = (userData.accepted == 1) ? "checked" : "",
+          accept = (self.dataFetched[department].data.accepted == 1) ? "checked" : "",
           disabled = (self.view == "detail") ? 'disabled="disabled"' : '',
-          rejectedText = (_.isEmpty(userData.rejected_text)) ? "" : userData.rejected_text;
+          rejectedText = (_.isEmpty(self.dataFetched[department].data.rejected_text)) ? "" : self.dataFetched[department].data.rejected_text;
 
-      if(userData.rejected == 1) {
+      if(self.dataFetched[department].data.rejected == 1) {
         reject = "checked";
         hide = "";
       }
@@ -175,33 +183,33 @@
   rejectedClicked: function(e) {
     var data = $(e.currentTarget).data();
 
-    if(this.dataFetched[data.dep_name][data.user_name].rejected == 0) {
+    if(this.dataFetched[data.dep_name].data.rejected == 0) {
       $(e.currentTarget).parents('.summary-label').find('.rejected-text').removeClass('hide');
       $(e.currentTarget).parents('.summary-label').find('input[name="rejected-text"]').removeAttr('disabled');
 
-      this.dataFetched[data.dep_name][data.user_name].rejected = 1;
+      this.dataFetched[data.dep_name].data.rejected = 1;
     } else {
       $(e.currentTarget).parents('.summary-label').find('.rejected-text').addClass('hide');
       $(e.currentTarget).parents('.summary-label').find('input[name="rejected-text"]').attr('disabled', true);
 
-      this.dataFetched[data.dep_name][data.user_name].rejected = 0;
+      this.dataFetched[data.dep_name].data.rejected = 0;
     }
   },
 
   acceptedClicked: function(e) {
     var data = $(e.currentTarget).data();
 
-    if(this.dataFetched[data.dep_name][data.user_name].accepted == 0) {
-      this.dataFetched[data.dep_name][data.user_name].accepted = 1;
+    if(this.dataFetched[data.dep_name].data.accepted == 0) {
+      this.dataFetched[data.dep_name].data.accepted = 1;
     } else {
-      this.dataFetched[data.dep_name][data.user_name].accepted = 0;
+      this.dataFetched[data.dep_name].data.accepted = 0;
     }
   },
 
   setRejectedText: function(e) {
     var data = $(e.currentTarget).data();
 
-    this.dataFetched[data.dep_name][data.user_name].rejected_text = $(e.currentTarget).val();
+    this.dataFetched[data.dep_name].data.rejected_text = $(e.currentTarget).val();
   },
 
   saveClicked: function() {

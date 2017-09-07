@@ -62,41 +62,41 @@ array (
             array (
               0 => 
               array (
-                'name' => 'sv_c',
-                'readonly' => true,
-                'span' => 3,
-              ),
-              1 => 
-              array (
-                'name' => 'rejected_c',
-                'readonly' => true,
-                'span' => 3,
-              ),
-              2 => 
-              array (
-                'name' => 'date_start_c',
-                'readonly' => true,
-                'span' => 3,
-              ),
-              3 => 
-              array (
-                'name' => 'date_end_c',
-                'readonly' => true,
-                'span' => 3,
-              ),
-              4 => 
-              array (
                 'name' => 'assigned_user_name',
                 'link' => false,
                 'readonly' => true,
                 'span' => 6,
               ),
-              5 => 
+              1 => 
               array (
                 'name' => 'department_c',
                 'link' => false,
                 'readonly' => true,
                 'span' => 6,
+              ),
+              2 => 
+              array (
+                'name' => 'sv_c',
+                'readonly' => true,
+                'span' => 3,
+              ),
+              3 => 
+              array (
+                'name' => 'rejected_c',
+                'readonly' => true,
+                'span' => 3,
+              ),
+              4 => 
+              array (
+                'name' => 'date_start_c',
+                'readonly' => true,
+                'span' => 3,
+              ),
+              5 => 
+              array (
+                'name' => 'date_end_c',
+                'readonly' => true,
+                'span' => 3,
               ),
               6 => 
               array (

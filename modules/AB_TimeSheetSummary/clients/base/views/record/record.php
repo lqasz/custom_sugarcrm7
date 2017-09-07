@@ -26,7 +26,8 @@ array (
                 'dismiss_label' => true,
                 'readonly' => true,
               ),
-              1 => array (
+              1 => 
+              array (
                 'name' => 'name',
                 'readonly' => true,
               ),
@@ -61,7 +62,15 @@ array (
             array (
               0 => 
               array (
+                'name' => 'accept_by_sv_c',
+                'label' => 'LBL_ACCEPT_BY_SV',
+                'readonly' => true,
+                'span' => 12,
+              ),
+              1 => 
+              array (
                 'name' => 'description',
+                'span' => 12,
               ),
             ),
           ),
