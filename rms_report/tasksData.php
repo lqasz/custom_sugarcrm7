@@ -10,7 +10,7 @@ class TasksData
 	private $db;
 	private $user;
 
-	public $tasks_type = array();
+	public $data = array();
 
 	public function __construct($user) 
 	{	
@@ -20,48 +20,55 @@ class TasksData
 		$this->user = $user;
 		$this->db = DBManagerFactory::getInstance();
 		
-		$this->tasks_type['overdue_tasks'] = $this->getTasks("AND DATE(`date_due`) < '{$today}'");
-		$this->tasks_type['today_tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$today}'");
-		$this->tasks_type['tomorrow_tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$tomorrow}'");
-		$this->tasks_type['next_tasks'] = $this->getTasks("AND DATE(`date_due`) > '{$tomorrow}'");
-		$this->tasks_type['created_tasks'] = json_encode($this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`'));
-		$this->tasks_type['quick_tasks'] = json_encode($this->getTasks("", 'NOT', 0, 1));
+		$this->data['Overdue Tasks'] = $this->getTasks("AND DATE(`date_due`) < '{$today}'");
+		$this->data['Today Tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$today}'");
+		$this->data['Tomorrow Tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$tomorrow}'");
+		$this->data['Next Tasks'] = $this->getTasks("AND DATE(`date_due`) > '{$tomorrow}'");
+		$this->data['Created Tasks'] = json_encode($this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`'));
+		$this->data['Quick Tasks'] = json_encode($this->getTasks("", 'NOT', 0, 1));
 
-		$this->tasks_type['sum'] = $this->tasks_type['overdue_tasks']['all'] + $this->tasks_type['today_tasks']['all'] + $this->tasks_type['tomorrow_tasks']['all'] + $this->tasks_type['next_tasks']['all'];
+		$this->data['Sum'] = $this->data['Overdue Tasks']['all'] + $this->data['Today Tasks']['all'] + $this->data['Tomorrow Tasks']['all'] + $this->data['Next Tasks']['all'];
 
-		$this->tasks_type['overdue_tasks'] = json_encode($this->tasks_type['overdue_tasks']);
-		$this->tasks_type['today_tasks'] = json_encode($this->tasks_type['today_tasks']);
-		$this->tasks_type['tomorrow_tasks'] = json_encode($this->tasks_type['tomorrow_tasks']);
-		$this->tasks_type['next_tasks'] = json_encode($this->tasks_type['next_tasks']);
+		$this->data['Overdue Tasks'] = json_encode($this->data['Overdue Tasks']);
+		$this->data['Today Tasks'] = json_encode($this->data['Today Tasks']);
+		$this->data['Tomorrow Tasks'] = json_encode($this->data['Tomorrow Tasks']);
+		$this->data['Next Tasks'] = json_encode($this->data['Next Tasks']);
 
-		$this->tasks_type['closed_tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", ''));
-		$this->tasks_type['deleted_tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1));
+		$this->data['Closed Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", ''));
+		$this->data['Deleted Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1));
+	}
 
+	public function addToDatabase($user_name)
+	{
 		$this->db->query("INSERT INTO `rms_report_tasks` VALUES(
 			'".create_guid()."', 
-			'{$user}',
+			'{$user_name}',
 			CURRENT_TIMESTAMP,
-			'{$this->tasks_type['overdue_tasks']}',
-			'{$this->tasks_type['today_tasks']}',
-			'{$this->tasks_type['tomorrow_tasks']}',
-			'{$this->tasks_type['next_tasks']}',
-			'{$this->tasks_type['created_tasks']}',
-			'{$this->tasks_type['quick_tasks']}',
-			'{$this->tasks_type['closed_tasks']}',
-			'{$this->tasks_type['deleted_tasks']}',
-			'{$this->tasks_type['sum']}'
-			)");
-
-		$this->test();
+			'{$this->data['Overdue Tasks']}',
+			'{$this->data['Today Tasks']}',
+			'{$this->data['Tomorrow Tasks']}',
+			'{$this->data['Next Tasks']}',
+			'{$this->data['Created Tasks']}',
+			'{$this->data['Quick Tasks']}',
+			'{$this->data['Closed Tasks']}',
+			'{$this->data['Deleted Tasks']}',
+			'{$this->data['sum']}'
+			)"
+		);
 	}
 
 	public function test()
 	{
+		$data = array();
 		$rms_report = $this->db->query("SELECT * FROM `rms_report_tasks`");
 		while($row = $this->db->fetchByAssoc($rms_report)) {
-			echo "sdfsdsdf: ". json_decode($row['today_tasks'], true). "sdfdf";
+			foreach($row as $key => $json) {
+				$json = mb_convert_encoding($json, "UTF-8");
+				$json = str_replace('&quot;', '"', $json);
+
+				$data[$key] = json_decode($json, true);
+			}
 		}
-		die();
 	}
 
 	public function getTasks($where, $status='NOT', $deleted=0, $new_one=0, $user_activity='`assigned_user_id`')
@@ -100,19 +107,29 @@ class TasksData
 
 		$result = $this->db->query($sql_tasks);
 		while($row = $this->db->fetchByAssoc($result)) {
-			$parent_type_result = $this->db->query("SELECT `name` FROM `".strtolower($row['parent_type'])."` WHERE `id`='{$row['parent_id']}'");
-			$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
+			if($row['parent_type'] == "Project") {
+				$parent_type_result = $this->db->query("SELECT `project_number_c` FROM `project_cstm` WHERE `id_c`='{$row['parent_id']}'");
+				$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
 
-			$sum[$row['parent_type']][$parent_type_row['name']] = $row['count'];
+				$sum[$parent_type_row['project_number_c']] = $row['count'];
+			} else {
+				$sum[$row['parent_type']] = $row['count'];
+			}
+			
 			$sum['all'] += $row['count'];
 		}
 
 		$result = $this->db->query($sql_periodic_tasks);
 		while($row = $this->db->fetchByAssoc($result)) {
-			$parent_type_result = $this->db->query("SELECT `name` FROM `".strtolower($row['parent_type'])."` WHERE `id`='{$row['parent_id']}'");
-			$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
+			if($row['parent_type'] == "Project") {
+				$parent_type_result = $this->db->query("SELECT `project_number_c` FROM `project_cstm` WHERE `id_c`='{$row['parent_id']}'");
+				$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
 
-			$sum[$row['parent_type']][$parent_type_row['name']]++;
+				$sum[$parent_type_row['project_number_c']]++;
+			} else {
+				$sum[$row['parent_type']]++;
+			}
+			
 			$sum['all']++;
 		}
 

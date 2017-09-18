@@ -10,17 +10,17 @@ class ActivitiesData
 	private $db;
 	private $user;
 
-	public $activities = array();
+	public $data = array();
 
 	public function __construct($user)
 	{
 		$this->user = $user;
 		$this->db = DBManagerFactory::getInstance();
 
-		$this->activities["Bugs"] = $this->getBugInformations();
-		$this->activities["Login"] = $this->getLoginToRMS();
-		$this->activities["Notifications"] = $this->getNotifications();
-		$this->activities["Chat"] = $this->getChatActivities();
+		$this->data["bugs"] = json_encode($this->getBugInformations());
+		$this->data["login"] = json_encode($this->getLoginToRMS());
+		$this->data["notifications"] = json_encode($this->getNotifications());
+		$this->data["chat"] = json_encode($this->getChatActivities());
 	}
 
 	public function getNotifications()
@@ -106,5 +106,18 @@ class ActivitiesData
 		$sum += $row['count'];
 
 		return $sum;
+	}
+
+	public function addToDatabase($user_name)
+	{
+		$this->db->query("INSERT INTO `rms_report_activities` VALUES(
+			'".create_guid()."', 
+			'{$user_name}',
+			CURRENT_TIMESTAMP,
+			'{$this->data["bugs"]}',
+			'{$this->data["login"]}',
+			'{$this->data["notifications"]}',
+			'{$this->data["chat"]}')"
+		);
 	}
 }
