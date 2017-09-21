@@ -4,6 +4,7 @@
   events: _.extend({}, this.events, {
     'click .single': 'displayDepartmentTimeSheet',
     'click a[name=cancel_button]': 'cancelClicked',
+    'click .modal-backdrop': 'cancelClicked',
     'click .show-details': 'showDetailsClicked',
     'click input[name="accept"]': 'acceptedClicked',
   }),
@@ -20,7 +21,6 @@
       // get all data from db
       app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheets=1&summary_id='+ self.model.get('id'), null,{
         success: _.bind(function(data) {
-          console.info("data: ", data);
           self.dataFetched = data;
           self.model.trigger('rebuildFields'); // trigger event in model
         })
@@ -157,11 +157,15 @@
     
     var that = this,
         department = ($(e.currentTarget).data()).dep_name;
-        TimeSheetPanel = Backbone.View.extend({
-      
+
+    var TimeSheetPanel = Backbone.View.extend({
       events: {
+        'click input[name="rejected"]': 'rejectedClicked',
+        'change textarea[name="rejected-text"]': 'addRejectedText',
+        'click .sheet-name': 'showDetails',
         'click #saveButtonMonit':'saveClicked',
         'click #cancelButtonMonit':'cancelClicked',
+        'click .modal-backdrop':'cancelClicked',
       },
 
       initialize: function() {
@@ -170,19 +174,49 @@
 
       render: function() {
         this.addPanel();
+        $('.sheet-details').hide(0);
+      },
+
+      showDetails: function(e) {
+        var $element = $(e.currentTarget).next('.sheet-details');
+
+        $('.sheet-name').css('font-weight', 'normal');
+        $('.sheet-details').hide(0);
+        $element.show();
+        $(e.currentTarget).css('font-weight', 'bold');
       },
 
       cancelClicked: function() {
-        $('#timeSheetMonit').remove();
+        $('#timeSheetDetails').remove();
       },
 
       saveClicked: function() {
-        $('#timeSheetMonit').remove();
+        console.info("that.dataFetched: ", that.dataFetched);
+      },
+
+      rejectedClicked: function(e) {
+        var $parentElement = $(e.currentTarget).parents('.controls'),
+            data = ($parentElement).data(),
+            $rejectedText = $parentElement.find('textarea[name="rejected-text"]');
+
+        if(that.dataFetched[data.dep_name].sheets[data.id].rejected == 0) {
+          that.dataFetched[data.dep_name].sheets[data.id].rejected = 1;
+          $rejectedText.removeAttr('disabled');
+        } else {
+          that.dataFetched[data.dep_name].sheets[data.id].rejected = 0;
+          $rejectedText.attr('disabled', true);
+        }
+      },
+
+      addRejectedText: function(e) {
+        var data = ($(e.currentTarget).parents('.controls')).data();
+
+        that.dataFetched[data.dep_name].sheets[data.id].rejected_text = $(e.currentTarget).val();
       },
 
       addPanel: function() {
         if($('#limitInvoice').length == 0) {
-          this.setElement($('body').append('<div id="timeSheetMonit"><div id="timeSheetPanel" class="modal"></div><div class="modal-backdrop"></div></div>') );
+          this.setElement($('body').append('<div id="timeSheetDetails"><div id="timeSheetDetailPanel" class="modal"></div><div class="modal-backdrop"></div></div>') );
           var html = '<div class="modal-header"><h3><i class="fa fa-file-text-o"></i> '+department+'</h3></div>'+
                       '<div class="modal-body">'+
                           '<div class="panel-main">'+
@@ -196,34 +230,56 @@
                           '<button id="saveButtonMonit" class="btn btn-primary">Save</button>'+
                       '</div>';
 
-          $('#timeSheetPanel').html(html);
+          $('#timeSheetDetailPanel').html(html);
         }
       },
 
       addTimeSheetData: function() {
         var html = '<div class="span12">';
 
-        _.each(that.dataFetched[department].sheets_values, function(sheetData, period) {
-          var sheetName = that.dataFetched[department].sheets[period].name;
+        _.each(that.dataFetched[department].sheets_values, function(sheetData, sheetID) {
+          var rejected = (that.dataFetched[department].sheets[sheetID].rejected == 1) ? "checked" : "",
+              rejectedText = (!_.isEmpty(that.dataFetched[department].sheets[sheetID].rejected_text)) ? that.dataFetched[department].sheets[sheetID].rejected_text : "",
+              sheetName = that.dataFetched[department].sheets[sheetID].name,
+              disabled = (rejected == "checked") ? '' : 'disabled';
           
-          html += '<div class="span12">'+ sheetName +'</div>';
+          html += '<div class="first span12 sheet-record">';
+          html += '<div class="first span12 sheet-name">'+ sheetName +'</div>';
 
-          html += '<div class="span12">'
+          html += '<div class="first span12 sheet-details">';
+          html += '<div class="span12 controls" data-dep_name="'+department+'" data-id="'+sheetID+'">'+
+                    '<div class="span3">'+
+                      '<label for="rejected">Rejected</label>'+
+                      '<input type="checkbox" name="rejected" '+rejected+'/>'+
+                    '</div>'+
+                    '<div class="span8">'+
+                      '<label for="rejected-text">Text</label>'+
+                      '<textarea class="span12" name="rejected-text" '+disabled+'>'+
+                        rejectedText+
+                      '</textarea>'+
+                    '</div>'+
+                  '</div>';
+          html += '<div class="first span12 ">';
           _.each(sheetData, function(userData, userName) {
-            html += '<div class="span12">'+ userName +'</div>';
+            html += '<div class="span12 first sheet-user-name">'+ userName +'</div>';
             
-            html += '<div class="span12">'
+            html += '<div class="first span12">';
+            html += '<div class="sheet-row span12"><div class="span6 first">Project Name</div><div class="span6 first">Value</div></div>';
             _.each(userData, function(value, project) {
-              html += '<div class="span5">'+project+'</div>';
-              html += '<div class="span5">'+value+'</div>';
+              html += '<div class="first span12 sheet-row">'
+              html += '<div class="span6 first">'+project+'</div>';
+              html += '<div class="span6 first">'+value+'</div>';
+              html += '</div>';
             });
 
             html += '</div>';
           });
 
           html += '</div>';
+          html += '</div>';
         });
 
+        html += '</div>';
         html += '</div>';
 
         return html;
@@ -253,6 +309,7 @@
 
     _.each(this.dataFetched, function(users, projectTeam) {
       _.each(users, function(userData, userName) {
+        console.info(userData);
         if(userData.accepted == 1 && userData.rejected == 1) {
           app.alert.show('message-id', {
               level: 'confirmation',
