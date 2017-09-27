@@ -16,7 +16,7 @@
         'focus .project-name': 'searchProjectByName',
         'click .project-item': 'setProjectItem',
         'keyup .project-item': 'moveOverProjectItem',
-        // 'focusout .project-name': 'closeProjectList',
+        'click #content': 'closeProjectList',
     }),
 
 	initialize: function(options) {
@@ -27,7 +27,7 @@
 		self.collection.on('data:sync:complete', function() {
 
 			// get all data from db
-            app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheetData=1&time_sheet_id='+self.model.get('id'), null,{
+            app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheetData=1&time_sheet_id='+self.model.get('id')+'&user_id='+app.user.id, null,{
                 success: _.bind(function(data) {
                 	self.dataFetched = data.time_sheet;
                     self.listOfProjects = data.projects;
@@ -193,10 +193,11 @@
 	},
 
 	closeProjectList: function(e) {
-		var $list = $(e.currentTarget).find('.select2-results');
+		var $list = $(e.currentTarget).parent().find('.select2-results');
 
-		$list.html("");
-		$list.addClass('hide');
+		console.info($list);
+		// $list.html("");
+		// $list.hide();
 	},
 
 	searchProjectByName: function(e) {

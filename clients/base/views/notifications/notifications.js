@@ -160,6 +160,7 @@
                 'severity',
                 'parent_id',
                 'description',
+                'confirmation',
             ],
             apiOptions: {
                 skipMetadataHash: true
@@ -337,7 +338,7 @@
                 });
 
                 self.oldTimeSheet = _.filter(self.collection.models, function(model){
-                    if(model.get('severity')==='time sheet'){
+                    if(model.get('severity') === 'time sheet' && model.get('confirmation') == 0){
                         lastReviewDate = new Date(model.get('date_entered'));
                         lastReviewDate.setHours(0, 0, 0, 0);
 
@@ -596,7 +597,7 @@
             dataFetched: {},
             listOfProjects: [],
             events: {
-                'blur .slider-text': 'setSliderValue',
+                'blur .slider-text': 'setValue',
                 'click #saveButtonMonit':'saveClicked',
                 'click .add-project-monit': 'addProjectRow',
                 'click .remove-project-monit': 'removeProjectRow',
@@ -610,7 +611,7 @@
 
                 that.collection.on('data:sync:complete', function() {
                     // get all data from db
-                    app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheetData=1&time_sheet_id='+model.get('parent_id'), null,{
+                    app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheetData=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id, null,{
                         success: _.bind(function(data) {
                             self.dataFetched = data.time_sheet;
                             self.listOfProjects = data.projects;
@@ -651,6 +652,7 @@
                 var self = this,
                     string = '';
                 
+                console.info("dataFetched: ", self.dataFetched);
                 _.each(self.dataFetched.data, function(timeSheet, userID) {
                     string += '<div class="span12 first user-timesheets-monit">';
                     string += '<div class="span12 first" data-name="employee-name" data-userid="'+userID+'"><div class="span8 first">'+self.dataFetched.users[userID]+'</div><div class="span1 first"><a data-userid="'+userID+'" class="add-project-monit"><i class="fa-plus fa"></i></a></div></div>';
@@ -748,7 +750,7 @@
                 this.dataFetched.data[projectData.userid][projectData.id]['id'] = projectID;
             },
 
-            setSliderValue: function(e) {
+            setValue: function(e) {
                 var $element = $(e.currentTarget),
                     $parentElement = $element.parents('.project-monit-row'),
                     projectData = $parentElement.data();
@@ -766,11 +768,24 @@
                         'users': "",
                         'validation': true,
                         'project': false,
+                        'time_sheet': false,
+                        'same_project': false,
                     };
 
                 _.each(this.dataFetched.data, function(timeSheet, userID) {
                     var sum = 0;
+
+                    if(_.isEmpty(timeSheet)) {
+                        error['validation'] = false;
+                        error['time_sheet'] = true;
+                        error['project'] = false;
+                        error['users'] = '';
+                        error['same_project'] = false;
+                    }
+
+                    var projects = [];
                     _.each(timeSheet, function(projectData, timeSheetID) {
+
                         if(projectData['deleted'] == 0) {
                             sum += parseInt(projectData['value']);
                         }
@@ -787,12 +802,41 @@
                         if(_.isEmpty(projectData['id'])) {
                             error['validation'] = false;
                             error['project'] = true;
+                            error['same_project'] = false;
                             error['users'] = '';
                         }
+
+                        if(_.indexOf(projects, projectData['id'])) {
+                            error['same_project'] = true;
+                            error['validation'] = false;
+                            error['project'] = false;
+                            error['users'] = '';
+                            error['users'] = self.dataFetched.users[userID];
+                        }
+
+                        projects.push(projectData['id']);
                     });
+
+                    if(sum < 100) {
+                        error['validation'] = false;
+                        error['time_sheet'] = true;
+                        error['project'] = false;
+                        error['same_project'] = false;
+                        error['users'] = '';
+                    }
                 });
 
-                if(!error['validation'] && error['project'] == true) {
+                if(!error['validation'] && error['same_project']) {
+                    app.alert.show('message-id', {
+                        level: 'confirmation',
+                        messages: 'You choose the same project for '+error['users']+' more then one time',
+                        autoClose: false,
+                    });
+
+                    return;
+                }
+
+                if(!error['validation'] && error['project']) {
                     app.alert.show('message-id', {
                         level: 'confirmation',
                         messages: 'Please choose a project',
@@ -812,7 +856,15 @@
                     return;
                 }
 
-                console.info('updated: ', self.dataFetched.data);
+                if(!error['validation'] && error['time_sheet']) {
+                    app.alert.show('message-id', {
+                        level: 'confirmation',
+                        messages: 'Please fill a Time Sheet'+ error['users'],
+                        autoClose: false,
+                    });
+
+                    return;
+                }
 
                 $.ajax({
                     url: 'index.php?entryPoint=getData&updateTimeSheet=1&time_sheet_id='+ model.get('parent_id') +'&noCache='+ (new Date().getTime()),

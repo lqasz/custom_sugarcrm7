@@ -53,7 +53,7 @@ array (
           array (
             'name' => 'panel_body',
             'label' => 'LBL_RECORD_BODY',
-            'columns' => 1,
+            'columns' => 2,
             'labelsOnTop' => true,
             'placeholders' => true,
             'newTab' => false,
@@ -65,9 +65,16 @@ array (
                 'name' => 'accept_by_sv_c',
                 'label' => 'LBL_ACCEPT_BY_SV',
                 'readonly' => true,
-                'span' => 12,
+                'span' => 6,
               ),
               1 => 
+              array (
+                'name' => 'to_fa_c',
+                'label' => 'LBL_TO_FA',
+                'readonly' => true,
+                'span' => 6,
+              ),
+              2 => 
               array (
                 'name' => 'description',
                 'span' => 12,
@@ -78,6 +85,58 @@ array (
         'templateMeta' => 
         array (
           'useTabs' => false,
+        ),
+        'buttons' => 
+        array (
+          0 => 
+          array (
+            'type' => 'button',
+            'name' => 'cancel_button',
+            'label' => 'LBL_CANCEL_BUTTON_LABEL',
+            'css_class' => 'btn-invisible btn-link',
+            'showOn' => 'edit',
+          ),
+          1 => 
+          array (
+            'type' => 'rowaction',
+            'event' => 'button:save_button:click',
+            'name' => 'save_button',
+            'label' => 'LBL_SAVE_BUTTON_LABEL',
+            'css_class' => 'btn btn-primary',
+            'showOn' => 'edit',
+            'acl_action' => 'edit',
+          ),
+          2 => 
+          array (
+            'type' => 'actiondropdown',
+            'name' => 'main_dropdown',
+            'primary' => true,
+            'showOn' => 'view',
+            'buttons' => 
+            array (
+              0 => 
+              array (
+                'type' => 'rowaction',
+                'event' => 'button:edit_button:click',
+                'name' => 'edit_button',
+                'label' => 'LBL_EDIT_BUTTON_LABEL',
+                'acl_action' => 'edit',
+              ),
+              1 => 
+              array (
+                'type' => 'rowaction',
+                'event' => 'button:to_csv:click',
+                'name' => 'to_csv',
+                'label' => 'Export to CSV',
+                'acl_action' => 'edit',
+              ),
+            ),
+          ),
+          3 => 
+          array (
+            'name' => 'sidebar_toggle',
+            'type' => 'sidebartoggle',
+          ),
         ),
       ),
     ),
