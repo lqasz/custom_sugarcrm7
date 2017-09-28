@@ -70,6 +70,7 @@ class ActivitiesData
 
 	public function getBugInformations()
 	{
+		$sum = 0;
 		$query = "SELECT COUNT(`id`) AS `count`
 					FROM `bugs`
 					WHERE `created_by`='{$this->user}'
@@ -78,7 +79,7 @@ class ActivitiesData
 		$result = $this->db->query($query);
 		$row = $this->db->fetchByAssoc($result);
 
-		return $row['count'];
+		return ($sum += $row['count']);
 	}
 
 	public function getChatActivities()

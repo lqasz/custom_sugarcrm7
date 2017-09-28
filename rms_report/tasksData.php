@@ -57,25 +57,18 @@ class TasksData
 		);
 	}
 
-	public function test()
-	{
-		$data = array();
-		$rms_report = $this->db->query("SELECT * FROM `rms_report_tasks`");
-		while($row = $this->db->fetchByAssoc($rms_report)) {
-			foreach($row as $key => $json) {
-				$json = mb_convert_encoding($json, "UTF-8");
-				$json = str_replace('&quot;', '"', $json);
-
-				$data[$key] = json_decode($json, true);
-			}
-		}
-	}
-
 	public function getTasks($where, $status='NOT', $deleted=0, $new_one=0, $user_activity='`assigned_user_id`')
 	{
 		$sum = array(
 			"all" => 0
 		);
+		$language_pack = array(
+			"AA_Departments" => "Department",
+			"AC_FeeProposal" => "Fee Proposal",
+			"AA_Persons" => "Person",
+			"AA_Buildings" => "Building",
+		);
+
 		$sql_tasks = "SELECT COUNT(`id`) AS `count`, `parent_id`, `parent_type`
 						FROM `tasks` 
 							LEFT JOIN `tasks_cstm` 
@@ -113,7 +106,9 @@ class TasksData
 
 				$sum[$parent_type_row['project_number_c']] = $row['count'];
 			} else {
-				$sum[$row['parent_type']] = $row['count'];
+				
+
+				$sum[$language_pack[$row['parent_type']]] = $row['count'];
 			}
 			
 			$sum['all'] += $row['count'];
@@ -127,7 +122,7 @@ class TasksData
 
 				$sum[$parent_type_row['project_number_c']]++;
 			} else {
-				$sum[$row['parent_type']]++;
+				$sum[$language_pack[$row['parent_type']]]++;
 			}
 			
 			$sum['all']++;

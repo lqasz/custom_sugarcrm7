@@ -10,10 +10,22 @@ class ReportVisualization
 	public $db;
 	public $assistants;
 	public $managers;
+	public $language_pack;
 
 	public function __construct()
 	{
 		$this->db = DBManagerFactory::getInstance();
+
+		$this->language_pack = array(
+			"overdue_tasks" => "Overdue Tasks",
+			"today_tasks" => "Today Tasks",
+			"tomorow_tasks" => "Tomorow Tasks",
+			"next_tasks" => "Next Tasks",
+			"created_tasks" => "Created Tasks",
+			"closed" => "Closed Tasks",
+			"deleted" => "Deleted Tasks",
+			"quick_tasks" => "Quick Tasks"
+		);
 		// $manager = "";
 		// $previous = "1";
 		// foreach($departments as $dep_name => $department) {
@@ -30,7 +42,7 @@ class ReportVisualization
 	public function getReportData()
 	{
 		$data = array();
-		$tasks_result = $this->db->query("SELECT * FROM `rms_report_tasks` WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-7) AND CURRENT_DATE");
+		$tasks_result = $this->db->query("SELECT * FROM `rms_report_tasks` WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE");
 		while($row = $this->db->fetchByAssoc($tasks_result)) {
 			$json_result = array();
 
@@ -101,57 +113,190 @@ class ReportVisualization
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
 				foreach($employees as $key => $employee) {
-					$header_row = '<tr><th></th><th></th><th></th><th colspan="3">'. $employee .'</th>';
-					$user_html = $this->generateReportForUser($data[$employee], $header_row);
+					$user_html = $this->generateReportForUser($data[$employee], $employee);
+					die();
 				}
 			}
 		}
 	}
 
-	public function generateReportForUser($user_data, $header_row)
+	public function generateReportForUser($user_data, $employee)
 	{
-		$structure = array();
-		$structure['first_row'] = $header_row;
+		$html = "<table class='employee-table'>
+					<tr class='employee-name'>
+						<th>$employee</th>
+					</tr>
+					<tr class='employee-data'>
+						<td>
+							<table class='dates-table'>
+								<tr class='dates'>";
 
 		foreach($user_data as $date => $date_data) {
-			$structure['first_row'] .= '<th>'. $date .'</th>';
+			$html .= "<td>
+						<table class='single-date-table'>
+							<tr class='date-value'>
+								<th>$date</th>
+							</tr>
+							<tr>
+								<td>
+									<table class='modules-table'>";
+
 			foreach($date_data as $module_name => $module_data) {
+				$html .= "<tr class='module-name'>
+							<th>$module_name</th>
+						</tr>
+						<tr>
+							<td>
+								<table class='single-module-table'>";
+
 				foreach($module_data as $type => $data_type) {
+					$html .= "<tr class='module-type'>";
+					
 					if($module_name == "Tasks") {
 						if($type != "sum") {
 							if($type == "created_tasks" || $type == "quick_tasks" || $type == "closed" || $type == "deleted") {
-								$structure[$module_name][$type][$date]['Sum'] = $data_type['all'];
+								$html .= "	<td>". $this->language_pack[$type] .":</td>
+											<td>". $data_type['all'] ."</td>";
+								// $structure[$module_name][$type][$date]['Sum'] = $data_type['all'];
 							} else {
 								if($data_type['all'] != 0) {
+									$html .= "<td colspan='2'>
+												<table class='submodule-type-table'>
+													<tr class='submodule-type-name'>
+														<th colspan='2'>". $this->language_pack[$type] ."
+														</th>
+													</tr>
+													<tr>
+														<td>
+															<table class='submodule-values'>";
+
 									foreach($data_type as $key => $value) {
 										if($key != "all") {
-											$structure[$module_name][$type][$date][$key] = $value;
+											$html .= "<tr class='submodel-value'>
+														<td>". $key .":</td>
+														<td>". $value ."</td>
+													</tr>";
+											// $structure[$module_name][$type][$date][$key] = $value;
 										}
 									}
+
+									$html .= "				</table>
+														</td>
+													</tr>
+												</table>
+											</td>";
+								} else {
+									$html .= "<td colspan='2'>
+												<table class='submodule-type-table'>
+													<tr class='submodule-type-name'>
+														<th colspan='2'>". $this->language_pack[$type] ."
+														</th>
+													</tr>
+													<tr>
+														<td>
+															<table class='submodule-values'>
+																<tr class='submodel-value'>	
+																	<td>Sum: </td>
+																	<td>0</td>
+																</tr>
+															</table>
+														</td>
+													</tr>
+												</table>
+											</td>";
 								}
 							}
 						}
 					} else if($module_name != "Activities") {
 						if(!is_array($data_type)) {
-							$structure[$module_name][$date][$type] = $data_type;
+							$html .= "	<td>". $type .":</td>
+										<td>". $data_type ."</td>";
+							// $structure[$module_name][$date][$type]['Value'] = $data_type;
 						} else {
 							if($data_type['all'] != 0) {
+								$html .= "<td colspan='2'>
+											<table class='submodule-type-table'>
+												<tr class='submodule-type-name'>
+													<th colspan='2'>". $type ."</th>
+												</tr>
+												<tr>
+													<td>
+														<table class='submodule-values'>";
+								
 								foreach($data_type as $key => $value) {
 									if($key != "all") {
-										$structure[$module_name][$date][$key] = $value;
+										$html .= "<tr class='submodel-value'>
+													<td>". $key ."</td>
+													<td>". $value ."</td>
+												</tr>";
+										// $structure[$module_name][$date][$key]['Value'] = $value;
 									}
 								}
+								$html .= "				</table>
+													</td>
+												</tr>
+											</table>
+										</td>";
 							} else {
-								$structure[$module_name][$date][$type] = 0;
+								$html .= "	<td>". $type ."</td>
+											<td>". 0 ."</td>";
+								// $structure[$module_name][$date][$type]['Value'] = 0;
 							}
 						}
+					} else {
+						if(!is_array($data_type)) {
+							$html .= "	<td>". $type ."</td>
+										<td>". $data_type ."</td>";
+							// $structure[$module_name][$date][$type]['Value'] = $data_type;
+						} else {
+							$html .= "<td colspan='2'>
+											<table class='submodule-type-table'>
+												<tr class='submodule-type-name'>
+													<th colspan='2'>". $type ."</th>
+												</tr>
+												<tr>
+													<td>
+														<table class='submodule-values'>";
+
+							foreach($data_type as $key => $value) {
+								$html .= "<tr class='submodel-value'>
+											<td>". $key ."</td>
+											<td>". $value ."</td>
+										</tr>";
+								// $structure[$module_name][$date][$type][$key] = $value;
+							}
+
+							$html .= "					</table>
+													</td>
+												</tr>
+											</table>
+										</td>";
+						}
 					}
+
+					$html .= "</tr>";
 				}
+
+				$html .= "		</table>
+							</td>
+						</tr>";
 			}
+
+			$html .= "				</table>
+								</td>
+							</tr>
+						</table>
+					</td>";
 		}
 
-		$structure['first_row'] .= '</tr>';
-		dump($structure);
+		$html .= "				</tr>
+							</table>
+						</td>	
+					</tr>
+				</table>";
+
+		echo $html;
+		// $this->createForAssistant($structure);
 	}
 
 	private function generateReportByDepartment($department, $dep_name, &$manager)
