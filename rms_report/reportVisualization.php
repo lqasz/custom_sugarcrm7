@@ -107,17 +107,25 @@ class ReportVisualization
 
 	public function prepareReport()
 	{
+		$rms_users = array();
 		$data = $this->getReportData();
 		$users = $this->getUsersDepartments();
 
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
-				foreach($employees as $key => $employee) {
-					$user_html = $this->generateReportForUser($data[$employee], $employee);
-					die();
+				if($manager != "Mateusz Ruszkowski") {
+					$rms_users[$manager][] = $this->generateReportForUser($data[$manager], $manager);
+					foreach($employees as $key => $employee) {
+						$rms_users[$manager][] = $this->generateReportForUser($data[$employee], $employee);
+					}
 				}
 			}
 		}
+
+
+
+		dump($rms_users);
+		die();
 	}
 
 	public function generateReportForUser($user_data, $employee)
@@ -157,7 +165,6 @@ class ReportVisualization
 							if($type == "created_tasks" || $type == "quick_tasks" || $type == "closed" || $type == "deleted") {
 								$html .= "	<td>". $this->language_pack[$type] .":</td>
 											<td>". $data_type['all'] ."</td>";
-								// $structure[$module_name][$type][$date]['Sum'] = $data_type['all'];
 							} else {
 								if($data_type['all'] != 0) {
 									$html .= "<td colspan='2'>
@@ -176,7 +183,6 @@ class ReportVisualization
 														<td>". $key .":</td>
 														<td>". $value ."</td>
 													</tr>";
-											// $structure[$module_name][$type][$date][$key] = $value;
 										}
 									}
 
@@ -211,7 +217,6 @@ class ReportVisualization
 						if(!is_array($data_type)) {
 							$html .= "	<td>". $type .":</td>
 										<td>". $data_type ."</td>";
-							// $structure[$module_name][$date][$type]['Value'] = $data_type;
 						} else {
 							if($data_type['all'] != 0) {
 								$html .= "<td colspan='2'>
@@ -229,7 +234,6 @@ class ReportVisualization
 													<td>". $key ."</td>
 													<td>". $value ."</td>
 												</tr>";
-										// $structure[$module_name][$date][$key]['Value'] = $value;
 									}
 								}
 								$html .= "				</table>
@@ -240,14 +244,12 @@ class ReportVisualization
 							} else {
 								$html .= "	<td>". $type ."</td>
 											<td>". 0 ."</td>";
-								// $structure[$module_name][$date][$type]['Value'] = 0;
 							}
 						}
 					} else {
 						if(!is_array($data_type)) {
 							$html .= "	<td>". $type ."</td>
 										<td>". $data_type ."</td>";
-							// $structure[$module_name][$date][$type]['Value'] = $data_type;
 						} else {
 							$html .= "<td colspan='2'>
 											<table class='submodule-type-table'>
@@ -263,7 +265,6 @@ class ReportVisualization
 											<td>". $key ."</td>
 											<td>". $value ."</td>
 										</tr>";
-								// $structure[$module_name][$date][$type][$key] = $value;
 							}
 
 							$html .= "					</table>
@@ -295,8 +296,18 @@ class ReportVisualization
 					</tr>
 				</table>";
 
-		echo $html;
-		// $this->createForAssistant($structure);
+		$html_content .= '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+					<html xmlns="http://www.w3.org/1999/xhtml">
+						<head>
+							<style>
+							</style>
+						</head>
+						<body>';
+		$html_content .= $html;
+		$html_content .= '</body>
+					</html>';
+
+		return $html;
 	}
 
 	private function generateReportByDepartment($department, $dep_name, &$manager)
