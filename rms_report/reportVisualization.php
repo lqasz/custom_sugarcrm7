@@ -11,9 +11,13 @@ class ReportVisualization
 	public $assistants;
 	public $managers;
 	public $language_pack;
+	public $week_tasks;
+	public $week_notifi;
+	public $week_modules;
 
 	public function __construct()
 	{
+		$this->week_tasks = array();
 		$this->db = DBManagerFactory::getInstance();
 
 		$this->language_pack = array(
@@ -45,15 +49,24 @@ class ReportVisualization
 		$tasks_result = $this->db->query("SELECT * FROM `rms_report_tasks` WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE");
 		while($row = $this->db->fetchByAssoc($tasks_result)) {
 			$json_result = array();
+			$all_parent_types = array();
 
 			foreach($row as $key => $json) {
 				if($key != "id" && $key != "user_name" && $key != "date_entered") {
 					$json_result[$key] = mb_convert_encoding($json, "UTF-8");
 					$json_result[$key] = str_replace('&quot;', '"', $json_result[$key]);
 					$json_result[$key] = json_decode($json_result[$key], true);
+
+					if($key != "sum") {
+						foreach($json_result[$key] as $parent_type => $value) {
+							if($parent_type != "all") {
+								$this->week_tasks[$row["user_name"]][$parent_type] = $value;
+							}
+						}
+					}
 				}
 			}
-
+			
 			$date = date("d-m-Y", strtotime($row["date_entered"]));
 			$data[$row["user_name"]][$date]['Tasks'] = $json_result;
 		}
@@ -82,6 +95,10 @@ class ReportVisualization
 			$notification_result = str_replace('&quot;', '"', $notification_result);
 			$notification_result = json_decode($notification_result, true);
 			
+			foreach($notification_result as $severity => $value) {
+				$this->week_notifi[$row["user_name"]][$severity] = $value;
+			}
+
 			$data[$row["user_name"]][$date]['Activities']["Bug"] = $row['bugs'];
 			$data[$row["user_name"]][$date]['Activities']["Chat"] = $row['chat'];
 			$data[$row["user_name"]][$date]['Activities']["Login"] = $login_result;
@@ -130,6 +147,7 @@ class ReportVisualization
 
 	public function generateReportForUser($user_data, $employee)
 	{
+		$iter1 = 0;
 		$html = "<table class='employee-table'>
 					<tr class='employee-name'>
 						<th>$employee</th>
@@ -139,9 +157,20 @@ class ReportVisualization
 							<table class='dates-table'>
 								<tr class='dates'>";
 
+		$date_data_html = "";
+		$horizontal_html = "";
 		foreach($user_data as $date => $date_data) {
-			$html .= "<td>
-						<table class='single-date-table'>
+			if($iter1 == 0) {
+				$horizontal_html .= "<td class='horizontal-content'><table class='module-name-table'>
+							<tr class='module-name-value'>
+								<th>Module Name</th>
+							</tr>
+							<tr>
+								<td>
+									<table class='horizontal-modules-table'>";
+			}
+
+			$date_data_html .= "<td  class='date-content'><table class='single-date-table'>
 							<tr class='date-value'>
 								<th>$date</th>
 							</tr>
@@ -149,125 +178,242 @@ class ReportVisualization
 								<td>
 									<table class='modules-table'>";
 
+			$i = 0;
 			foreach($date_data as $module_name => $module_data) {
-				$html .= "<tr class='module-name'>
-							<th>$module_name</th>
-						</tr>
-						<tr>
-							<td>
-								<table class='single-module-table'>";
+				$class_name = "";
+
+				if($i % 2 == 0) {
+					$class_name = "gray";
+				}
+
+				if($iter1 == 0) {
+					$inline_css = "";
+					if($module_name != "Tasks" && $module_name != "Activities") {
+						$inline_css = "style='text-align: right'";
+					}
+					$horizontal_html .= "<tr class='module-name $class_name'>
+							<th $inline_css class='module-name-row'>$module_name</th>
+							<td class='module-name-row'>
+								<table class='single-module-horizontal-table'>";
+				}
+
+				$date_data_html .= " <tr class='$class_name module-data'>
+										<td class='module-name-row'>
+											<table class='single-module-table'>";
 
 				foreach($module_data as $type => $data_type) {
-					$html .= "<tr class='module-type'>";
-					
+					if($iter1 == 0) { 
+						if(($type == "created_tasks" || $type == "quick_tasks" || $type == "closed" || $type == "deleted") || $module_name != "Tasks") {
+
+							if($module_name == "Tasks") {
+								$horizontal_html .= "<tr class='module-type task-type-data'>";
+							} else {
+								$horizontal_html .= "<tr class='module-type'>";
+							}
+						} else {
+							$horizontal_html .= "<tr class='module-type horizontal-header'>";
+						}
+					}
+
+					if(($type == "created_tasks" || $type == "quick_tasks" || $type == "closed" || $type == "deleted") || $module_name != "Tasks") {
+
+						if($module_name == "Tasks") {
+							$date_data_html .= "<tr class='module-type simple-type-data task-type-data'>";
+						} else {
+							$date_data_html .= "<tr class='module-type simple-type-data'>";
+						}
+					} else {
+						$date_data_html .= "<tr class='module-type complex-type-data'>";
+					}
+
 					if($module_name == "Tasks") {
 						if($type != "sum") {
 							if($type == "created_tasks" || $type == "quick_tasks" || $type == "closed" || $type == "deleted") {
-								$html .= "	<td>". $this->language_pack[$type] .":</td>
-											<td>". $data_type['all'] ."</td>";
+								if($iter1 == 0) {
+									$horizontal_html .= "<td>&nbsp;</td>
+														<td>&nbsp;</td>";
+								}
+								$date_data_html .= "<td class='type-row'>". $this->language_pack[$type] ."</td>
+											<td class='align-center'>". $data_type['all'] ."</td>";
 							} else {
-								if($data_type['all'] != 0) {
-									$html .= "<td colspan='2'>
-												<table class='submodule-type-table'>
-													<tr class='submodule-type-name'>
-														<th colspan='2'>". $this->language_pack[$type] ."
-														</th>
-													</tr>
-													<tr>
-														<td>
-															<table class='submodule-values'>";
+								if($iter1 == 0) {
+									$horizontal_html .= "<td colspan='2'>
+															<table>
+																<tr>
+																	<th colspan='2'>". $this->language_pack[$type] ."
+																	</th>
+																	<td>
+																		<table>";
 
-									foreach($data_type as $key => $value) {
-										if($key != "all") {
-											$html .= "<tr class='submodel-value'>
-														<td>". $key .":</td>
-														<td>". $value ."</td>
-													</tr>";
-										}
+									foreach($this->week_tasks[$employee] as $parent_type => $val) {
+										$value = (!empty($data_type[$parent_type])) ? $data_type[$parent_type] : 0 ;
+										$horizontal_html .= "<tr class='submodel-value'>
+													<td>&nbsp;</td>
+													<td>&nbsp;</td>
+												</tr>";
 									}
+								}
+								$date_data_html .= "<td colspan='2'>
+											<table class='submodule-type-table'>
+												<tr>
+													<td>
+														<table class='submodule-values'>";
 
-									$html .= "				</table>
-														</td>
-													</tr>
-												</table>
-											</td>";
-								} else {
-									$html .= "<td colspan='2'>
-												<table class='submodule-type-table'>
-													<tr class='submodule-type-name'>
-														<th colspan='2'>". $this->language_pack[$type] ."
-														</th>
-													</tr>
-													<tr>
-														<td>
-															<table class='submodule-values'>
-																<tr class='submodel-value'>	
-																	<td>Sum: </td>
-																	<td>0</td>
-																</tr>
-															</table>
-														</td>
-													</tr>
-												</table>
-											</td>";
+								foreach($this->week_tasks[$employee] as $parent_type => $val) {
+									$value = (!empty($data_type[$parent_type])) ? $data_type[$parent_type] : 0 ;
+									$date_data_html .= "<tr class='submodel-value'>
+												<td class='type-row'>". $parent_type ."</td>
+												<td class='align-center'>". $value ."</td>
+											</tr>";
+								}
+
+								$date_data_html .= "	</table>
+													</td>
+												</tr>
+											</table>
+										</td>";
+
+								if($iter1 == 0) {
+									$horizontal_html .= "	</table>
+													</td>
+												</tr>
+											</table>
+										</td>";
 								}
 							}
 						}
 					} else if($module_name != "Activities") {
 						if(!is_array($data_type)) {
-							$html .= "	<td>". $type .":</td>
-										<td>". $data_type ."</td>";
+							$date_data_html .= "<td class='type-row'>". $type ."</td>
+												<td class='align-center'>". $data_type ."</td>";
+
+							if($iter1 == 0) {
+								$horizontal_html .= "<td>&nbsp;</td>
+													<td>&nbsp;</td>";
+							}
 						} else {
 							if($data_type['all'] != 0) {
-								$html .= "<td colspan='2'>
+								if($iter1 == 0) {
+									$horizontal_html .= "<td colspan='2'>
 											<table class='submodule-type-table'>
 												<tr class='submodule-type-name'>
 													<th colspan='2'>". $type ."</th>
-												</tr>
+													<td>
+														<table class='submodule-values'>";
+								
+									foreach($data_type as $key => $value) {
+										if($key != "all") {
+											$horizontal_html .= "<tr class='submodel-value'>
+														<td>&nbsp;</td>
+														<td>&nbsp;</td>
+													</tr>";
+										}
+									}
+								}
+
+								$date_data_html .= "<td colspan='2'>
+											<table class='submodule-type-table'>
 												<tr>
 													<td>
 														<table class='submodule-values'>";
 								
 								foreach($data_type as $key => $value) {
 									if($key != "all") {
-										$html .= "<tr class='submodel-value'>
-													<td>". $key ."</td>
-													<td>". $value ."</td>
+										$date_data_html .= "<tr class='submodel-value'>
+													<td class='type-row'>". $key ."</td>
+													<td class='align-center'>". $value ."</td>
 												</tr>";
 									}
 								}
-								$html .= "				</table>
+
+								$date_data_html .= "	</table>
 													</td>
 												</tr>
 											</table>
 										</td>";
+								if($iter1 == 0) {
+									$horizontal_html .= "</table>
+													</td>
+												</tr>
+											</table>
+										</td>";
+								}
 							} else {
-								$html .= "	<td>". $type ."</td>
-											<td>". 0 ."</td>";
+								$date_data_html .= "<td class='type-row'>". $type ."</td>
+													<td class='align-center'>". 0 ."</td>";
+								if($iter1 == 0) {
+									$horizontal_html .= "<td>&nbsp;</td>
+														<td>&nbsp;</td>";
+								}
 							}
 						}
 					} else {
 						if(!is_array($data_type)) {
-							$html .= "	<td>". $type ."</td>
-										<td>". $data_type ."</td>";
+							$date_data_html .= "<td class='type-row'>". $type ."</td>
+												<td class='align-center'>". $data_type ."</td>";
+							if($iter1 == 0) {
+								$horizontal_html .= "<td>&nbsp;</td>
+													<td>&nbsp;</td>";
+							}
 						} else {
-							$html .= "<td colspan='2'>
+							if($iter1 == 0) {
+								$horizontal_html .= "<td colspan='2'>
 											<table class='submodule-type-table'>
 												<tr class='submodule-type-name'>
 													<th colspan='2'>". $type ."</th>
-												</tr>
+													<td>
+														<table class='submodule-values'>";
+
+								if($type != "Login") {
+									foreach($this->week_notifi[$employee] as $severity => $val) {
+										$value = (!empty($data_type[$severity])) ? $data_type[$severity] : 0 ;
+										$horizontal_html .= "<tr class='submodel-value'>
+													<td>&nbsp;</td>
+													<td>&nbsp;</td>
+												</tr>";
+									}
+								} else {
+									foreach($data_type as $key => $value) {
+										$horizontal_html .= "<tr class='submodel-value'>
+													<td>&nbsp;</td>
+													<td>&nbsp;</td>
+												</tr>";
+									}
+								}
+							}
+
+							$date_data_html .= "<td colspan='2'>
+											<table class='submodule-type-table'>
 												<tr>
 													<td>
 														<table class='submodule-values'>";
 
-							foreach($data_type as $key => $value) {
-								$html .= "<tr class='submodel-value'>
-											<td>". $key ."</td>
-											<td>". $value ."</td>
-										</tr>";
+							if($type != "Login") {
+								foreach($this->week_notifi[$employee] as $severity => $val) {
+									$value = (!empty($data_type[$severity])) ? $data_type[$severity] : 0 ;
+									$date_data_html .= "<tr class='submodel-value'>
+												<td class='type-row'>". $severity ."</td>
+												<td class='align-center'>". $value ."</td>
+											</tr>";
+								}
+							} else {
+								foreach($data_type as $key => $value) {
+									$date_data_html .= "<tr class='submodel-value'>
+												<td class='type-row'>". $key ."</td>
+												<td class='align-center'>". $value ."</td>
+											</tr>";
+								}
 							}
 
-							$html .= "					</table>
+							if($iter1 == 0) {
+								$horizontal_html .= "		</table>
+													</td>
+												</tr>
+											</table>
+										</td>";
+							}
+
+							$date_data_html .= "		</table>
 													</td>
 												</tr>
 											</table>
@@ -275,31 +421,135 @@ class ReportVisualization
 						}
 					}
 
-					$html .= "</tr>";
+					if($iter1 == 0) { $horizontal_html .= "</tr>"; }
+					$date_data_html .= "</tr>";
 				}
 
-				$html .= "		</table>
+				$date_data_html .= "</table>
 							</td>
 						</tr>";
+
+				if($iter1 == 0) {
+					$horizontal_html .= "</table>
+								</td>
+							</tr>";
+				}
+
+				$i++;
 			}
 
-			$html .= "				</table>
+			$date_data_html .= "	</table>
 								</td>
 							</tr>
 						</table>
 					</td>";
+
+			if($iter1 == 0) {
+				$horizontal_html .= "	</table>
+								</td>
+							</tr>
+						</table>
+					</td>";
+			}
+			
+			$iter1++;
 		}
 
+		$html .= $horizontal_html.$date_data_html;
 		$html .= "				</tr>
 							</table>
 						</td>	
 					</tr>
 				</table>";
 
-		$html_content .= '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+		// echo $html; die();
+		// echo $horizontal_html; die();
+
+		$html_content = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 					<html xmlns="http://www.w3.org/1999/xhtml">
 						<head>
 							<style>
+								body {
+							  		color: #000;
+								}
+								table {
+									border-collapse: collapse;
+								}
+								.employee-name {
+									margin-bottom: 1em;
+									font-size: 1.5em;
+									font-weight: bold;
+									text-align: center;
+								}
+								.module-name-value, .date-value {
+									background-color: #70b933;
+									border: 1px solid #70b933;
+									font-weight: normal;
+									text-align: center;
+									color: white;
+									height: 40px;
+								}
+								tbody, tr, th, td {
+									padding: 0;
+									white-space: normal;
+								}
+								.gray {
+									background-color: rgba(94,93,82,.1);
+								}
+								.module-name>th {
+									width: 60%;
+									border-left: 1px solid #000;
+									border-top: 1px solid #000;
+									border-bottom: 1px solid #000;
+								}
+								.module-name>td {
+									border-top: 1px solid #000;
+									border-bottom: 1px solid #000;
+								}
+								.module-data>td {
+									border-top: 1px solid #000;
+								}
+								table {
+									width: 100%;
+								}
+								.align-center {
+									text-align: center;
+								}
+								.horizontal-header>td {
+									border-bottom: 1px solid #000;
+								}
+								.complex-type-data>td {
+									border-bottom: 1px solid rgba(94,93,82,0);
+								}
+								.horizontal-content {
+									width: 500px;
+								}
+								.modules-table>tr {
+									background-color: #F5F5F5;
+								}
+								.submodel-value {
+									border-bottom: 1px solid #000;
+									border-right: 1px solid #000;
+								}
+								.submodel-value td {
+									height: 20px;
+								}
+								.single-module-horizontal-table .submodel-value,
+								.horizontal-header .submodel-value {
+									border-bottom: 1px solid rgba(94,93,82,0);
+									border-right: 1px solid rgba(94,93,82,0);
+								}
+								.type-row {
+									width: 30%;
+								}
+								.task-type-data {
+									border-right: 1px solid #000;
+									border-bottom: 1px solid #000;
+								}
+								.single-module-horizontal-table .task-type-data {
+									border-right: 1px solid rgba(94,93,82,0);
+									border-bottom: 1px solid rgba(94,93,82,0);
+								}
 							</style>
 						</head>
 						<body>';
@@ -307,7 +557,8 @@ class ReportVisualization
 		$html_content .= '</body>
 					</html>';
 
-		return $html;
+		echo $html_content; die();
+		return $html_content;
 	}
 
 	private function generateReportByDepartment($department, $dep_name, &$manager)
