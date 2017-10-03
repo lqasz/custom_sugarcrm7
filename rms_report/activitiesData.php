@@ -34,21 +34,23 @@ class ActivitiesData
 						AND `is_read`=0 
 					GROUP BY `severity`";
 
+		$all = 0;
 		$result = $this->db->query($query);
 		while($row = $this->db->fetchByAssoc($result)) {
 			$severity = (empty($row['severity'])) ? "Information" : $row['severity'];
 			$sum[$severity] = $row['ile'];
-			$sum['all'] += $row['ile'];
+			$all += $row['ile'];
 		}
 		
+		$sum['Number of all Notifications'] += $all;
 		return $sum;
 	}
 
 	public function getLoginToRMS()
 	{
 		$sum = array(
-			"mobile" => 0,
-			"normal" => 0,
+			"Login by Mobile" => 0,
+			"Normal Login" => 0,
 		);
 		$query = "SELECT COUNT(`id`) AS `count`, `mobile`
 					FROM `tracker_mobile` 
@@ -58,10 +60,10 @@ class ActivitiesData
 
 		$result = $this->db->query($query);
 		while($row = $this->db->fetchByAssoc($result)) {
-			if($row['mobile'] == 1) {
-				$sum['mobile'] += $row['count'];
+			if($row['Login by Mobile'] == 1) {
+				$sum['Login by Mobile'] += $row['count'];
 			} else {
-				$sum['normal'] += $row['count'];
+				$sum['Normal Login'] += $row['count'];
 			}
 		}
 		
@@ -114,7 +116,7 @@ class ActivitiesData
 		$this->db->query("INSERT INTO `rms_report_activities` VALUES(
 			'".create_guid()."', 
 			'{$user_name}',
-			CURRENT_TIMESTAMP,
+			ADDDATE(CURRENT_DATE,-1),
 			'{$this->data["bugs"]}',
 			'{$this->data["login"]}',
 			'{$this->data["notifications"]}',

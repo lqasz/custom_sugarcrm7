@@ -27,7 +27,7 @@ class TasksData
 		$this->data['Created Tasks'] = json_encode($this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`'));
 		$this->data['Quick Tasks'] = json_encode($this->getTasks("", 'NOT', 0, 1));
 
-		$this->data['Sum'] = $this->data['Overdue Tasks']['all'] + $this->data['Today Tasks']['all'] + $this->data['Tomorrow Tasks']['all'] + $this->data['Next Tasks']['all'];
+		$this->data['Sum'] = $this->data['Overdue Tasks'] + $this->data['Today Tasks'] + $this->data['Tomorrow Tasks'] + $this->data['Next Tasks'];
 
 		$this->data['Overdue Tasks'] = json_encode($this->data['Overdue Tasks']);
 		$this->data['Today Tasks'] = json_encode($this->data['Today Tasks']);
@@ -43,7 +43,7 @@ class TasksData
 		$this->db->query("INSERT INTO `rms_report_tasks` VALUES(
 			'".create_guid()."', 
 			'{$user_name}',
-			CURRENT_TIMESTAMP,
+			ADDDATE(CURRENT_DATE,-1),
 			'{$this->data['Overdue Tasks']}',
 			'{$this->data['Today Tasks']}',
 			'{$this->data['Tomorrow Tasks']}',
@@ -52,23 +52,14 @@ class TasksData
 			'{$this->data['Quick Tasks']}',
 			'{$this->data['Closed Tasks']}',
 			'{$this->data['Deleted Tasks']}',
-			'{$this->data['sum']}'
+			'{$this->data['Sum']}'
 			)"
 		);
 	}
 
 	public function getTasks($where, $status='NOT', $deleted=0, $new_one=0, $user_activity='`assigned_user_id`')
 	{
-		$sum = array(
-			"all" => 0
-		);
-		$language_pack = array(
-			"AA_Departments" => "Department",
-			"AC_FeeProposal" => "Fee Proposal",
-			"AA_Persons" => "Person",
-			"AA_Buildings" => "Building",
-		);
-
+		$sum = 0;
 		$sql_tasks = "SELECT COUNT(`id`) AS `count`, `parent_id`, `parent_type`
 						FROM `tasks` 
 							LEFT JOIN `tasks_cstm` 
@@ -99,33 +90,13 @@ class TasksData
 		$sql_periodic_tasks .= $where;
 
 		$result = $this->db->query($sql_tasks);
-		while($row = $this->db->fetchByAssoc($result)) {
-			if($row['parent_type'] == "Project") {
-				$parent_type_result = $this->db->query("SELECT `project_number_c` FROM `project_cstm` WHERE `id_c`='{$row['parent_id']}'");
-				$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
-
-				$sum[$parent_type_row['project_number_c']] = $row['count'];
-			} else {
-				
-
-				$sum[$language_pack[$row['parent_type']]] = $row['count'];
-			}
-			
-			$sum['all'] += $row['count'];
+		while($row = $this->db->fetchByAssoc($result)) {			
+			$sum += $row['count'];
 		}
 
 		$result = $this->db->query($sql_periodic_tasks);
 		while($row = $this->db->fetchByAssoc($result)) {
-			if($row['parent_type'] == "Project") {
-				$parent_type_result = $this->db->query("SELECT `project_number_c` FROM `project_cstm` WHERE `id_c`='{$row['parent_id']}'");
-				$parent_type_row = $this->db->fetchByAssoc($parent_type_result);
-
-				$sum[$parent_type_row['project_number_c']]++;
-			} else {
-				$sum[$language_pack[$row['parent_type']]]++;
-			}
-			
-			$sum['all']++;
+			$sum++;
 		}
 
 		return $sum;
