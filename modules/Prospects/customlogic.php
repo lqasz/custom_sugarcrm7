@@ -37,30 +37,23 @@ class Prospects_CustomLogic
     	}
     }
 
-    function createPerson(&$bean, $event, $arguments)
+    function associatePerson(&$bean, $event, $arguments)
     {
     	$db = DBManagerFactory::getInstance();
-    	$get_contact_data = $db->query("SELECT `id` FROM `contacts` WHERE `deleted` = 0 AND `first_name` = '{$bean->first_name}' AND `last_name` = '{$bean->last_name}'");
+    	$contact_result = $db->query("SELECT `id` FROM `contacts` WHERE `deleted` = 0 AND `first_name` = '{$bean->first_name}' AND `last_name` = '{$bean->last_name}'");
 
-    	$GLOBALS['log']->fatal(print_r($bean, true));
-
-    	if($db->getRowCount($get_contact_data) == 0) {
+    	if($db->getRowCount($contact_result) == 0) {
     		$contact_bean = BeanFactory::newBean('Contacts');
     		$contact_bean->new_with_id = true;
     		$contact_bean->id = create_guid();
-    		$contact_bean->salutation = $bean->salutation;
     		$contact_bean->first_name = $bean->first_name;
     		$contact_bean->last_name = $bean->last_name;
     		$contact_bean->title = $bean->title;
-    		$contact_bean->facebook = $contact_bean->facebook;
-    		$contact_bean->twitter = $bean->twitter;
-    		$contact_bean->department = $bean->department;
     		$contact_bean->website_c = $bean->website_c;
-    		$contact_bean->phone_mobile = $bean->phone_mobile;
-    		$contact_bean->phone_work = $bean->phone_work;
-    		$contact_bean->description = $bean->description;
-    		$contact_bean->primary_address_street = $bean->primary_address_street;
-    		$contact_bean->primary_address_city = $bean->primary_address_city;
+            $contact_bean->phone_mobile = $bean->phone_mobile;
+    		$contact_bean->linkedin_c = $bean->linkedin_c;
+            $contact_bean->contact_stage_c = "target";
+    		$contact_bean->description = "";
 
     		for($i = 1; $i < 10; $i++) {
     			if(!empty($bean->{'email'.$i})) {
@@ -70,8 +63,42 @@ class Prospects_CustomLogic
     			}
     		}
 
+            $contact_bean->load_relationship('accounts_contacts');
+            $contact_bean->set_relationship('accounts_contacts', array('contact_id' => $contact_bean->id ,'account_id' => $bean->accounts_prospects_1accounts_ida), true, true);
+
     		$contact_bean->save();
-    	}
+    	} else {
+            $contact_row = $db->fetchByAssoc($contact_result);
+            $contact_bean = BeanFactory::getBean('Contacts', $contact_row['id']);
+            $contact_bean->first_name = $bean->first_name;
+            $contact_bean->last_name = $bean->last_name;
+            $contact_bean->title = $bean->title;
+            $contact_bean->website_c = $bean->website_c;
+            $contact_bean->phone_mobile = $bean->phone_mobile;
+            $contact_bean->linkedin_c = $bean->linkedin_c;
+
+            if($contact_bean->contact_stage_c == "contact" || $contact_bean->contact_stage_c == "") {
+                $contact_bean->contact_stage_c = "target";
+            }
+
+            for($i = 1; $i < 10; $i++) {
+                if(!empty($bean->{'email'.$i})) {
+                    $contact_bean->{'email'.$i} = $bean->{'email'.$i};
+                } else {
+                    break;
+                }
+            }
+
+            $contact_bean->load_relationship('accounts_contacts');
+            $contact_bean->set_relationship('accounts_contacts', array('contact_id' => $contact_row['id'] ,'account_id' => $bean->accounts_prospects_1accounts_ida), true, true);
+
+            $contact_bean->save();
+        }
+    }
+
+    function businessLogic(&$bean, $event, $arguments)
+    {
+        
     }
 
     function createTask($name, $bean)

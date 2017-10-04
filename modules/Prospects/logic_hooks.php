@@ -7,5 +7,6 @@ $hook_array = Array();
 
 $hook_array['after_save'] = Array();
 
-$hook_array['after_save'][] = Array(1,'createPerson','custom/modules/Prospects/customlogic.php','Prospects_CustomLogic','createPerson',);
+$hook_array['after_save'][] = Array(1,'associatePerson','custom/modules/Prospects/customlogic.php','Prospects_CustomLogic','associatePerson',);
+$hook_array['after_save'][] = Array(2,'businessLogic','custom/modules/Prospects/customlogic.php','Prospects_CustomLogic','businessLogic',);
 ?>

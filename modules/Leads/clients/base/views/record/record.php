@@ -116,13 +116,6 @@ array (
                 'dismiss_label' => true,
                 'fields' => 
                 array (
-                  0 => 
-                  array (
-                    'name' => 'salutation',
-                    'type' => 'enum',
-                    'enum_width' => 'auto',
-                    'searchBarThreshold' => 7,
-                  ),
                   1 => 'first_name',
                   2 => 'last_name',
                 ),
@@ -152,91 +145,70 @@ array (
               ),
               2 => 'website',
               3 => 'title',
-              4 => 'phone_mobile',
+              4 => 
+              array (
+                'name' => 'company_type_c',
+                'label' => 'LBL_COMPANY_TYPE',
+              ),
               5 => 
               array (
-                'name' => 'department',
+                'name' => 'status',
               ),
-              6 => 'phone_work',
+              6 => 
+              array (
+                'name' => 'phone_mobile',
+              ),
               7 => 
               array (
                 'name' => 'linkedin_c',
                 'label' => 'LBL_LINKEDIN',
               ),
-              8 => 'email',
+              8 => 
+              array (
+                'name' => 'email',
+              ),
               9 => 
               array (
-                'type' => 'url',
-                'name' => 'facebook',
-                'comment' => 'The facebook name of the user',
-                'label' => 'LBL_FACEBOOK',
+                'name' => 'assigned_user_name',
+                'link' => false,
               ),
               10 => 
-              array (
-                'name' => 'contacts_c',
-                'label' => 'LBL_CONTACTS',
-              ),
-              11 => 
-              array (
-                'type' => 'url',
-                'name' => 'twitter',
-              ),
-              12 => 
               array (
                 'name' => 'buildings_c',
                 'label' => 'LBL_BUILDINGS',
               ),
-              13 => 
+              11 => 
               array (
-                'name' => 'primary_address',
-                'type' => 'fieldset',
-                'css_class' => 'address',
-                'label' => 'LBL_PRIMARY_ADDRESS',
-                'fields' => 
-                array (
-                  0 => 
-                  array (
-                    'name' => 'primary_address_street',
-                    'css_class' => 'address_street',
-                    'placeholder' => 'LBL_PRIMARY_ADDRESS_STREET',
-                    'rows' => 1,
-                  ),
-                  1 => 
-                  array (
-                    'name' => 'primary_address_city',
-                    'css_class' => 'address_city',
-                    'placeholder' => 'LBL_PRIMARY_ADDRESS_CITY',
-                  ),
-                ),
+                'name' => 'contacts_c',
+                'label' => 'LBL_CONTACTS',
               ),
-              14 => 
+              12 => 
               array (
                 'name' => 'refered_by',
                 'comment' => 'Identifies who refered the lead',
                 'label' => 'LBL_REFERED_BY',
               ),
-              15 => 
+              13 => 
               array (
-                'name' => 'assigned_user_name',
-                'link' => false,
+                'name' => 'report_to_name',
+                'label' => 'LBL_REPORTS_TO',
               ),
-              16 => 
+              14 => 
+              array (
+                'name' => 'hobby_c',
+                'label' => 'LBL_HOBBY',
+              ),
+              15 => 
               array (
                 'name' => 'birthdate',
                 'comment' => 'The birthdate of the contact',
                 'label' => 'LBL_BIRTHDATE',
               ),
+              16 => 
+              array (
+                'name' => 'description',
+              ),
               17 => 
-              array (
-                'name' => 'hobby_c',
-                'label' => 'LBL_HOBBY',
-              ),
-              18 => 
-              array (
-                'name' => 'report_to_name',
-                'label' => 'LBL_REPORTS_TO',
-              ),
-              19 => 
               array (
                 'name' => 'date_entered',
                 'comment' => 'Date record created',
@@ -247,22 +219,12 @@ array (
                 'readonly' => true,
                 'label' => 'LBL_DATE_ENTERED',
               ),
-              20 => 
-              array (
-                'name' => 'description',
-                'span' => 6,
-              ),
-              21 => 
-              array (
-                'name' => 'status',
-                'span' => 6,
-              ),
             ),
           ),
         ),
         'templateMeta' => 
         array (
-          'useTabs' => true,
+          'useTabs' => false,
         ),
       ),
     ),

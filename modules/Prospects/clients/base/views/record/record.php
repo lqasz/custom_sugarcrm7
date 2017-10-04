@@ -110,9 +110,8 @@ array (
                 'dismiss_label' => true,
                 'fields' => 
                 array (
-                  0 => 'salutation',
-                  1 => 'first_name',
-                  2 => 'last_name',
+                  0 => 'first_name',
+                  1 => 'last_name',
                 ),
               ),
               2 => 
@@ -163,12 +162,20 @@ array (
               array (
                 'name' => 'title',
               ),
-              4 => 'phone_mobile',
+              4 => 
+              array (
+                'name' => 'company_type_c',
+                'label' => 'LBL_COMPANY_TYPE',
+              ),
               5 => 
               array (
-                'name' => 'department',
+                'name' => 'status_c',
+                'label' => 'LBL_STATUS',
               ),
-              6 => 'phone_work',
+              6 => 
+              array (
+                'name' => 'phone_mobile',
+              ),
               7 => 
               array (
                 'name' => 'linkedin_c',
@@ -180,10 +187,8 @@ array (
               ),
               9 => 
               array (
-                'type' => 'url',
-                'name' => 'facebook',
-                'comment' => 'The facebook name of the user',
-                'label' => 'LBL_FACEBOOK',
+                'name' => 'assigned_user_name',
+                'link' => false,
               ),
               10 => 
               array (
@@ -192,58 +197,19 @@ array (
               ),
               11 => 
               array (
-                'type' => 'url',
-                'name' => 'twitter',
+                'name' => 'contacts_c',
               ),
               12 => 
-              array (
-                'name' => 'contacts_c',
-                'label' => 'LBL_CONTACTS',
-              ),
-              13 => 
-              array (
-                'name' => 'primary_address',
-                'type' => 'fieldset',
-                'css_class' => 'address',
-                'label' => 'LBL_PRIMARY_ADDRESS',
-                'fields' => 
-                array (
-                  0 => 
-                  array (
-                    'name' => 'primary_address_street',
-                    'css_class' => 'address_street',
-                    'placeholder' => 'LBL_PRIMARY_ADDRESS_STREET',
-                    'rows' => 2,
-                  ),
-                  1 => 
-                  array (
-                    'name' => 'primary_address_city',
-                    'css_class' => 'address_city',
-                    'placeholder' => 'LBL_PRIMARY_ADDRESS_CITY',
-                  ),
-                ),
-              ),
-              14 => 
-              array (
-                'name' => 'birthdate',
-                'label' => 'LBL_BIRTHDATE',
-              ),
-              15 => 
               array (
                 'name' => 'hobby_c',
                 'label' => 'LBL_HOBBY',
               ),
-              16 => 
+              13 => 
               array (
-                'name' => 'status_c',
-                'label' => 'LBL_STATUS',
+                'name' => 'birthdate',
+                'label' => 'LBL_BIRTHDATE',
               ),
-              17 => 
-              array (
-                'name' => 'assigned_user_name',
-                'link' => false,
-              ),
-              18 => 
+              14 => 
               array (
                 'name' => 'description',
                 'related_fields' => 
@@ -252,20 +218,17 @@ array (
                 ),
                 'span' => 6,
               ),
-              19 => 
+              15 => 
               array (
-                'name' => 'date_of_first_call_c',
-                'label' => 'LBL_DATE_OF_FIRST_CALL',
-                'span' => 6,
-              ),
-              20 => 
-              array (
-                'name' => 'lead_was_created_c',
-                'label' => 'LBL_LEAD_WAS_CREATED',
+                'name' => 'date_entered',
+                'comment' => 'Date record created',
+                'studio' => 
+                array (
+                  'portaleditview' => false,
+                ),
                 'readonly' => true,
-              ),
-              21 => 
-              array (
+                'label' => 'LBL_DATE_ENTERED',
+                'span' => 6,
               ),
             ),
           ),
