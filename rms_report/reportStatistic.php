@@ -8,16 +8,119 @@ ini_set("display_errors", 1);
 class ReportStatistic
 {
 	private $db;
-	private $users;
-	private $average_data;
-	private $statistic_data;
+	private $user_id;
+	private $user_role;
+	private $week_data;
+	private $result;
+	private $role_modules;
 
-	public function __construct($users) 
+	public function __construct($user_id, $user_role, $tasks_data, $modules_data, $activities_data) 
 	{
-		$this->users = $users;
-		$this->average_data = array();
-		$this->statistic_data = array();
 		$this->db = DBManagerFactory::getInstance();
+		$this->user_id = $user_id;
+		$this->user_role = $user_role;
+		$this->result = array();
+		$this->week_data = array_merge($modules_data, $activities_data, array("Tasks" => $tasks_data));
+
+		dump($this->week_data); die();
+	}
+
+	public function syncUserStatistic()
+	{
+		$user_statistics_result = $this->db->query("SELECT `user_data`, `week_number` FROM `rms_statistics` WHERE `user_id`='{$this->user_id}'");
+
+		if($this->db->getRowCount($user_statistics_result) == 0) {
+			$this->week_data = json_encode($this->week_data);
+
+			$this->db->query("INSERT INTO `rms_statistics` VALUES('{$this->user_id}', CURRENT_TIMESTAMP, '{$this->week_data}', 1)");
+		} else {
+			include('custom/rms_report/roleModules.php');
+
+			$output = array();
+			$user_statistic_row = $this->db->fetchByAssoc($user_statistics_result);
+			$data = mb_convert_encoding($user_statistic_row['user_data'], "UTF-8");
+			$data = str_replace('&quot;', '"', $data);
+			$statistic_data = json_decode($data, true);
+
+			$regresion = 0;
+			foreach($statistic_data as $module_name => $module_data) {
+				switch($module_name) {
+					case "Chat":
+					case "Bugs":
+						$message = "up";
+						$distance = $this->week_data[$module_name] - $module_data;
+						$it_contains = ($module_data == 0) ? 0 : $this->week_data[$module_name] / $module_data;
+
+						if($distance == 0) {
+							$message = "average";
+						} else if($distance < 0) {
+							$message = "down";
+						}
+
+						$this->result[$module_name] = array(
+							"distance" => $distance,
+							"it_contains" => $it_contains,
+							"message" => $message
+						);
+
+						$regresion += (0.25 * $distance);
+						$output[$module_name] = ($this->week_data[$module_name] + $module_data) / 2;
+					break;
+					case "Login":
+					case "Notifications":
+						foreach($module_data as $key => $value) {
+							$message = "up";
+							$distance = $value - ($this->week_data[$module_name][$key]);
+							$it_contains = ($value == 0) ? 0 : $this->week_data[$module_name][$key] / $value;
+
+							if($distance == 0) {
+								$message = "average";
+							} else if($distance < 0) {
+								$message = "down";	
+							}
+
+							$regresion += (0.25 * $distance);
+							$output[$module_name] = ($this->week_data[$module_name][$key] + $value) / 2;
+						}
+					break;
+					default:
+						foreach($module_data as $key => $value) {
+							$message = "up";
+							$distance = ($key == "Deleted Tasks" || $key == "Overdue Tasks") ? $value - $this->week_data[$module_name][$key] : $this->week_data[$module_name][$key] - $value;
+							$it_contains = ($value == 0) ? 0 : $this->week_data[$module_name][$key] / $value;
+
+							if($distance == 0) {
+								$message = "average";
+							} else if($distance < 0) {
+								$message = "down";
+							}
+
+							$this->result[$module_name][$key] = array(
+								"distance" => $distance,
+								"it_contains" => $it_contains,
+								"message" => $message
+							);
+
+							$weight = 1;
+							if($module_name != "Tasks") {
+								$weight = $this->role_modules[$module_name]['weight'];
+							}
+
+							$regresion += ($weight * $distance);
+							$output[$module_name][$key] = ($this->week_data[$module_name][$key] + $value) / 2;
+						}
+					break;
+				}
+			}
+
+			echo $this->user_id ." regresion: ". $regresion ."<br/>";
+			dump($this->result);
+
+			$output = json_encode($output);
+			$week_number = $user_statistic_row['week_number'] + 1;
+
+			$this->db->query("UPDATE `rms_statistics` SET `user_data`='{$output}', `date_of_last_update`=CURRENT_TIMESTAMP, `week_number`='{$week_number}' WHERE `user_id`='{$this->user_id}'");
+		}
 	}
 
 	public function getUsersTasksStatistic()
@@ -97,5 +200,10 @@ class ReportStatistic
 		$this->syncUsersTasksStatistic();
 
 		$this->getTaskIndicator('users');
+	}
+
+	public function setRoleModules($role_modules)
+	{
+		$this->role_modules = $role_modules;
 	}
 }

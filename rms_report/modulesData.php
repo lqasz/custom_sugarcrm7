@@ -10,7 +10,8 @@ class ModulesData
 	private $db;
 	private $user;
 
-	private $data = array();
+	public $data = array();
+	public $decoded_data = array();
 
 	public function __construct($user, $modules) 
 	{
@@ -18,9 +19,10 @@ class ModulesData
 		$this->db = DBManagerFactory::getInstance();
 
 		foreach($modules as $module_name => $module_data) {
-			$this->data[$module_data['label']] = $this->getUserActionsByModule($module_name);
+			$this->data[$module_name] = $this->getUserActionsByModule($module_name);
 		}
 
+		$this->decoded_data = $this->data;
 		$this->data = json_encode($this->data);
 	}
 

@@ -11,16 +11,23 @@ class ActivitiesData
 	private $user;
 
 	public $data = array();
+	public $decoded_data = array();
 
 	public function __construct($user)
 	{
 		$this->user = $user;
 		$this->db = DBManagerFactory::getInstance();
 
-		$this->data["bugs"] = json_encode($this->getBugInformations());
-		$this->data["login"] = json_encode($this->getLoginToRMS());
-		$this->data["notifications"] = json_encode($this->getNotifications());
-		$this->data["chat"] = json_encode($this->getChatActivities());
+		$this->data["Bugs"] = $this->getBugInformations();
+		$this->data["Login"] = $this->getLoginToRMS();
+		$this->data["Notifications"] = $this->getNotifications();
+		$this->data["Chat"] = $this->getChatActivities();
+
+		$this->decoded_data = $this->data;
+
+		foreach($this->data as $activity => $value) {
+			$this->data[$activity] = json_encode($value);
+		}
 	}
 
 	public function getNotifications()
@@ -117,10 +124,10 @@ class ActivitiesData
 			'".create_guid()."', 
 			'{$user_name}',
 			ADDDATE(CURRENT_DATE,-1),
-			'{$this->data["bugs"]}',
-			'{$this->data["login"]}',
-			'{$this->data["notifications"]}',
-			'{$this->data["chat"]}')"
+			'{$this->data["Bugs"]}',
+			'{$this->data["Login"]}',
+			'{$this->data["Notifications"]}',
+			'{$this->data["Chat"]}')"
 		);
 	}
 }
