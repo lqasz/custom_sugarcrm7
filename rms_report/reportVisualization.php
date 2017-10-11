@@ -89,6 +89,27 @@ class ReportVisualization
 		return $data;
 	}
 
+	public function getUsersStatistics($period = "last_week")
+	{
+		$data = array();
+		$where = "ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE";
+
+		$regresion_result = $this->db->query("SELECT `user_name`, `date_entered`, `data`, `week_number` FROM `rms_report_regresion` WHERE `date_entered` BETWEEN $where ORDER BY `date_entered` DESC");
+
+		while($row = $this->db->fetchByAssoc($regresion_result)) {
+			$date = date("d-m-Y", strtotime($row["date_entered"]));
+			$user_regresion = mb_convert_encoding($row['data'], "UTF-8");
+			$user_regresion = str_replace('&quot;', '"', $user_regresion);
+			$user_regresion = json_decode($user_regresion, true);
+
+			if($row['week_number'] > 14) {
+				$data[$row["user_name"]][$date] = $user_regresion["regresion"];
+			}
+		}
+
+		return $data;
+	}
+
 	public function getUsersDepartments()
 	{
 		$users = array();
@@ -105,23 +126,31 @@ class ReportVisualization
 
 	public function prepareReport()
 	{
-		$rms_users = array();
-		$data = $this->getReportData();
+		$detail_report = array();
+		$statistic_report = array();
+		$detail = $this->getReportData();
+		$statistic = $this->getUsersStatistics();
 		$users = $this->getUsersDepartments();
 
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
 				if($manager != "Mateusz Ruszkowski") {
-					$rms_users[$manager][] = $this->generateReportForUser($data[$manager], $manager);
+					$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$manager], $manager);
+
 					foreach($employees as $key => $employee) {
-						$rms_users[$manager][] = $this->generateReportForUser($data[$employee], $employee);
+						$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$employee], $employee);
 					}
 				}
 			}
 		}
 	}
 
-	public function generateReportForUser($user_data, $employee)
+	public function generateStatisticReportForUser($employees_data)
+	{
+		
+	}
+
+	public function generateDetailReportForUser($user_data, $employee)
 	{
 		$iter1 = 0;
 		$html = "<table class='employee-table'>
