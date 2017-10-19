@@ -41,6 +41,7 @@ class ReportStatistic
 			$statistic_data = json_decode($data, true);
 
 			$regresion = 0;
+			$avg_indicator = 0;
 			foreach($statistic_data as $module_name => $module_data) {
 				switch($module_name) {
 					case "Chat":
@@ -62,6 +63,8 @@ class ReportStatistic
 						);
 
 						$regresion += (0.25 * $distance);
+						$avg_indicator += (0.25 * $module_data);
+
 						$output[$module_name] = ($this->week_data[$module_name] + $module_data) / 2;
 					break;
 					case "Login":
@@ -79,6 +82,8 @@ class ReportStatistic
 							}
 
 							$regresion += (0.25 * $distance);
+							$avg_indicator += (0.25 * $value);
+
 							$output[$module_name] = ($this->week_data[$module_name][$key] + $value) / 2;
 						}
 					break;
@@ -114,20 +119,23 @@ class ReportStatistic
 								$weight = 0;
 							}
 
+							$avg_indicator += ($weight * $value);
 							$regresion += ($weight * $distance);
+
 							$output[$module_name][$key] = ($this->week_data[$module_name][$key] + $value) / 2;
 						}
 					break;
 				}
 			}
 
-			$this->result['modules'] = $this->result;
-			$this->result['regresion'] = $regresion;
+			$statistic_result['modules'] = $this->result;
+			$statistic_result['regresion'] = $regresion;
+			$statistic_result['avg_indicator'] = $avg_indicator;
 
 			$week_number = $user_statistic_row['week_number'] + 1;
 
-			$json = json_encode($this->result);
-			$this->db->query("INSERT INTO `rms_report_regresion` VALUES('". create_guid() ."', '{$user_name}', CURRENT_DATE, '{$json}', '{$week_number}')");
+			$json = json_encode($statistic_result);
+			$this->db->query("INSERT INTO `rms_report_regresion` VALUES('". create_guid() ."', '{$user_name}', CURRENT_DATE, '{$json}', '{$user_statistic_row['week_number']}')");
 
 			$output = json_encode($output);
 			$this->db->query("UPDATE `rms_statistics` SET `user_data`='{$output}', `date_of_last_update`=CURRENT_TIMESTAMP, `week_number`='{$week_number}' WHERE `user_id`='{$this->user_id}'");

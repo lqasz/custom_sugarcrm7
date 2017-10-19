@@ -89,12 +89,12 @@ class ReportVisualization
 		return $data;
 	}
 
-	public function getUsersStatistics($period = "last_week")
+	public function getUsersRegresion($period = "last_week")
 	{
 		$data = array();
 		$where = "ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE";
 
-		$regresion_result = $this->db->query("SELECT `user_name`, `date_entered`, `data`, `week_number` FROM `rms_report_regresion` WHERE `date_entered` BETWEEN $where ORDER BY `date_entered` DESC");
+		$regresion_result = $this->db->query("SELECT `user_name`, `date_entered`, `data`, `week_number` FROM `rms_report_regresion` WHERE `date_entered` BETWEEN $where ORDER BY `date_entered` ASC");
 
 		while($row = $this->db->fetchByAssoc($regresion_result)) {
 			$date = date("d-m-Y", strtotime($row["date_entered"]));
@@ -102,9 +102,9 @@ class ReportVisualization
 			$user_regresion = str_replace('&quot;', '"', $user_regresion);
 			$user_regresion = json_decode($user_regresion, true);
 
-			if($row['week_number'] > 14) {
-				$data[$row["user_name"]][$date] = $user_regresion["regresion"];
-			}
+			// if($row['week_number'] > 14) {
+			$data[$row["user_name"]][$date] = $user_regresion;
+			// }
 		}
 
 		return $data;
@@ -129,15 +129,23 @@ class ReportVisualization
 		$detail_report = array();
 		$statistic_report = array();
 		$detail = $this->getReportData();
-		$statistic = $this->getUsersStatistics();
+		$statistic = $this->getUsersRegresion();
 		$users = $this->getUsersDepartments();
 
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
 				if($manager != "Mateusz Ruszkowski") {
+					if(!empty($statistic[$manager])) {
+						$statistic_report[$manager][] = $this->generateStatisticReportForUser($statistic[$manager], $manager);
+					}
+
 					$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$manager], $manager);
 
 					foreach($employees as $key => $employee) {
+						if(!empty($statistic[$employee])) {
+							$statistic_report[$manager][] = $this->generateStatisticReportForUser($statistic[$employee], $employee);
+						}
+
 						$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$employee], $employee);
 					}
 				}
@@ -145,9 +153,150 @@ class ReportVisualization
 		}
 	}
 
-	public function generateStatisticReportForUser($employees_data)
+	public function generateStatisticReportForUser($user_data, $employee)
 	{
-		
+		$html = '<html>
+					<head>
+  						<style>
+  							html{font-family:Lato Light;}
+  						</style>
+						<script type="text/javascript">';
+
+		$val_max = 0;
+		$val_min = 0;
+		$avg_val = "";
+		$day_val = "";
+		$dates = "";
+		$sections = 0;
+
+		foreach($user_data as $date => $date_data) {
+			$day_indicator = $date_data['avg_indicator'] + $date_data['regresion'];
+
+			if($val_min > $date_data['avg_indicator']) {
+				$date_data['avg_indicator'] = 0;
+			}
+
+			if($val_min > $day_indicator) {
+				$day_indicator = 0;
+			}
+
+			$dates .= '"'.$date .'",';
+			$avg_val .= $date_data['avg_indicator'] .",";
+			$day_val .= $day_indicator .",";
+
+			if($val_max < $date_data['avg_indicator']) {
+				$val_max = $date_data['avg_indicator'];
+			}
+
+			if($val_max < $day_indicator) {
+				$val_max = $day_indicator;
+			}
+
+			$sections++;
+		}
+
+		$regresion = rtrim($regresion,", ");
+		$avg_val = rtrim($avg_val,", ");
+		$day_val = rtrim($day_val,", ");
+		$dates = rtrim($dates,", ");
+
+		// echo $regresion ."<br/>";
+		// echo $avg_val ."<br/>";
+		// echo $dates ."<br/>";
+		// echo $day_val ."<br/>";die();
+
+		$html .= 'var canvas;
+				var context;
+				var Val_max;
+				var Val_min;
+				var sections;
+				var xScale;
+				var yScale;
+				// Values for the Data Plot, they can also be obtained from a external file
+				// var Day =  ['. $day_val .'];
+				// var Avg =   ['. $avg_val .'];
+				var Day =  [54, 56, 57, 45, 48];
+				var Avg =   [52, 53, 54.5, 55.75, 50.375];
+
+				function init() {
+					// set these values for your data 
+					// sections = '.$sections.';
+					sections = 5;
+					// Val_max = '.$val_max.';
+					// Val_min = '.$val_min.';
+					Val_max = 70;
+					Val_min = 0;
+					var stepSize = 5;
+					var columnSize = 50;
+					var rowSize = 50;
+					var margin = 10;
+					// var xAxis = [" ", '.$dates.'] 
+					var xAxis = [" ", "09-10-2017", "10-10-2017", "11-10-2017", "12-10-2017", "13-10-2017"]
+					//
+						
+					canvas = document.getElementById("canvas");
+					context = canvas.getContext("2d");
+					context.fillStyle = "#0099ff"
+					context.font = "20 pt Lato Light"
+					
+					yScale = (canvas.height - columnSize - margin) / (Val_max - Val_min);
+					xScale = (canvas.width - rowSize) / sections;
+					
+					context.strokeStyle="#009933"; // color of grid lines
+					context.beginPath();
+					// print Parameters on X axis, and grid lines on the graph
+					for (i=1;i<=sections;i++) {
+						var x = i * xScale;
+						context.fillText(xAxis[i], x,columnSize - margin);
+						context.moveTo(x, columnSize);
+						context.lineTo(x, canvas.height - margin);
+					}
+					// print row header and draw horizontal grid lines
+					var count =  0;
+					for (scale=Val_max;scale>=Val_min;scale = scale - stepSize) {
+						var y = columnSize + (yScale * count * stepSize); 
+						context.fillText(scale, margin,y + margin);
+						context.moveTo(rowSize,y)
+						context.lineTo(canvas.width,y)
+						count++;
+					}
+					context.stroke();
+					
+					context.translate(rowSize,canvas.height + Val_min * yScale);
+					context.scale(1,-1 * yScale);
+					
+					// Color of each dataplot items	
+					context.strokeStyle="#FF0066";
+					plotData(Day);
+					context.strokeStyle="#000";
+					plotData(Avg);
+				}
+
+				function plotData(dataSet) {
+					context.beginPath();
+					context.moveTo(0, dataSet[0]);
+					for (i=1;i<sections;i++) {
+						context.lineTo(i * xScale, dataSet[i]);
+					}
+					context.stroke();
+				}';
+		$html .= '	</script>
+				</head>
+				<body onLoad="init()">
+					<div align="center">
+					<h2>'. $employee .'</h2>
+
+					<canvas id="canvas" height="400" width="650">
+					</canvas>
+					<br>
+						<!--Legends for Dataplot -->
+					<span style="color:#FF0066"> Day Value</span>
+					<span style="color:#000"> Avg </span>
+					</div>
+				</body>
+				</html>';
+
+echo $html; die();
 	}
 
 	public function generateDetailReportForUser($user_data, $employee)
