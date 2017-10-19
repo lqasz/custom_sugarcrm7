@@ -25,6 +25,7 @@ array (
                 'height' => 42,
                 'dismiss_label' => true,
                 'readonly' => true,
+                'link' => false,
               ),
               1 => 
               array (

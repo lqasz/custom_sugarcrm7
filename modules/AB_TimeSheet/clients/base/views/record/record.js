@@ -14,9 +14,6 @@
         'click .remove-project': 'removeProjectRow',
         'keyup .project-name': 'searchProjectByName',
         'focus .project-name': 'searchProjectByName',
-        'click .project-item': 'setProjectItem',
-        'keyup .project-item': 'moveOverProjectItem',
-        'click #content': 'closeProjectList',
     }),
 
 	initialize: function(options) {
@@ -45,7 +42,9 @@
 		this._super('render');
 
 		if(!_.isEmpty(this.dataFetched)) {
+			var self = this;
 			$('.record-cell[data-name="subordinates_c"]').html(this.rebuildSubordinatiesField());
+			$("body").append('<style>.ui-autocomplete li {list-style: none;background:white;max-width:'+ $('.project-name').outerWidth() +'px;border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd;}.ui-autocomplete li a {color: black;padding-left:10px;display:block;max-width:'+ $('.project-name').outerWidth() +'px;}.ui-autocomplete li a.ui-state-hover{background:#ccc;}</style>');
 		}
 	},
 
@@ -169,60 +168,32 @@
 		this.setSum(projectData.userid, $parentElement.parents('.project-list').find('.sum-row'));
 	},
 
-	setProjectItem: function(e) {
-		e.preventDefault();
-		e.stopPropagation();
-
-		var $element = $(e.currentTarget),
-			$parentElement = $element.parents('.project-row'),
-			projectData = $parentElement.data();
-
-		$parentElement.find('.slider').removeAttr('disabled');
-		$parentElement.find('.slider-text').removeAttr('disabled');
-		$parentElement.find('.project-name').val($element.text());
-		$element.parent().addClass('hide');
-
-		var projectID = Object.keys(this.listOfProjects).find(key => this.listOfProjects[key] === $element.text());
-		$element.parent().parent().attr('data-projectid', projectID);
-
-		if(this.dataFetched.data[projectData.userid][projectData.id]['new'] == undefined) {
-			this.dataFetched.data[projectData.userid][projectData.id]['updated'] = 1;
-		}
-
-		this.dataFetched.data[projectData.userid][projectData.id]['id'] = projectID;
-	},
-
-	closeProjectList: function(e) {
-		var $list = $(e.currentTarget).parent().find('.select2-results');
-
-		console.info($list);
-		// $list.html("");
-		// $list.hide();
-	},
-
 	searchProjectByName: function(e) {
-		var results = [],
-			$input = $(e.currentTarget),
-			toSearch = $input.val(),
-			$list = $input.next('.select2-results');
-
-		$list.html("");
-
-		for(key in this.listOfProjects) {
-			if(this.listOfProjects[key].indexOf(toSearch)!=-1) {
-				results.push(this.listOfProjects[key]);
-			}
-		}
-
-		if(!_.isEmpty(results)) {
-			_.each(results, function(el) {
-				var listItem = '<li class="project-item">'+el+'</li>';
-				$list.append(listItem);
+		var self = this,
+			$element = $(e.currentTarget),
+			$parentElement = $element.parents('.project-row'),
+			projectData = $parentElement.data(),
+			array = $.map(self.listOfProjects, function(value, index) {
+			    return [value];
 			});
 
-			$input.addClass('big-element');
-			$list.removeClass('hide');
-		}
+		$element.autocomplete({
+            minLength: 2,
+            source: array,
+            select: function(event, ui) {
+		    	$parentElement.find('.slider').removeAttr('disabled');
+				$parentElement.find('.slider-text').removeAttr('disabled');
+
+				var projectID = Object.keys(self.listOfProjects).find(key => self.listOfProjects[key] === ui.item.value);
+				$element.parent().parent().attr('data-projectid', projectID);
+
+				if(self.dataFetched.data[projectData.userid][projectData.id]['new'] == undefined) {
+					self.dataFetched.data[projectData.userid][projectData.id]['updated'] = 1;
+				}
+
+				self.dataFetched.data[projectData.userid][projectData.id]['id'] = projectID;
+		    }
+        });
 	},
 
 	setSum: function(userID, $element) {
@@ -243,10 +214,6 @@
 		$element.find('.sum-text').text(this.sum[userID].text +"%");
 	},
 
-	moveOverProjectItem: function(e) {
-		console.info(e)
-	},
-
 	editClicked: function() {
         this.view = "edit";
         this.render();
@@ -260,55 +227,61 @@
 
     saveClicked: function() {
     	var self = this,
-    		error = {
-    			'users': "",
-    			'validation': true,
-    			'project': false,
-    		};
+            error = {
+                'validation': true,
+                'message': "",
+            };
 
-    	_.each(this.dataFetched.data, function(timeSheet, userID) {
-    		var sum = 0;
-    		_.each(timeSheet, function(projectData, timeSheetID) {
-    			if(projectData['deleted'] == 0) {
-    				sum += parseInt(projectData['value']);
-    			}
+        _.each(this.dataFetched.data, function(timeSheet, userID) {
+            var sum = 0;
 
-    			if(sum > 100) {
-	    			if(error['users'] != "") {
-	    				error['users'] += " and ";
-	    			}
+            if(_.isEmpty(timeSheet)) {
+                error = {
+                    'validation': false,
+                    'message': 'Proszę o rozpisanie czasu pracy dla '+ self.dataFetched.users[userID],
+                };
+            }
 
-	    			error['validation'] = false;
-	    			error['users'] += self.dataFetched.users[userID];
-	   	 		}
+            var projects = [];
+            _.each(timeSheet, function(projectData, timeSheetID) {
+                if(projectData['deleted'] == 0) {
+                    sum += parseInt(projectData['value']);
 
-    			if(_.isEmpty(projectData['id'])) {
-    				error['validation'] = false;
-    				error['project'] = true;
-    				error['users'] = '';
-    			}
-    		});
-    	});
+                    if(_.isEmpty(projectData['id'])) {
+                        error = {
+                            'validation': false,
+                            'message': 'Proszę o wybór projektu',
+                        };
+                    }
 
-    	if(!error['validation'] && error['project'] == true) {
-    		app.alert.show('message-id', {
+                    if(projects.indexOf(projectData['id']) != -1) {
+                        error = {
+                            'validation': false,
+                            'message': 'Wybrałeś ten sam projekt więcej niż jeden raz dla pracownika '+ self.dataFetched.users[userID],
+                        };
+                    } else {
+                        projects.push(projectData['id']);
+                    }
+                }
+            });
+
+            if(sum > 100) {
+                error = {
+                    'validation': false,
+                    'message': 'Suma nie może być większa niż 100 dla pracownika '+ self.dataFetched.users[userID],
+                };
+            }
+        });
+
+        if(!error['validation']) {
+            app.alert.show('message-id', {
                 level: 'confirmation',
-                messages: 'Please choose a project',
+                messages: error['message'],
                 autoClose: false,
             });
 
             return;
-    	}
-
-    	if(!error['validation'] && error['users'] != "") {
-    		app.alert.show('message-id', {
-                level: 'confirmation',
-                messages: 'Sum couldn`t be greater then 100% for '+ error['users'],
-                autoClose: false,
-            });
-
-            return;
-    	}
+        }
 
     	$.ajax({
             url: 'index.php?entryPoint=getData&updateTimeSheet=1&time_sheet_id='+ self.model.get('id')+'&noCache='+ (new Date().getTime()),

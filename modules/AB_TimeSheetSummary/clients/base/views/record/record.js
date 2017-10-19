@@ -337,7 +337,7 @@
 
   cancelClicked: function() {
     this.view = "detail";
-    location.replace('http://'+window.location.hostname+'/#AB_TimeSheetSummary/'+this.model.get("id"));
+    location.replace('https://'+window.location.hostname+'/#AB_TimeSheetSummary/'+this.model.get("id"));
   },
 
   acceptedClicked: function(e) {
@@ -383,6 +383,6 @@
   },
 
   generateSheetCSV: function() {
-    window.open('http://'+ window.location.hostname +'/index.php?entryPoint=userRepair&generateReportFromTimeSheet&summary_id='+this.model.get('id'));
+    window.open('https://'+ window.location.hostname +'/index.php?entryPoint=userRepair&generateReportFromTimeSheet&summary_id='+this.model.get('id'));
   },
 })
