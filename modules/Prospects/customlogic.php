@@ -15,28 +15,6 @@ class Prospects_CustomLogic
 		}
 	}
 
-	function createFirstCall(&$bean, $event, $arguments)
-    {
-    	$db = DBManagerFactory::getInstance();
-    	$get_calls = $db->query("SELECT `id` FROM `prospects_calls_1_c` WHERE `prospects_calls_1prospects_ida` = '{$bean->id}'");
-
-    	if(!empty($bean->date_of_first_call_c) && ($db->getRowCount($get_calls) == 0)) {
-			$callBean = BeanFactory::newBean('Calls', array('disable_row_level_security' => true));
-			$callBean->new_with_id = true;
-			$callBean->id = create_guid();
-			$callBean->name = $bean->name .", ". date("Y-m-d", strtotime($bean->date_of_first_call_c));
-			$callBean->date_of_call_c = date("Y-m-d", strtotime($bean->date_of_first_call_c));
-			$callBean->assigned_user_id = $bean->assigned_user_id;
-			$callBean->target_status_c = $bean->target_status_c;
-			$callBean->new_one_c = 1;
-
-			$callBean->load_relationship("prospects_calls_1");
-			$callBean->set_relationship("prospects_calls_1_c", array('prospects_calls_1prospects_ida' => $bean->id,'prospects_calls_1calls_idb' => $callBean->id), true, true);
-
-			$callBean->save();
-    	}
-    }
-
     function associatePerson(&$bean, $event, $arguments)
     {
     	$db = DBManagerFactory::getInstance();
@@ -98,7 +76,18 @@ class Prospects_CustomLogic
 
     function businessLogic(&$bean, $event, $arguments)
     {
-        
+        $choice = str_replace("^", "", $bean->client_for_c);
+        $choice = split(",", $choice);
+
+        foreach(array("rsc_c", "pkig_c", "ats_c", "rwt_c", "rdsg_c") as $value) {
+            $bean->{$value} = 0;
+        }
+
+        foreach($choice as $key => $value) {
+            $company = strtolower($value) ."_c";
+
+            $bean->{$company} = 1;
+        }
     }
 
     function createTask($name, $bean)

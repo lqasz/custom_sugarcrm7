@@ -12,12 +12,20 @@ array (
           0 => 
           array (
             'type' => 'button',
+            'name' => 'history',
+            'event' => 'button:history:click',
+            'label' => 'Activities',
+            'css_class' => 'btn history-button',
+          ),
+          1 => 
+          array (
+            'type' => 'button',
             'name' => 'cancel_button',
             'label' => 'LBL_CANCEL_BUTTON_LABEL',
             'css_class' => 'btn-invisible btn-link',
             'showOn' => 'edit',
           ),
-          1 => 
+          2 => 
           array (
             'type' => 'rowaction',
             'event' => 'button:save_button:click',
@@ -27,7 +35,7 @@ array (
             'showOn' => 'edit',
             'acl_action' => 'edit',
           ),
-          2 => 
+          3 => 
           array (
             'type' => 'actiondropdown',
             'name' => 'main_dropdown',
@@ -80,7 +88,7 @@ array (
               ),
             ),
           ),
-          3 => 
+          4 => 
           array (
             'name' => 'sidebar_toggle',
             'type' => 'sidebartoggle',
@@ -211,12 +219,8 @@ array (
               ),
               14 => 
               array (
-                'name' => 'description',
-                'related_fields' => 
-                array (
-                  0 => 'lead_id',
-                ),
-                'span' => 6,
+                'name' => 'client_for_c',
+                'label' => 'LBL_CLIENT_FOR',
               ),
               15 => 
               array (
@@ -228,7 +232,6 @@ array (
                 ),
                 'readonly' => true,
                 'label' => 'LBL_DATE_ENTERED',
-                'span' => 6,
               ),
             ),
           ),

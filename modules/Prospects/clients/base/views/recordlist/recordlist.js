@@ -1,5 +1,6 @@
 ({
     extendsFrom: 'RecordlistView',
+    id: 'TargetsRecordList',
 
     initialize: function (options) {
         app.view.invokeParent(this, {type: 'view', name: 'recordlist', method: 'initialize', args:[options]});
@@ -25,7 +26,7 @@
     addLinkedInIcon : function() {
         setTimeout(
             function() {
-                $("tr[name^='Leads']").each(function () { //loop over each row
+                $("tr[name^='Prospects']").each(function () { //loop over each row
                     if($(this).find('td[data-type="url"]').length > 0) {
                         $(this).find('td[data-type="url"]').find('.ellipsis_inline').html('<i class="fa fa-linkedin-square fa-2x"></i>');
                         $(this).find('td[data-type="url"]').find('.ellipsis_inline').css("text-align", "center");

@@ -1,6 +1,9 @@
 ({
     extendsFrom: 'RecordView',
     id: "LeadRecord",
+    events: _.extend({}, this.events, {
+        'click .history-button': 'showHistoryClicked'
+    }),
 
     initialize: function(options) {
         app.view.invokeParent(this, {
@@ -25,7 +28,11 @@
 
         callback(null, fields, errors);
     },
-
+    showHistoryClicked: function(e) {
+        app.drawer.open({
+            layout: 'activitystream',
+        });
+    },
     convertDelegator: function(model, DOM) {
         if(DOM.name == "convert_fee") {
             this.convertContactClicked("AC_FeeProposal");

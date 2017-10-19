@@ -50,30 +50,40 @@ array (
                 'name' => 'rsc_c',
                 'enabled' => true,
                 'default' => true,
+                'readonly' => true,
+                'sortable' => false,
               ),
               4 => 
               array (
                 'name' => 'pkig_c',
                 'enabled' => true,
                 'default' => true,
+                'readonly' => true,
+                'sortable' => false,
               ),
               5 => 
               array (
                 'name' => 'ats_c',
                 'enabled' => true,
                 'default' => true,
+                'readonly' => true,
+                'sortable' => false,
               ),
               6 => 
               array (
                 'name' => 'rwt_c',
                 'enabled' => true,
                 'default' => true,
+                'readonly' => true,
+                'sortable' => false,
               ),
               7 => 
               array (
                 'name' => 'rdsg_c',
                 'enabled' => true,
                 'default' => true,
+                'readonly' => true,
+                'sortable' => false,
               ),
               8 => 
               array (
@@ -100,6 +110,10 @@ array (
               ),
             ),
           ),
+        ),
+        'orderBy' => array (
+          'field' => 'date_of_last_comment_c',
+          'direction' => 'desc',
         ),
       ),
     ),

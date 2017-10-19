@@ -78,6 +78,10 @@ array (
             ),
           ),
         ),
+        'orderBy' => array (
+          'field' => 'date_of_last_comment_c',
+          'direction' => 'desc',
+        ),
       ),
     ),
   ),

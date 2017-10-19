@@ -11,10 +11,15 @@
 ({
     extendsFrom: 'RecordView',
     id: 'TargetRecord',
+    events: _.extend({}, this.events, {
+        'click .history-button': 'showHistoryClicked'
+    }),
+
     initialize: function(options) {
         this.plugins = _.union(this.plugins || [], ['HistoricalSummary']);
         this._super('initialize', [options]);
 
+        this.context
         $('<style>'+ 
             'div[data-subpanel-link="archived_emails"] { display: none !important}'+
             'div[data-subpanel-link="campaigns"] { display: none !important}'+
@@ -25,6 +30,15 @@
     delegateButtonEvents: function() {
         this.context.on('button:convert_button:click', this.convertProspectClicked, this);
         this._super("delegateButtonEvents");
+    },
+    showHistoryClicked: function(e) {
+        app.drawer.open({
+            layout: 'activitystream',
+            context: {
+                create: true,
+                parent_id: this.model.get('id')
+            }
+        });
     },
     convertProspectClicked: function() {
         var self = this,

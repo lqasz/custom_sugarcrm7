@@ -102,4 +102,9 @@ class Leads_CustomLogic
             $contact_bean->save();
         }
     }
+
+    function businessLogic(&$bean, $event, $arguments)
+    {
+        
+    }
 }
