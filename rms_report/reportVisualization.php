@@ -89,22 +89,40 @@ class ReportVisualization
 		return $data;
 	}
 
-	public function getUsersRegresion($period = "last_week")
+	public function getUsersStatistics($period = "last_week")
 	{
 		$data = array();
 		$where = "ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE";
 
-		$regresion_result = $this->db->query("SELECT `user_name`, `date_entered`, `data`, `week_number` FROM `rms_report_regresion` WHERE `date_entered` BETWEEN $where ORDER BY `date_entered` ASC");
+		$statistics_result = $this->db->query("SELECT * FROM `rms_statistics` ORDER BY `date_entered` ASC");
 
-		while($row = $this->db->fetchByAssoc($regresion_result)) {
+		$count = array();
+		while($row = $this->db->fetchByAssoc($statistics_result)) {
 			$date = date("d-m-Y", strtotime($row["date_entered"]));
-			$user_regresion = mb_convert_encoding($row['data'], "UTF-8");
-			$user_regresion = str_replace('&quot;', '"', $user_regresion);
-			$user_regresion = json_decode($user_regresion, true);
+			$user_name = $row["user_name"];
+			unset($row['id']);
+			unset($row['user_name']);
+			unset($row['date_entered']);
 
-			// if($row['week_number'] > 14) {
-			$data[$row["user_name"]][$date] = $user_regresion;
-			// }
+			foreach($row as $w => $value) {
+				if(empty($data[$user_name][$w])) {
+					$data[$user_name][$w] = $value;
+				} else {
+					$data[$user_name][$w] += $value;
+				}
+			}
+
+			if(empty($count[$user_name])) {
+				$count[$user_name] = 1;
+			} else {
+				$count[$user_name]++;
+			}
+		}
+
+		foreach($count as $user_name => $count) {
+			foreach($data[$user_name] as $w => $value) {
+				$data[$user_name][$w] = $value / $count;
+			}
 		}
 
 		return $data;
@@ -127,25 +145,16 @@ class ReportVisualization
 	public function prepareReport()
 	{
 		$detail_report = array();
-		$statistic_report = array();
 		$detail = $this->getReportData();
-		$statistic = $this->getUsersRegresion();
 		$users = $this->getUsersDepartments();
-
+		$statistic_report = $this->generateStatisticReportForUsers($this->getUsersStatistics());
+		
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
 				if($manager != "Mateusz Ruszkowski") {
-					if(!empty($statistic[$manager])) {
-						$statistic_report[$manager][] = $this->generateStatisticReportForUser($statistic[$manager], $manager);
-					}
-
 					$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$manager], $manager);
 
 					foreach($employees as $key => $employee) {
-						if(!empty($statistic[$employee])) {
-							$statistic_report[$manager][] = $this->generateStatisticReportForUser($statistic[$employee], $employee);
-						}
-
 						$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$employee], $employee);
 					}
 				}
@@ -153,7 +162,7 @@ class ReportVisualization
 		}
 	}
 
-	public function generateStatisticReportForUser($user_data, $employee)
+	public function generateStatisticReportForUsers($data)
 	{
 		$html = '<html>
 					<head>
@@ -162,39 +171,69 @@ class ReportVisualization
   						</style>
 						<script type="text/javascript">';
 
-		$val_max = 0;
-		$val_min = 0;
-		$avg_val = "";
-		$day_val = "";
-		$dates = "";
-		$sections = 0;
+		$weights = array(
+			'w1' => 0.15,
+			'w2' => 0.15,
+			'w3' => 0.15,
+			'w4' => 0.1,
+			'w5' => 0.05,
+			'w6' => 0.05,
+			'w7' => 0.05,
+			'w8' => 0.1,
+			'w9' => 0.05,
+			'w10' => 0.05,
+			'w11' => 0.1,
+		);
 
-		foreach($user_data as $date => $date_data) {
-			$day_indicator = $date_data['avg_indicator'] + $date_data['regresion'];
+		$min = array();
+		$max = array();
+		foreach($data as $user_name => $user_indicators) {
+			foreach($user_indicators as $w => $value) {
+				$value = $weights[$w] * $value;
 
-			if($val_min > $date_data['avg_indicator']) {
-				$date_data['avg_indicator'] = 0;
+				if(!isset($min[$w])) {
+					$min[$w] = $value;
+				} else {
+					if($min[$w] > $value) {
+						$min[$w] = $value;
+					}
+				}
+
+				if(!isset($max[$w])) {
+					$max[$w] = $value;
+				} else {
+					if($max[$w] < $value) {
+						$max[$w] = $value;
+					}
+				}
+
+				$data[$user_name][$w] = $value;
 			}
-
-			if($val_min > $day_indicator) {
-				$day_indicator = 0;
-			}
-
-			$dates .= '"'.$date .'",';
-			$avg_val .= $date_data['avg_indicator'] .",";
-			$day_val .= $day_indicator .",";
-
-			if($val_max < $date_data['avg_indicator']) {
-				$val_max = $date_data['avg_indicator'];
-			}
-
-			if($val_max < $day_indicator) {
-				$val_max = $day_indicator;
-			}
-
-			$sections++;
 		}
 
+		$standarized_indicator = array();
+		foreach($data as $user_name => $user_indicators) {
+			foreach($user_indicators as $w => $value) {
+				$max_minus_min = (($val=$max[$w]-$min[$w]) == 0) ? 1 : $val;
+				$indicator = (2*($value-$min[$w])/($max_minus_min))-1;
+				$change_scope = 50+($indicator*50);
+
+
+				if(!isset($standarized_indicator[$user_name][$w])) {
+					$standarized_indicator[$user_name] = $change_scope;
+				} else {
+					$standarized_indicator[$user_name] += $change_scope;
+				}
+			}
+
+			$standarized_indicator[$user_name] /= 1.1;
+			$standarized_indicator[$user_name] = $this->floordec($standarized_indicator[$user_name]);
+		}
+
+
+
+		dump($standarized_indicator);
+		die();
 		$regresion = rtrim($regresion,", ");
 		$avg_val = rtrim($avg_val,", ");
 		$day_val = rtrim($day_val,", ");
@@ -584,5 +623,9 @@ echo $html; die();
 
 		echo $html_content; die();
 		return $html_content;
+	}
+
+	function floordec($zahl, $decimals = 2){    
+		return floor($zahl*pow(10,$decimals)) / pow(10,$decimals);
 	}
 }

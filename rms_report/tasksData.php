@@ -27,15 +27,15 @@ class TasksData
 		$this->data['Created Tasks'] = json_encode($this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`'));
 		$this->data['Quick Tasks'] = json_encode($this->getTasks("", 'NOT', 0, 1));
 
-		$this->data['Sum'] = $this->data['Overdue Tasks'] + $this->data['Today Tasks'] + $this->data['Tomorrow Tasks'] + $this->data['Next Tasks'];
+		$this->data['Closed Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", '', 0, 0, '`modified_user_id`'));
+		$this->data['Deleted Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1, 0, '`modified_user_id`'));
 
+		$this->data['Sum'] = $this->data['Overdue Tasks'] + $this->data['Today Tasks'] + $this->data['Tomorrow Tasks'] + $this->data['Next Tasks'];
+		
 		$this->data['Overdue Tasks'] = json_encode($this->data['Overdue Tasks']);
 		$this->data['Today Tasks'] = json_encode($this->data['Today Tasks']);
 		$this->data['Tomorrow Tasks'] = json_encode($this->data['Tomorrow Tasks']);
 		$this->data['Next Tasks'] = json_encode($this->data['Next Tasks']);
-
-		$this->data['Closed Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", ''));
-		$this->data['Deleted Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1));
 	}
 
 	public function addToDatabase($user_name)

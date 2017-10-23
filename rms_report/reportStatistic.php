@@ -22,7 +22,7 @@ class ReportStatistic
 		$this->result = array();
 		$this->week_data = array_merge($modules_data, $activities_data, array("Tasks" => $tasks_data));
 	}
-
+	
 	public function syncUserStatistic($user_name)
 	{
 		$user_statistics_result = $this->db->query("SELECT `user_data`, `week_number` FROM `rms_statistics` WHERE `user_id`='{$this->user_id}'");
