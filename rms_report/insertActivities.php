@@ -13,7 +13,8 @@ class InsertActivities
 	{
 		$db = DBManagerFactory::getInstance();
 		$sum_of_tasks = $tasksData['Tomorrow Tasks'] + $tasksData['Next Tasks'];
-		$combined_indicator = ($sum_of_tasks != 0) ? -1 * $activitiesData['Notifications']['Number of all Notifications'] / $sum_of_tasks : -0.5;
+		$combined_indicator = ($sum_of_tasks != 0) ? -1 * $activitiesData['Notifications']['Number of all Notifications'] / $sum_of_tasks : -1 * $activitiesData['Notifications']['Number of all Notifications'];
+
 		$modules_indicator = array(
 			"Contacts" => 0,
 			"Companies" => 0,

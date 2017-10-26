@@ -18,8 +18,8 @@ class ModulesData
 		$this->user = $user;
 		$this->db = DBManagerFactory::getInstance();
 
-		foreach($modules as $module_name => $module_data) {
-			$this->data[$module_name] = $this->getUserActionsByModule($module_name);
+		foreach($modules as $module_in_db => $module_name) {
+			$this->data[$module_name] = $this->getUserActionsByModule($module_in_db);
 		}
 
 		$this->decoded_data = $this->data;

@@ -98,7 +98,6 @@ class ReportVisualization
 
 		$count = array();
 		while($row = $this->db->fetchByAssoc($statistics_result)) {
-			$date = date("d-m-Y", strtotime($row["date_entered"]));
 			$user_name = $row["user_name"];
 			unset($row['id']);
 			unset($row['user_name']);
@@ -147,50 +146,64 @@ class ReportVisualization
 		$detail_report = array();
 		$detail = $this->getReportData();
 		$users = $this->getUsersDepartments();
-		$statistic_report = $this->generateStatisticReportForUsers($this->getUsersStatistics());
+		$users_indicators = $this->returnUsersIndicators($this->getUsersStatistics());
+
+		$by_team = array();
+		$by_position = array();
 		
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
 				if($manager != "Mateusz Ruszkowski") {
-					$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$manager], $manager);
+					$detail_report[$dep_name][$manager][] = $this->generateDetailReportForUser($detail[$manager], $manager);
+
+					$by_team[$dep_name][$manager] = $users_indicators[$manager];
 
 					foreach($employees as $key => $employee) {
-						$detail_report[$manager][] = $this->generateDetailReportForUser($detail[$employee], $employee);
+						$detail_report[$dep_name][$manager][] = $this->generateDetailReportForUser($detail[$employee], $employee);
+
+						$by_team[$dep_name][$employee] = $users_indicators[$employee];
 					}
 				}
 			}
 		}
+
+		dump($detail_report); die();
+
+		$statistic_report = array();
+		foreach($by_team as $dep_name => $dep_data) {
+			$statistic_report["by_team"][$dep_name] = $this->generateDepartmentStatisticReport($dep_data);
+		}
+
+		dump($statistic_report["by_team"]);
 	}
 
-	public function generateStatisticReportForUsers($data)
+	public function generateDepartmentStatisticReport($dep_data) 
 	{
-		$html = '<html>
-					<head>
-  						<style>
-  							html{font-family:Lato Light;}
-  						</style>
-						<script type="text/javascript">';
+		$average = 0;
+		$count = count($dep_data);
+		
+		foreach($dep_data as $user_name => $indicator) {
+			$average += $indicator;
+		}
 
-		$weights = array(
-			'w1' => 0.15,
-			'w2' => 0.15,
-			'w3' => 0.15,
-			'w4' => 0.1,
-			'w5' => 0.05,
-			'w6' => 0.05,
-			'w7' => 0.05,
-			'w8' => 0.1,
-			'w9' => 0.05,
-			'w10' => 0.05,
-			'w11' => 0.1,
-		);
+		$average /= $count;
+		
+		$html = "<table>";
+		foreach($dep_data as $user_name => $indicator) {
+			$html .= "<tr><td>". $user_name ."</td><td>". ($indicator / $average) ."</td></tr>";
+		}
 
+		$html .= "</table>";
+		return $html;
+	}
+
+	public function returnUsersIndicators($data)
+	{
 		$min = array();
 		$max = array();
+		$average = array();
 		foreach($data as $user_name => $user_indicators) {
 			foreach($user_indicators as $w => $value) {
-				$value = $weights[$w] * $value;
-
 				if(!isset($min[$w])) {
 					$min[$w] = $value;
 				} else {
@@ -207,8 +220,18 @@ class ReportVisualization
 					}
 				}
 
+				if(!isset($data['Average'][$w])) {
+					$data['Average'][$w] = $value;
+				} else {
+					$data['Average'][$w] += $value;
+				}
+
 				$data[$user_name][$w] = $value;
 			}
+		}
+
+		foreach($data['Average'] as $w => $value) {
+			$data['Average'][$w] = ($value / (count($data) - 1));
 		}
 
 		$standarized_indicator = array();
@@ -217,7 +240,6 @@ class ReportVisualization
 				$max_minus_min = (($val=$max[$w]-$min[$w]) == 0) ? 1 : $val;
 				$indicator = (2*($value-$min[$w])/($max_minus_min))-1;
 				$change_scope = 50+($indicator*50);
-
 
 				if(!isset($standarized_indicator[$user_name][$w])) {
 					$standarized_indicator[$user_name] = $change_scope;
@@ -230,112 +252,7 @@ class ReportVisualization
 			$standarized_indicator[$user_name] = $this->floordec($standarized_indicator[$user_name]);
 		}
 
-
-
-		dump($standarized_indicator);
-		die();
-		$regresion = rtrim($regresion,", ");
-		$avg_val = rtrim($avg_val,", ");
-		$day_val = rtrim($day_val,", ");
-		$dates = rtrim($dates,", ");
-
-		// echo $regresion ."<br/>";
-		// echo $avg_val ."<br/>";
-		// echo $dates ."<br/>";
-		// echo $day_val ."<br/>";die();
-
-		$html .= 'var canvas;
-				var context;
-				var Val_max;
-				var Val_min;
-				var sections;
-				var xScale;
-				var yScale;
-				// Values for the Data Plot, they can also be obtained from a external file
-				// var Day =  ['. $day_val .'];
-				// var Avg =   ['. $avg_val .'];
-				var Day =  [54, 56, 57, 45, 48];
-				var Avg =   [52, 53, 54.5, 55.75, 50.375];
-
-				function init() {
-					// set these values for your data 
-					// sections = '.$sections.';
-					sections = 5;
-					// Val_max = '.$val_max.';
-					// Val_min = '.$val_min.';
-					Val_max = 70;
-					Val_min = 0;
-					var stepSize = 5;
-					var columnSize = 50;
-					var rowSize = 50;
-					var margin = 10;
-					// var xAxis = [" ", '.$dates.'] 
-					var xAxis = [" ", "09-10-2017", "10-10-2017", "11-10-2017", "12-10-2017", "13-10-2017"]
-					//
-						
-					canvas = document.getElementById("canvas");
-					context = canvas.getContext("2d");
-					context.fillStyle = "#0099ff"
-					context.font = "20 pt Lato Light"
-					
-					yScale = (canvas.height - columnSize - margin) / (Val_max - Val_min);
-					xScale = (canvas.width - rowSize) / sections;
-					
-					context.strokeStyle="#009933"; // color of grid lines
-					context.beginPath();
-					// print Parameters on X axis, and grid lines on the graph
-					for (i=1;i<=sections;i++) {
-						var x = i * xScale;
-						context.fillText(xAxis[i], x,columnSize - margin);
-						context.moveTo(x, columnSize);
-						context.lineTo(x, canvas.height - margin);
-					}
-					// print row header and draw horizontal grid lines
-					var count =  0;
-					for (scale=Val_max;scale>=Val_min;scale = scale - stepSize) {
-						var y = columnSize + (yScale * count * stepSize); 
-						context.fillText(scale, margin,y + margin);
-						context.moveTo(rowSize,y)
-						context.lineTo(canvas.width,y)
-						count++;
-					}
-					context.stroke();
-					
-					context.translate(rowSize,canvas.height + Val_min * yScale);
-					context.scale(1,-1 * yScale);
-					
-					// Color of each dataplot items	
-					context.strokeStyle="#FF0066";
-					plotData(Day);
-					context.strokeStyle="#000";
-					plotData(Avg);
-				}
-
-				function plotData(dataSet) {
-					context.beginPath();
-					context.moveTo(0, dataSet[0]);
-					for (i=1;i<sections;i++) {
-						context.lineTo(i * xScale, dataSet[i]);
-					}
-					context.stroke();
-				}';
-		$html .= '	</script>
-				</head>
-				<body onLoad="init()">
-					<div align="center">
-					<h2>'. $employee .'</h2>
-
-					<canvas id="canvas" height="400" width="650">
-					</canvas>
-					<br>
-						<!--Legends for Dataplot -->
-					<span style="color:#FF0066"> Day Value</span>
-					<span style="color:#000"> Avg </span>
-					</div>
-				</body>
-				</html>';
-
-echo $html; die();
+		return $standarized_indicator;
 	}
 
 	public function generateDetailReportForUser($user_data, $employee)
@@ -397,7 +314,6 @@ echo $html; die();
 					$date_data_html .= "<tr class='module-type complex-type-data'>";
 
 					if($module_name == "Tasks") {
-
 
 						if($iter1 == 0) {
 							$horizontal_html .= "<td>"
@@ -621,7 +537,6 @@ echo $html; die();
 		$html_content .= '</body>
 					</html>';
 
-		echo $html_content; die();
 		return $html_content;
 	}
 

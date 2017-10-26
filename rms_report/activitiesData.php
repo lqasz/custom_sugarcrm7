@@ -34,18 +34,15 @@ class ActivitiesData
 	{
 		$sum = array();
 
-		$query = "SELECT COUNT(`id`) AS `ile`, `severity` 
+		$query = "SELECT COUNT(`id`) AS `ile`
 					FROM `notifications` 
 					WHERE `assigned_user_id`='{$this->user}' 
 						AND `deleted`=0 
-						AND `is_read`=0 
-					GROUP BY `severity`";
+						AND `is_read`=0";
 
 		$all = 0;
 		$result = $this->db->query($query);
 		while($row = $this->db->fetchByAssoc($result)) {
-			$severity = (empty($row['severity'])) ? "Information" : $row['severity'];
-			$sum[$severity] = $row['ile'];
 			$all += $row['ile'];
 		}
 		
