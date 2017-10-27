@@ -79,7 +79,6 @@ class ReportVisualization
                 $this->week_notifi[$row["user_name"]][$severity] = $value;
             }
 
-
 			$data[$row["user_name"]][$date]['Activities']["Bug"] = $row['bugs'];
 			$data[$row["user_name"]][$date]['Activities']["Chat"] = $row['chat'];
 			$data[$row["user_name"]][$date]['Activities']["Login"] = $login_result;
@@ -144,9 +143,11 @@ class ReportVisualization
 	public function prepareReport()
 	{
 		$detail_report = array();
+		$statistic_report = array();
 		$detail = $this->getReportData();
 		$users = $this->getUsersDepartments();
 		$users_indicators = $this->returnUsersIndicators($this->getUsersStatistics());
+		$statistic_report["main"] = $this->generateStatisticReport($users_indicators);
 
 		$by_team = array();
 		$by_position = array();
@@ -167,17 +168,222 @@ class ReportVisualization
 			}
 		}
 
-		dump($detail_report); die();
-
-		$statistic_report = array();
+		$teams_data = array();
 		foreach($by_team as $dep_name => $dep_data) {
-			$statistic_report["by_team"][$dep_name] = $this->generateDepartmentStatisticReport($dep_data);
+			$statistic_report["by_team"][$dep_name] = $this->generateUsersDepartmentStatisticReport($dep_data, $dep_name, $teams_data);
 		}
 
-		dump($statistic_report["by_team"]);
+		$statistic_report["teams"] = $this->generateDepartmentsStatisticReport($teams_data, $users_indicators['Average']);
+
+		foreach($users as $dep_name => $users_values) {
+			foreach($users_values as $manager => $employees) {
+				$this->sendReport($detail_report[$dep_name][$manager], $statistic_report["main"], $statistic_report["by_team"][$dep_name], $statistic_report["teams"]);
+			}
+		}
 	}
 
-	public function generateDepartmentStatisticReport($dep_data) 
+	public function generateDepartmentsStatisticReport($teams_data, $average)
+	{
+		arsort($teams_data);
+
+		$html = "<table>
+					<tr>
+						<th class='employee-name'>Departments Activities</th>
+					</tr>
+					<tr>
+						<td>
+							<table>";
+		$html .= "<tr><td>Average: $average</td></tr>";
+		$html .= "<tr class='stats-header'><th>Department</th><th>Ws</th><th>Ws/Average</th></tr>";
+
+		$iter = 1;
+		foreach($teams_data as $team => $indicator) {
+			$value = number_format(($indicator / $average), 2, '.', '');
+			$class = ($value < 1) ? "warn" : "";
+
+			$html .= "<tr class='stats-user-name $class'><td>$iter. ". $team ."</td><td>". $indicator ."</td><td>". $value ."</td></tr>";
+
+			$iter++;
+		}
+
+		$html .= "				</table>
+							</td>
+						</tr>
+					</table>";
+		return $html;
+	}
+
+	public function sendReport($detail_reports, $main_statistic_report, $by_team_statistic_report, $teams_statistic_report)
+	{
+		$html_content = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+					<html xmlns="http://www.w3.org/1999/xhtml">
+						<head>
+							<style>
+								body {
+							  		color: #000;
+							  		font-family: Lato;
+							  		font-size: 13px;
+								}
+								table {
+									border-collapse: collapse;
+								}
+								.employee-name {
+									margin-bottom: 1em;
+									font-size: 1.5em;
+									font-weight: bold;
+									text-align: center;
+								}
+								.module-name-value, .date-value {
+									background-color: #70b933;
+									font-weight: normal;
+									text-align: center;
+									color: white;
+									height: 40px;
+								}
+								tbody, tr, th, td {
+									padding: 0;
+									white-space: normal;
+								}
+								.gray {
+									background-color: rgba(94,93,82,.1);
+								}
+								.module-name>th {
+									width: 60%;
+								}
+								table {
+									width: 100%;
+								}
+								.align-center {
+									text-align: center;
+								}
+								.horizontal-content {
+									width: 500px;
+								}
+								.modules-table>tr {
+									background-color: #F5F5F5;
+								}
+								.submodel-value td {
+									height: 20px;
+								}
+								.type-row {
+									width: 90%;
+								}
+								.module-name-row {
+									text-align: center;
+									border-bottom: 1px solid #000;
+								}
+								.module-name-row .horizontal-header {
+									text-align: right;
+								}
+								.module-type:not(:last-child) {
+									border-bottom: 1px dotted #70b933;
+								}
+								.module-type:nth-child(even) {
+									background-color: #F5F5F5;
+								}
+								.module-type td {
+									padding: 2px;
+								}
+								.module-name-value, .date-value {
+									border-top: 1px solid #000;
+									border-bottom: 1px solid #000;
+								}
+								th.module-name-row {
+									background-color: #70b933;
+									text-align: center;
+									color: white;
+								}
+								.warn {
+									font-weight: bold;
+									color: red;
+								}
+								.stats-user-name {
+									text-align: center;
+									border-bottom: 1px solid #000;
+								}
+								.stats-user-name td {
+									padding: 2px;
+								}
+								.stats-header {
+									border-bottom: 1px solid #000;
+									border-top: 1px solid #000;
+								}
+								.stats-user-name td:first-child {
+									text-align: left;
+								}
+							</style>
+						</head>
+						<body>';
+		
+		$html_content .= '<table><tr>';
+		$html_content .= '<td style="width: 47.5%;">
+							<table>
+								<tr>
+									<td>'. $main_statistic_report .'</td>
+								</tr>
+							</table>
+						</td>';
+		$html_content .= '<td style="width: 5%;"></td>';
+		$html_content .= '<td style="width: 47.5%;">
+							<table>
+								<tr>
+									<td>'. $by_team_statistic_report .'</td>
+								</tr>
+								<tr>
+									<td>'. $teams_statistic_report .'</td>
+								</tr>
+							</table>
+						</td>';
+		$html_content .= '</tr><tr><td colspan="3">';
+
+		foreach($detail_reports as $key => $user_report) {
+			$html_content .= $user_report;
+		}
+
+		$html_content .= '			</td>
+								</tr>
+							</table>
+						</body>
+					</html>';
+
+		echo $html_content; die();
+	}
+
+	public function generateStatisticReport($users_indicators)
+	{
+		$average = $users_indicators['Average'];
+		unset($users_indicators['Average']);
+
+		arsort($users_indicators);
+
+		$html = "<table>
+					<tr>
+						<th class='employee-name'>Employees Activities</th>
+					</tr>
+					<tr>
+						<td>
+							<table>";
+		$html .= "<tr><td>Average: $average</td></tr>";
+		$html .= "<tr class='stats-header'><th>Employee</th><th>Ws</th><th>Ws/Average</th></tr>";
+
+		$iter = 1;
+		foreach($users_indicators as $user_name => $indicator) {
+			$value = number_format(($indicator / $average), 2, '.', '');
+			$class = ($value < 1) ? "warn" : "";
+
+			$html .= "<tr class='stats-user-name $class'><td>$iter. ". $user_name ."</td><td>". $indicator ."</td><td>". $value ."</td></tr>";
+
+			$iter++;
+		}
+
+		$html .= "				</table>
+							</td>
+						</tr>
+					</table>";
+		return $html;
+	}
+
+	public function generateUsersDepartmentStatisticReport($dep_data, $dep_name, &$teams) 
 	{
 		$average = 0;
 		$count = count($dep_data);
@@ -187,13 +393,34 @@ class ReportVisualization
 		}
 
 		$average /= $count;
-		
-		$html = "<table>";
+		$average = number_format($average, 2, '.', '');
+		$teams[$dep_name] = $average;
+
+		$html = "<table>
+					<tr>
+						<th class='employee-name'>$dep_name Activities</th>
+					</tr>
+					<tr>
+						<td>
+							<table>";
+		$html .= "<tr><td>Average: $average</td></tr>";
+		$html .= "<tr class='stats-header'><th>Employee</th><th>Ws</th><th>Ws/Average</th></tr>";
+
+		$iter = 1;
+		arsort($dep_data);
 		foreach($dep_data as $user_name => $indicator) {
-			$html .= "<tr><td>". $user_name ."</td><td>". ($indicator / $average) ."</td></tr>";
+			$value = number_format(($indicator / $average), 2, '.', '');
+			$class = ($value < 1) ? "warn" : "";
+
+			$html .= "<tr class='stats-user-name $class'><td>$iter. ". $user_name ."</td><td>". $indicator ."</td><td>". $value ."</td></tr>";
+
+			$iter++;
 		}
 
-		$html .= "</table>";
+		$html .= "				</table>
+							</td>
+						</tr>
+					</table>";
 		return $html;
 	}
 
@@ -445,99 +672,7 @@ class ReportVisualization
 					</tr>
 				</table>";
 
-		// echo $html; die();
-		// echo $horizontal_html; die();
-
-		$html_content = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-					<html xmlns="http://www.w3.org/1999/xhtml">
-						<head>
-							<style>
-								body {
-							  		color: #000;
-							  		font-family: Lato;
-							  		font-size: 13px;
-								}
-								table {
-									border-collapse: collapse;
-								}
-								.employee-name {
-									margin-bottom: 1em;
-									font-size: 1.5em;
-									font-weight: bold;
-									text-align: center;
-								}
-								.module-name-value, .date-value {
-									background-color: #70b933;
-									font-weight: normal;
-									text-align: center;
-									color: white;
-									height: 40px;
-								}
-								tbody, tr, th, td {
-									padding: 0;
-									white-space: normal;
-								}
-								.gray {
-									background-color: rgba(94,93,82,.1);
-								}
-								.module-name>th {
-									width: 60%;
-								}
-								table {
-									width: 100%;
-								}
-								.align-center {
-									text-align: center;
-								}
-								.horizontal-content {
-									width: 500px;
-								}
-								.modules-table>tr {
-									background-color: #F5F5F5;
-								}
-								.submodel-value td {
-									height: 20px;
-								}
-								.type-row {
-									width: 90%;
-								}
-								.module-name-row {
-									text-align: center;
-									border-bottom: 1px solid #000;
-								}
-								.module-name-row .horizontal-header {
-									text-align: right;
-								}
-								.module-type:not(:last-child) {
-									border-bottom: 1px dotted #70b933;
-								}
-								.module-type:nth-child(even) {
-									background-color: #F5F5F5;
-								}
-								.module-type td {
-									padding: 2px;
-								}
-								.module-name-value, .date-value {
-									border-top: 1px solid #000;
-									border-bottom: 1px solid #000;
-								}
-								th.module-name-row {
-									background-color: #70b933;
-									text-align: center;
-									color: white;
-								}
-								.warn {
-									font-weight: bold;
-									color: red;
-								}
-							</style>
-						</head>
-						<body>';
-		$html_content .= $html;
-		$html_content .= '</body>
-					</html>';
-
-		return $html_content;
+		return $html;
 	}
 
 	function floordec($zahl, $decimals = 2){    
