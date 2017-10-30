@@ -20,47 +20,26 @@ class TasksData
 		$this->user = $user;
 		$this->db = DBManagerFactory::getInstance();
 		
+		// get tasks activites specified by key in array
 		$this->data['Overdue Tasks'] = $this->getTasks("AND DATE(`date_due`) < '{$today}'");
 		$this->data['Today Tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$today}'");
+
 		$this->data['Tomorrow Tasks'] = $this->getTasks("AND DATE(`date_due`) = '{$tomorrow}'");
 		$this->data['Next Tasks'] = $this->getTasks("AND DATE(`date_due`) > '{$tomorrow}'");
-		$this->data['Created Tasks'] = json_encode($this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`'));
-		$this->data['Quick Tasks'] = json_encode($this->getTasks("", 'NOT', 0, 1));
 
-		$this->data['Closed Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", '', 0, 0, '`modified_user_id`'));
-		$this->data['Deleted Tasks'] = json_encode($this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1, 0, '`modified_user_id`'));
+		$this->data['Created Tasks'] = $this->getTasks("AND DATE(`date_entered`) = '{$today}'", 'NOT', 0, 0, '`created_by`');
+		$this->data['Quick Tasks'] = $this->getTasks("", 'NOT', 0, 1);
+
+		$this->data['Closed Tasks'] = $this->getTasks("AND DATE(`date_modified`) = '{$today}'", '', 0, 0, '`modified_user_id`');
+		$this->data['Deleted Tasks'] = $this->getTasks("AND DATE(`date_modified`) = '{$today}'", 'NOT', 1, 0, '`modified_user_id`');
 
 		$this->data['Sum'] = $this->data['Overdue Tasks'] + $this->data['Today Tasks'] + $this->data['Tomorrow Tasks'] + $this->data['Next Tasks'];
-		
-		$this->data['Overdue Tasks'] = json_encode($this->data['Overdue Tasks']);
-		$this->data['Today Tasks'] = json_encode($this->data['Today Tasks']);
-		$this->data['Tomorrow Tasks'] = json_encode($this->data['Tomorrow Tasks']);
-		$this->data['Next Tasks'] = json_encode($this->data['Next Tasks']);
 	}
 
-	public function addToDatabase($user_name)
-	{
-		$this->db->query("INSERT INTO `rms_report_tasks` VALUES(
-			'".create_guid()."', 
-			'{$user_name}',
-			ADDDATE(CURRENT_DATE,-1),
-			'{$this->data['Overdue Tasks']}',
-			'{$this->data['Today Tasks']}',
-			'{$this->data['Tomorrow Tasks']}',
-			'{$this->data['Next Tasks']}',
-			'{$this->data['Created Tasks']}',
-			'{$this->data['Quick Tasks']}',
-			'{$this->data['Closed Tasks']}',
-			'{$this->data['Deleted Tasks']}',
-			'{$this->data['Sum']}'
-			)"
-		);
-	}
-
-	public function getTasks($where, $status='NOT', $deleted=0, $new_one=0, $user_activity='`assigned_user_id`')
+	private function getTasks($where, $status='NOT', $deleted=0, $new_one=0, $user_activity='`assigned_user_id`')
 	{
 		$sum = 0;
-		$sql_tasks = "SELECT COUNT(`id`) AS `count`, `parent_id`, `parent_type`
+		$sql_tasks = "SELECT COUNT(`id`) AS `count`
 						FROM `tasks` 
 							LEFT JOIN `tasks_cstm` 
 								ON(`id`=`id_c`) 
@@ -73,9 +52,8 @@ class TasksData
 								AND `every_month_c`=0 
 								AND `generated_c`=0 ";
 		$sql_tasks .= $where;
-		$sql_tasks .= "GROUP BY `parent_id`, `parent_type`";
 
-		$sql_periodic_tasks = "SELECT DISTINCT `parent_id`, `parent_type`
+		$sql_periodic_tasks = "SELECT DISTINCT `name`
 								FROM `tasks` 
 									LEFT JOIN `tasks_cstm` 
 										ON(`id` = `id_c`) 
@@ -100,5 +78,25 @@ class TasksData
 		}
 
 		return $sum;
+	}
+
+	public function addToDatabase($user_name)
+	{
+		// insert {$user_name} tasks activities to databese
+		$this->db->query("INSERT INTO `rms_report_tasks` VALUES(
+			'".create_guid()."', 
+			'{$user_name}',
+			CURRENT_TIMESTAMP,
+			'{$this->data['Overdue Tasks']}',
+			'{$this->data['Today Tasks']}',
+			'{$this->data['Tomorrow Tasks']}',
+			'{$this->data['Next Tasks']}',
+			'{$this->data['Created Tasks']}',
+			'{$this->data['Quick Tasks']}',
+			'{$this->data['Closed Tasks']}',
+			'{$this->data['Deleted Tasks']}',
+			'{$this->data['Sum']}'
+			)"
+		);
 	}
 }

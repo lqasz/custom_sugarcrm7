@@ -7,52 +7,87 @@ ini_set("display_errors", 1);
 */
 class ReportVisualization
 {
-	public $db;
-	public $managers;
-	public $assistants;
-	public $week_notifi;
-	public $language_pack;
+	private $db;
+	private $current_user;
+	private $employee_activities_count;
 
-	public function __construct()
+	public function __construct($current_user)
 	{
-		$this->week_tasks = array();
+		$this->current_user = $current_user; // current user object
+		$this->employee_activities_count = array(); // helper var for hidden table
 		$this->db = DBManagerFactory::getInstance();
-
-		$this->language_pack = array(
-			"overdue_tasks" => "Overdue Tasks",
-			"today_tasks" => "Today Tasks",
-			"tomorow_tasks" => "Tomorow Tasks",
-			"next_tasks" => "Next Tasks",
-			"created_tasks" => "Created Tasks",
-			"closed" => "Closed Tasks",
-			"deleted" => "Deleted Tasks",
-			"quick_tasks" => "Quick Tasks",
-			"sum" => "Sum of Existing Tasks",
-		);
 	}
 
-	public function getReportData()
+	public function groupByManagers()
+	{
+		$users = array();
+		// get all active users grouped by their managers
+		$query = 'SELECT CONCAT(`u2`.`first_name`, " ", `u2`.`last_name`) AS `m_name`,
+						CONCAT(`u1`.`first_name`, " ", `u1`.`last_name`) AS `e_name`,
+						`u1`.`id` AS `u1_id`,
+						`u2`.`id` AS `u2_id`,
+						`aa_departments`.`name` AS `dep_name`
+				FROM `users` `u1` 
+					LEFT JOIN `users_cstm` 
+						ON(`u1`.`id`=`users_cstm`.`id_c`) 
+					LEFT JOIN `aa_departments` 
+						ON(`aa_departments`.`id`=`aa_departments_id_c`) 
+					INNER JOIN `users` `u2` 
+						ON(`u2`.`id`=`aa_departments`.`assigned_user_id`) 
+				WHERE `u1`.`employee_status`="Active" 
+					AND `u1`.`status`="Active" 
+					AND `u1`.`show_on_employees`=1
+					AND `aa_departments`.`name` NOT LIKE "IT Department"';
+
+		$result = $this->db->query($query);
+
+		if($this->current_user['data']['dep_name'] == "Board") {
+			while($row = $this->db->fetchByAssoc($result)) {
+				$users[$this->current_user['data']['user_id']]['subordinates'][$row['dep_name']][$row['u2_id']] = $row['m_name'];
+				$users[$this->current_user['data']['user_id']]['subordinates'][$row['dep_name']][$row['u1_id']] = $row['e_name'];
+			}
+		} else {
+			while($row = $this->db->fetchByAssoc($result)) {
+				$users[$row['u2_id']]['subordinates'][$row['u1_id']] = $row['e_name'];
+			}
+		}
+
+		return $users;
+	}
+
+	public function getReportData($user_name)
 	{
 		$data = array();
-		$tasks_result = $this->db->query("SELECT * FROM `rms_report_tasks` WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE ORDER BY `date_entered` ASC");
-		while($row = $this->db->fetchByAssoc($tasks_result)) {
-			$json_result = array();
-			$all_parent_types = array();
+		$query = "SELECT * 
+				FROM `rms_report_tasks` 
+				WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) 
+					AND CURRENT_DATE AND `user_name` LIKE '$user_name'
+				ORDER BY `date_entered` ASC";
 
-			foreach($row as $key => $json) {
+		$result = $this->db->query($query);
+		
+		while($row = $this->db->fetchByAssoc($result)) {
+			$all_data = array();
+
+			foreach($row as $key => $value) {
 				if($key != "id" && $key != "user_name" && $key != "date_entered") {
-					$json_result[$key] = mb_convert_encoding($json, "UTF-8");
-					$json_result[$key] = str_replace('&quot;', '"', $json_result[$key]);
-					$json_result[$key] = json_decode($json_result[$key], true);
+					$all_data[$key] = $value;
 				}
 			}
 			
 			$date = date("d-m-Y", strtotime($row["date_entered"]));
-			$data[$row["user_name"]][$date]['Tasks'] = $json_result;
+			$data[$row["user_name"]][$date]['Tasks'] = $all_data;
 		}
 
-		$modules_result = $this->db->query("SELECT * FROM `rms_report_modules` WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE ORDER BY `date_entered` ASC");
-		while($row = $this->db->fetchByAssoc($modules_result)) {
+		$query = "SELECT * 
+				FROM `rms_report_modules` 
+				WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) 
+					AND CURRENT_DATE AND `user_name` LIKE '$user_name'
+				ORDER BY `date_entered` ASC";
+
+		$result = $this->db->query($query);
+
+		while($row = $this->db->fetchByAssoc($result)) {
 			$date = date("d-m-Y", strtotime($row["date_entered"]));
 			$json_result = mb_convert_encoding($row['data'], "UTF-8");
 			$json_result = str_replace('&quot;', '"', $json_result);
@@ -63,26 +98,22 @@ class ReportVisualization
 			}	
 		}
 
-		$activities_result = $this->db->query("SELECT * FROM `rms_report_activities` WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) AND CURRENT_DATE ORDER BY `date_entered` ASC");
-		while($row = $this->db->fetchByAssoc($activities_result)) {
+		$query = "SELECT * 
+				FROM `rms_report_activities` 
+				WHERE DATE(`date_entered`) BETWEEN ADDDATE(CURRENT_DATE,-5) 
+					AND CURRENT_DATE AND `user_name` LIKE '$user_name'
+				ORDER BY `date_entered` ASC";
+
+		$result = $this->db->query($query);
+
+		while($row = $this->db->fetchByAssoc($result)) {
 			$date = date("d-m-Y", strtotime($row["date_entered"]));
-
-			$login_result = mb_convert_encoding($row['login'], "UTF-8");
-			$login_result = str_replace('&quot;', '"', $login_result);
-			$login_result = json_decode($login_result, true);
-
-			$notification_result = mb_convert_encoding($row['notifications'], "UTF-8");
-			$notification_result = str_replace('&quot;', '"', $notification_result);
-			$notification_result = json_decode($notification_result, true);
-
-			foreach($notification_result as $severity => $value) {
-                $this->week_notifi[$row["user_name"]][$severity] = $value;
-            }
 
 			$data[$row["user_name"]][$date]['Activities']["Bug"] = $row['bugs'];
 			$data[$row["user_name"]][$date]['Activities']["Chat"] = $row['chat'];
-			$data[$row["user_name"]][$date]['Activities']["Login"] = $login_result;
-			$data[$row["user_name"]][$date]['Activities']["Notification"] = $notification_result;
+			$data[$row["user_name"]][$date]['Activities']["Login"]["Normal Login"] = $row['normal_login'];
+			$data[$row["user_name"]][$date]['Activities']["Login"]["Login by Mobile"] = $row['mobile_login'];
+			$data[$row["user_name"]][$date]['Activities']["Notification"] = $row['notifications'];
 		}
 
 		return $data;
@@ -126,36 +157,41 @@ class ReportVisualization
 		return $data;
 	}
 
-	public function getUsersDepartments()
-	{
-		$users = array();
-		$departments_result = $this->db->query('SELECT CONCAT(`u1`.`first_name`, " ", `u1`.`last_name`) AS `e_name`, `aa_departments`.`name` AS `dep_name`, CONCAT(`u2`.`first_name`, " ", `u2`.`last_name`) AS `m_name` FROM `users` `u1` LEFT JOIN `users_cstm` ON(`u1`.`id`=`users_cstm`.`id_c`) LEFT JOIN `aa_departments` ON(`aa_departments`.`id`=`aa_departments_id_c`) INNER JOIN `users` `u2` ON(`u2`.`id`=`aa_departments`.`assigned_user_id`) WHERE `u1`.`employee_status`="Active" AND `u1`.`status`="Active" AND `u1`.`show_on_employees`=1');
-
-		while($row = $this->db->fetchByAssoc($departments_result)) {
-			if($row['m_name'] != $row['e_name']) {
-				$users[$row['dep_name']][$row['m_name']][] = $row['e_name'];
-			}
-		}
-
-		return $users;
-	}
-
 	public function prepareReport()
 	{
 		$detail_report = array();
 		$statistic_report = array();
-		$detail = $this->getReportData();
-		$users = $this->getUsersDepartments();
+		$users = $this->groupByManagers();
+
+		if(isset($users[$this->current_user['data']['user_id']])) {
+			if($this->current_user['data']['dep_name'] == "Board") {
+				foreach($users[$this->current_user['data']['user_id']]['subordinates'] as $dep_name => $dep_data) {
+					foreach($dep_data as $e_name) {
+						$detail = $this->getReportData($e_name);
+						$detail_report[$dep_name][$this->current_user['data']['user_name']][] = $this->generateDetailReportForUser($detail[$e_name], $e_name);
+					}
+				}
+			} else {
+				foreach($users[$this->current_user['data']['user_id']]['subordinates'] as $e_id => $e_name) {
+					$detail = $this->getReportData($e_name);
+					$detail_report[$this->current_user['data']['user_name']][] = $this->generateDetailReportForUser($detail[$e_name], $e_name);
+				}
+			}
+		} else {
+			$e_name = $this->current_user['data']['user_name'];
+			$detail = $this->getReportData($e_name);
+			$detail_report[$this->current_user['data']['user_name']][] = $this->generateDetailReportForUser($detail[$e_name], $e_name);
+		}
+
 		$users_indicators = $this->returnUsersIndicators($this->getUsersStatistics());
 		$statistic_report["main"] = $this->generateStatisticReport($users_indicators);
 
 		$by_team = array();
-		$by_position = array();
 		
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
 				if($manager != "Mateusz Ruszkowski") {
-					$detail_report[$dep_name][$manager][] = $this->generateDetailReportForUser($detail[$manager], $manager);
+					
 
 					$by_team[$dep_name][$manager] = $users_indicators[$manager];
 
@@ -177,7 +213,7 @@ class ReportVisualization
 
 		foreach($users as $dep_name => $users_values) {
 			foreach($users_values as $manager => $employees) {
-				$this->sendReport($detail_report[$dep_name][$manager], $statistic_report["main"], $statistic_report["by_team"][$dep_name], $statistic_report["teams"]);
+				$this->sendReport($detail_report[$dep_name][$manager], $statistic_report["main"], $statistic_report["by_team"][$dep_name], $statistic_report["teams"], $dep_name);
 			}
 		}
 	}
@@ -185,16 +221,15 @@ class ReportVisualization
 	public function generateDepartmentsStatisticReport($teams_data, $average)
 	{
 		arsort($teams_data);
-
-		$html = "<table>
+		$html = "<table class='table-header'>
 					<tr>
 						<th class='employee-name'>Departments Activities</th>
 					</tr>
 					<tr>
 						<td>
 							<table>";
-		$html .= "<tr><td>Average: $average</td></tr>";
-		$html .= "<tr class='stats-header'><th>Department</th><th>Ws</th><th>Ws/Average</th></tr>";
+		$html .= "<tr><td><b>Average: $average</b></td></tr>";
+		$html .= "<tr class='stats-header date-value'><th>Department</th><th>Ws</th><th>Ws/Average</th></tr>";
 
 		$iter = 1;
 		foreach($teams_data as $team => $indicator) {
@@ -206,6 +241,8 @@ class ReportVisualization
 			$iter++;
 		}
 
+		$this->employee_activities_count['teams'] = $iter-1;
+		
 		$html .= "				</table>
 							</td>
 						</tr>
@@ -213,7 +250,50 @@ class ReportVisualization
 		return $html;
 	}
 
-	public function sendReport($detail_reports, $main_statistic_report, $by_team_statistic_report, $teams_statistic_report)
+	public function generateUsersDepartmentStatisticReport($dep_data, $dep_name, &$teams) 
+	{
+		$average = 0;
+		$count = count($dep_data);
+		
+		foreach($dep_data as $user_name => $indicator) {
+			$average += $indicator;
+		}
+
+		$average /= $count;
+		$average = number_format($average, 2, '.', '');
+		$teams[$dep_name] = $average;
+
+		$html = "<table>
+					<tr>
+						<th class='employee-name'>$dep_name Activities</th>
+					</tr>
+					<tr>
+						<td>
+							<table>";
+		$html .= "<tr><td><b>Average: $average</b></td></tr>";
+		$html .= "<tr class='stats-header date-value'><th>Employee</th><th>Ws</th><th>Ws/Average</th></tr>";
+
+		$iter = 1;
+		arsort($dep_data);
+		foreach($dep_data as $user_name => $indicator) {
+			$value = number_format(($indicator / $average), 2, '.', '');
+			$class = ($value < 1) ? "warn" : "";
+
+			$html .= "<tr class='stats-user-name $class'><td>$iter. ". $user_name ."</td><td>". $indicator ."</td><td>". $value ."</td></tr>";
+
+			$iter++;
+		}
+
+		$this->employee_activities_count[$dep_name] = $iter-1;
+
+		$html .= "				</table>
+							</td>
+						</tr>
+					</table>";
+		return $html;
+	}
+
+	public function sendReport($detail_reports, $main_statistic_report, $by_team_statistic_report, $teams_statistic_report, $dep_name)
 	{
 		$html_content = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 					<html xmlns="http://www.w3.org/1999/xhtml">
@@ -297,6 +377,13 @@ class ReportVisualization
 									font-weight: bold;
 									color: red;
 								}
+								.info {
+									font-weight: bold;
+									color: blue;
+								}
+								.stats-user-name:nth-child(even) {
+									background-color: #F5F5F5;
+								}
 								.stats-user-name {
 									text-align: center;
 									border-bottom: 1px solid #000;
@@ -311,26 +398,41 @@ class ReportVisualization
 								.stats-user-name td:first-child {
 									text-align: left;
 								}
+								.table-header {
+									margin-top: 5%;
+								}
 							</style>
 						</head>
 						<body>';
 		
 		$html_content .= '<table><tr>';
 		$html_content .= '<td style="width: 47.5%;">
-							<table>
+							<table class="table-header">
 								<tr>
 									<td>'. $main_statistic_report .'</td>
 								</tr>
 							</table>
 						</td>';
 		$html_content .= '<td style="width: 5%;"></td>';
+
+		$new_table_count = $this->employee_activities_count['all'] - $this->employee_activities_count['teams'] - $this->employee_activities_count[$dep_name];
+
+		$new_table = "<table>";
+		for($i = 0; $i < $new_table_count; $i++) { 
+			$new_table .= "<tr><td>&nbsp;</td></tr>";
+		}
+		$new_table .= "</table>";
+
 		$html_content .= '<td style="width: 47.5%;">
-							<table>
+							<table class="table-header">
 								<tr>
 									<td>'. $by_team_statistic_report .'</td>
 								</tr>
 								<tr>
 									<td>'. $teams_statistic_report .'</td>
+								</tr>
+								<tr>
+									<td>'. $new_table .'</td>
 								</tr>
 							</table>
 						</td>';
@@ -353,7 +455,6 @@ class ReportVisualization
 	{
 		$average = $users_indicators['Average'];
 		unset($users_indicators['Average']);
-
 		arsort($users_indicators);
 
 		$html = "<table>
@@ -363,59 +464,21 @@ class ReportVisualization
 					<tr>
 						<td>
 							<table>";
-		$html .= "<tr><td>Average: $average</td></tr>";
-		$html .= "<tr class='stats-header'><th>Employee</th><th>Ws</th><th>Ws/Average</th></tr>";
+		$html .= "<tr><td><b>Average: $average</b></td></tr>";
+		$html .= "<tr class='stats-header date-value'><th>Employee</th><th>Ws</th><th>Ws/Average</th></tr>";
 
 		$iter = 1;
 		foreach($users_indicators as $user_name => $indicator) {
 			$value = number_format(($indicator / $average), 2, '.', '');
-			$class = ($value < 1) ? "warn" : "";
+			$warn_class = ($value < 1) ? "warn" : "";
+			$info_class = ($value == 1.00 && $value < 1.02) ? "info" : "";
 
-			$html .= "<tr class='stats-user-name $class'><td>$iter. ". $user_name ."</td><td>". $indicator ."</td><td>". $value ."</td></tr>";
-
-			$iter++;
-		}
-
-		$html .= "				</table>
-							</td>
-						</tr>
-					</table>";
-		return $html;
-	}
-
-	public function generateUsersDepartmentStatisticReport($dep_data, $dep_name, &$teams) 
-	{
-		$average = 0;
-		$count = count($dep_data);
-		
-		foreach($dep_data as $user_name => $indicator) {
-			$average += $indicator;
-		}
-
-		$average /= $count;
-		$average = number_format($average, 2, '.', '');
-		$teams[$dep_name] = $average;
-
-		$html = "<table>
-					<tr>
-						<th class='employee-name'>$dep_name Activities</th>
-					</tr>
-					<tr>
-						<td>
-							<table>";
-		$html .= "<tr><td>Average: $average</td></tr>";
-		$html .= "<tr class='stats-header'><th>Employee</th><th>Ws</th><th>Ws/Average</th></tr>";
-
-		$iter = 1;
-		arsort($dep_data);
-		foreach($dep_data as $user_name => $indicator) {
-			$value = number_format(($indicator / $average), 2, '.', '');
-			$class = ($value < 1) ? "warn" : "";
-
-			$html .= "<tr class='stats-user-name $class'><td>$iter. ". $user_name ."</td><td>". $indicator ."</td><td>". $value ."</td></tr>";
+			$html .= "<tr class='stats-user-name $warn_class $info_class'><td>$iter. ". $user_name ."</td><td>". $indicator ."</td><td>". $value ."</td></tr>";
 
 			$iter++;
 		}
+
+		$this->employee_activities_count['all'] = $iter-1;
 
 		$html .= "				</table>
 							</td>
@@ -485,7 +548,18 @@ class ReportVisualization
 	public function generateDetailReportForUser($user_data, $employee)
 	{
 		$iter1 = 0;
-		$html = "<table class='employee-table'>
+		$language_pack = array(
+			"overdue_tasks" => "Overdue Tasks",
+			"today_tasks" => "Today Tasks",
+			"tomorow_tasks" => "Tomorow Tasks",
+			"next_tasks" => "Next Tasks",
+			"created_tasks" => "Created Tasks",
+			"closed" => "Closed Tasks",
+			"deleted" => "Deleted Tasks",
+			"quick_tasks" => "Quick Tasks",
+			"sum" => "Sum of Existing Tasks",
+		);
+		$html = "<table class='employee-table table-header'>
 					<tr class='employee-name'>
 						<th>$employee</th>
 					</tr>
@@ -544,7 +618,7 @@ class ReportVisualization
 
 						if($iter1 == 0) {
 							$horizontal_html .= "<td>"
-												. $this->language_pack[$type] .
+												. $language_pack[$type] .
 												"</td>";
 						}
 						$date_data_html .= "<td class='align-center $class_name'>"
@@ -571,14 +645,7 @@ class ReportVisualization
 													<td>
 														<table class='submodule-values'>";
 
-								if($type != "Login") {
-									foreach($this->week_notifi[$employee] as $severity => $val) {
-										$value = (!empty($data_type[$severity])) ? $data_type[$severity] : 0 ;
-										$horizontal_html .= "<tr class='submodel-value'>
-													<td class='type-row'>". $severity ."</td>
-												</tr>";
-									}
-								} else {
+								if($type = "Login") {
 									foreach($data_type as $key => $value) {
 										$horizontal_html .= "<tr class='submodel-value'>
 													<td class='type-row $class_name'>". $key ."</td>
@@ -593,19 +660,7 @@ class ReportVisualization
 													<td>
 														<table class='submodule-values'>";
 
-							if($type != "Login") {
-								foreach($this->week_notifi[$employee] as $severity => $val) {
-									$value = (!empty($data_type[$severity])) ? $data_type[$severity] : 0 ;
-
-									if($value == 0) {
-										$class_name = "warn";
-									}
-
-									$date_data_html .= "<tr class='submodel-value'>
-													<td class='align-center $class_name'>". $value ."</td>
-												</tr>";
-								}
-							} else {
+							if($type == "Login") {
 								foreach($data_type as $key => $value) {
 									if($value == 0) {
 										$class_name = "warn";
@@ -675,7 +730,8 @@ class ReportVisualization
 		return $html;
 	}
 
-	function floordec($zahl, $decimals = 2){    
-		return floor($zahl*pow(10,$decimals)) / pow(10,$decimals);
+	private function floordec($zahl, $decimals = 2) 
+	{    
+		return floor($zahl * pow(10, $decimals)) / pow(10, $decimals);
 	}
 }

@@ -3,14 +3,14 @@ error_reporting(E_ALL & ~E_STRICT);
 ini_set("display_errors", 1);
 
 /**
-* Class used to get all data from task table
+* Class used to get all data from specified modules tables
 */
 class ModulesData 
 {
 	private $db;
 	private $user;
 
-	public $data = array();
+	private $data = array();
 	public $decoded_data = array();
 
 	public function __construct($user, $modules) 
@@ -19,6 +19,7 @@ class ModulesData
 		$this->db = DBManagerFactory::getInstance();
 
 		foreach($modules as $module_in_db => $module_name) {
+			// gets info from modules which were assigned to {$user}
 			$this->data[$module_name] = $this->getUserActionsByModule($module_in_db);
 		}
 
@@ -26,18 +27,28 @@ class ModulesData
 		$this->data = json_encode($this->data);
 	}
 
-	public function getUserActionsByModule($module)
+	private function getUserActionsByModule($module)
 	{
 		$sum = array(
 			"Created" => 0,
 			"Modified" => 0,
 		);
 
-		$module_created_result = $this->db->query("SELECT COUNT(`id`) AS `count` FROM `$module` WHERE DATE(`date_entered`) = CURRENT_DATE AND `created_by`='{$this->user}'");
+		$query = "SELECT COUNT(`id`) AS `count` 
+				FROM `$module` 
+				WHERE DATE(`date_entered`) = CURRENT_DATE 
+					AND `created_by`='{$this->user}'";
+
+		$module_created_result = $this->db->query($query);
 		$row = $this->db->fetchByAssoc($module_created_result);
 		$sum['Created'] += $row['count'];
 
-		$module_modified_result = $this->db->query("SELECT COUNT(`id`) AS `count` FROM `{$module}_audit` WHERE DATE(`date_created`) = CURRENT_DATE AND `created_by`='{$this->user}'");
+		$query = "SELECT COUNT(`id`) AS `count` 
+				FROM `{$module}_audit` 
+				WHERE DATE(`date_created`) = CURRENT_DATE 
+					AND `created_by`='{$this->user}'";
+
+		$module_modified_result = $this->db->query($query);
 		$row = $this->db->fetchByAssoc($module_modified_result);
 		$sum['Modified'] += $row['count'];
 
@@ -46,10 +57,11 @@ class ModulesData
 
 	public function addToDatabase($user_name)
 	{
+		// insert {$user_name} modules activities to databese
 		$this->db->query("INSERT INTO `rms_report_modules` VALUES(
 			'".create_guid()."', 
 			'{$user_name}',
-			ADDDATE(CURRENT_DATE,-1),
+			CURRENT_TIMESTAMP,
 			'{$this->data}')"
 		);
 	}

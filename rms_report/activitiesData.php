@@ -3,54 +3,40 @@ error_reporting(E_ALL & ~E_STRICT);
 ini_set("display_errors", 1);
 
 /**
-* Class used to get all data from task table
+* Class used to get all data from other activities tables
 */
 class ActivitiesData 
 {
 	private $db;
 	private $user;
-
 	public $data = array();
-	public $decoded_data = array();
 
 	public function __construct($user)
 	{
 		$this->user = $user;
 		$this->db = DBManagerFactory::getInstance();
 
-		$this->data["Bugs"] = $this->getBugInformations();
-		$this->data["Login"] = $this->getLoginToRMS();
-		$this->data["Notifications"] = $this->getNotifications();
-		$this->data["Chat"] = $this->getChatActivities();
-
-		$this->decoded_data = $this->data;
-
-		foreach($this->data as $activity => $value) {
-			$this->data[$activity] = json_encode($value);
-		}
+		$this->data["Bugs"] = $this->getBugInformations(); // get all bugs created today
+		$this->data["Login"] = $this->getLoginToRMS(); // get device which was used to login
+		$this->data["Notifications"] = $this->getNotifications(); // get all unread notifications
+		$this->data["Chat"] = $this->getChatActivities(); // get all chat activities from today
 	}
 
-	public function getNotifications()
+	private function getNotifications()
 	{
-		$sum = array();
-
-		$query = "SELECT COUNT(`id`) AS `ile`
+		$query = "SELECT COUNT(`id`) AS `count`
 					FROM `notifications` 
 					WHERE `assigned_user_id`='{$this->user}' 
 						AND `deleted`=0 
 						AND `is_read`=0";
 
-		$all = 0;
 		$result = $this->db->query($query);
-		while($row = $this->db->fetchByAssoc($result)) {
-			$all += $row['ile'];
-		}
+		$row = $this->db->fetchByAssoc($result);
 		
-		$sum['Number of all Notifications'] += $all;
-		return $sum;
+		return $row['count'];
 	}
 
-	public function getLoginToRMS()
+	private function getLoginToRMS()
 	{
 		$sum = array(
 			"Login by Mobile" => 0,
@@ -74,7 +60,7 @@ class ActivitiesData
 		return $sum;
 	}
 
-	public function getBugInformations()
+	private function getBugInformations()
 	{
 		$sum = 0;
 		$query = "SELECT COUNT(`id`) AS `count`
@@ -85,10 +71,10 @@ class ActivitiesData
 		$result = $this->db->query($query);
 		$row = $this->db->fetchByAssoc($result);
 
-		return ($sum += $row['count']);
+		return $row['count'];
 	}
 
-	public function getChatActivities()
+	private function getChatActivities()
 	{	
 		$sum = 0;
 		$query = "SELECT COUNT(`id`) AS `count`
@@ -117,12 +103,14 @@ class ActivitiesData
 
 	public function addToDatabase($user_name)
 	{
+		// insert {$user_name} today activities
 		$this->db->query("INSERT INTO `rms_report_activities` VALUES(
 			'".create_guid()."', 
 			'{$user_name}',
-			ADDDATE(CURRENT_DATE,-1),
+			CURRENT_TIMESTAMP,
 			'{$this->data["Bugs"]}',
-			'{$this->data["Login"]}',
+			'{$this->data["Login"]["Normal Login"]}',
+			'{$this->data["Login"]["Login by Mobile"]}',
 			'{$this->data["Notifications"]}',
 			'{$this->data["Chat"]}')"
 		);
