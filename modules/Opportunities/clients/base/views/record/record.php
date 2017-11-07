@@ -54,6 +54,14 @@ array (
               2 => 
               array (
                 'type' => 'rowaction',
+                'event' => 'button:audit_button:click',
+                'name' => 'audit_button',
+                'label' => 'LNK_VIEW_CHANGE_LOG',
+                'acl_action' => 'view',
+              ),
+              3 => 
+              array (
+                'type' => 'rowaction',
                 'event' => 'button:delete_button:click',
                 'name' => 'delete_button',
                 'label' => 'LBL_DELETE_BUTTON_LABEL',
@@ -144,9 +152,9 @@ array (
               ),
               4 => 
               array (
-                'name' => 'responsible_c',
+                'name' => 'delegated_c',
                 'studio' => 'visible',
-                'label' => 'LBL_RESPONSIBLE',
+                'label' => 'LBL_DELEGATED',
                 'link' => false,
                 'span' => 6,
               ),
@@ -158,38 +166,22 @@ array (
               ),
               6 => 
               array (
-                'name' => 'delegated_c',
-                'studio' => 'visible',
-                'label' => 'LBL_DELEGATED',
-                'link' => false,
-                'span' => 6,
-              ),
-              7 => 
-              array (
                 'name' => 'floors_c',
                 'label' => 'LBL_FLOORS',
                 'span' => 6,
               ),
-              8 => 
-              array (
-                'name' => 'supervisor_c',
-                'studio' => 'visible',
-                'label' => 'LBL_SUPERVISOR',
-                'link' => false,
-                'span' => 6,
-              ),
-              9 => 
+              7 => 
               array (
                 'name' => 'opportunities_accounts_1_name',
                 'span' => 6,
               ),
-              10 => 
+              8 => 
               array (
                 'name' => 'service_c',
                 'label' => 'LBL_SERVICE',
                 'span' => 6,
               ),
-              11 => 
+              9 => 
               array (
                 'name' => 'account_name',
                 'related_fields' => 
@@ -198,23 +190,19 @@ array (
                 ),
                 'span' => 6,
               ),
+              10 => 
+              array (
+                'name' => 'leads_opportunities_1_name',
+                'span' => 6,
+              ),
+              11 => 
+              array (
+                'name' => 'description',
+                'span' => 6,
+              ),
               12 => 
               array (
                 'name' => 'probability',
-                'span' => 6,
-              ),
-              13 => 
-              array (
-                'name' => 'date_closed',
-                'related_fields' => 
-                array (
-                  0 => 'date_closed_timestamp',
-                ),
-                'span' => 6,
-              ),
-              14 => 
-              array (
-                'name' => 'leads_opportunities_1_name',
                 'span' => 6,
               ),
             ),

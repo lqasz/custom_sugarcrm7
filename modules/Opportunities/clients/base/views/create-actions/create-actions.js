@@ -72,6 +72,7 @@
                 model: model
             }
         }, _.bind(function(model) {
+        	$('input[name="name"]').val("dsadasdasd");
             if (!model) {
 
                 return;

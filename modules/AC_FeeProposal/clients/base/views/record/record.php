@@ -69,18 +69,18 @@ array (
               4 => 
               array (
                 'type' => 'rowaction',
-                'event' => 'button:delete_button:click',
-                'name' => 'delete_button',
-                'label' => 'LBL_DELETE_BUTTON_LABEL',
-                'acl_action' => 'delete',
-              ),
-              5 => 
-              array (
-                'type' => 'rowaction',
                 'event' => 'button:audit_button:click',
                 'name' => 'audit_button',
                 'label' => 'LNK_VIEW_CHANGE_LOG',
                 'acl_action' => 'view',
+              ),
+              5 => 
+              array (
+                'type' => 'rowaction',
+                'event' => 'button:delete_button:click',
+                'name' => 'delete_button',
+                'label' => 'LBL_DELETE_BUTTON_LABEL',
+                'acl_action' => 'delete',
               ),
             ),
           ),
@@ -216,8 +216,9 @@ array (
               ),
               12 => 
               array (
-                'name' => 'fcp_proposition_c',
-                'label' => 'LBL_FCP_PROPOSITION',
+                'name' => 'date_of_implementation_c',
+                'placeholder' => 'Kwartał/Data',
+                'label' => 'LBL_DATE_OF_IMPLEMENTATION',
               ),
               13 => 
               array (
@@ -244,9 +245,7 @@ array (
               ),
               16 => 
               array (
-                'name' => 'date_of_implementation_c',
-                'placeholder' => 'Kwartał/Data',
-                'label' => 'LBL_DATE_OF_IMPLEMENTATION',
+                'name' => 'leads_ac_feeproposal_1_name',
               ),
               17 => 
               array (
@@ -254,11 +253,8 @@ array (
               ),
               18 => 
               array (
-                'name' => 'leads_ac_feeproposal_1_name',
-              ),
-              19 => 
-              array (
                 'name' => 'description',
+                'span' => 12,
               ),
             ),
           ),

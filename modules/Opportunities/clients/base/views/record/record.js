@@ -9,7 +9,6 @@
 		this._super('initialize', [options]);
 		// this.before('render', this.addRow, this);
 
-    console.info("model: ", this.model);
 		this.context.on('button:convert_fee:click', this.convertOpportunitieClicked, this);
 	},
   cancelClicked: function() {
@@ -22,9 +21,7 @@
         prefill = app.data.createBean("AC_FeeProposal");
 
     prefill.copy(this.model);
-    prefill.set("cam", self.model.get("responsible_c"));
     prefill.set("responsible", self.model.get("delegated_c"));
-    prefill.set("supervisor", self.model.get("supervisor_c"));
     prefill.set("sales_stage", "In Proccess");
     prefill.set("accounts_ac_feeproposal_1_name", self.model.get("account_name"));
     prefill.set("accounts_ac_feeproposal_1accounts_ida", self.model.get("account_id"));
@@ -36,7 +33,9 @@
     prefill.set("opportunities_ac_feeproposal_1opportunities_ida", self.model.get("id"));
     prefill.set("account_id_c", self.model.get("opportunities_accounts_1accounts_idb"));
     prefill.set("tenant_c", self.model.get("opportunities_accounts_1_name"));
-    
+    prefill.set("probability", "");
+    prefill.set("description", "");
+
     app.drawer.open({
       layout: 'create-actions',
       context: {

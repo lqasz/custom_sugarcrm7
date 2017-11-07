@@ -11,7 +11,7 @@
         this.context.on('list:makeproject:fire', this.addtoproject, this);
 
         // tylko JJ może tworzyć projekty w RMS
-        if(App.user.id !== "144c39bf-ccc3-65ec-2023-5407f7975b91"){
+        if(App.user.id !== "144c39bf-ccc3-65ec-2023-5407f7975b91"  && App.user.id !== "e07026a9-691a-67e7-32a6-5407f619ae5b"){
             $('<style>'+
               '.single .btn-group .btn.dropdown-toggle { display: none !important; }'+
              // '.dataTable>thead>tr>th>span { display: none; }'+
@@ -27,7 +27,7 @@
         setTimeout(
             function() {
                 $("tr[name^='AC_FeeProposal']").each(function () { //loop over each row
-                    if ($(this).find('div[data-original-title="Closed Won"]').length > 0) { //check value of TD
+                    if ($(this).find('div[data-original-title="Won"]').length > 0) { //check value of TD
                         $(this).find($('td')).each(function () {
                             $(this).css("background-color", "#70b933");
                         });
