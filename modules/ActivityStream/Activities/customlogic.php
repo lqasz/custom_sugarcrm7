@@ -9,7 +9,7 @@ class SugarNotifyUser
 	 * Function gets all active users from single post,
 	 * gets content and makes notification to that users
 	 */
-	function notifyUserOnPostComment($bean, $event, $arguments)
+	function notifyUserOnPostComment(&$bean, $event, $arguments)
 	{
 		$all_users = array();
 		$all_commentators = $this->getCommentators($bean->id); // array that has all previous comments
@@ -28,7 +28,7 @@ class SugarNotifyUser
 				$all_users = array_merge($all_commentators, $activity['users']);
 			} else {
 				$all_users = $all_commentators;
-			} // if/else
+			}
 			
 			// get all users from main post and add to all active persons
 			$tmp_users = $this->getContentAndUser($bean);
@@ -40,7 +40,7 @@ class SugarNotifyUser
 
 			$all_users = array_unique($all_users); // only not the same records suit our need
 			$all_users = array_diff($all_users, array('', $GLOBALS['current_user']->id)); // delete empty and current user
-		} // if/elseif
+		}
 
 		if(!empty($all_users)) {
 			$user = BeanFactory::getBean("Users", $bean->created_by);
@@ -70,7 +70,7 @@ class SugarNotifyUser
 					} else {
 						// set module activity
 						$notification->name = ($bean->activity_type == "post" && $bean->comment_count == 0) ? "{$user->first_name} {$user->last_name} post {$activity['post']} on {$suite_parent_type}" : "{$current_user->first_name} {$current_user->last_name} comment {$activity['post']} on {$suite_parent_type}";
-					} // if/else
+					}
 
 					$notification->assigned_user_id = $user_id;
 					$notification->parent_type =  $bean->parent_type;
@@ -79,11 +79,11 @@ class SugarNotifyUser
 					$notification->confirmation = 1; //set confirmation to true
 					$notification->severity = "notification"; //set the level of severity
 					$notification->new_with_id = true; // very important
-					$notification->save(); // save notification bean
-				} // if
-			} // foreach
-		} // if
-	} // function
+					$notification->save();
+				}
+			}
+		}
+	}
 
 	/*
 	 * Function gets all active users but with no repeat
@@ -96,10 +96,44 @@ class SugarNotifyUser
 		$users_query = $db->query('SELECT DISTINCT `created_by` FROM `comments` WHERE `parent_id`="'. $post_id .'"');
 		while($user = $db->fetchByAssoc($users_query)) {
 			$users[] = $user['created_by'];
-		} // while
+		}
 
 		return $users;
-	} // function
+	}
+
+	public function salesModules(&$bean, $event, $arguments)
+	{
+		$suite_parent_type = $bean->parent_type;
+		$suite_parent_id = $bean->parent_id;
+		
+		if($suite_parent_type == "Prospects" || $suite_parent_type == "Leads") {
+			$retrive_bean = BeanFactory::getBean($suite_parent_type, $suite_parent_id);
+			$retrive_bean->date_of_last_comment_c = date("Y-m-d H:i:s");
+			$retrive_bean->save();
+
+			// $notifi_name = ($suite_parent_type == "Prospects") ? "Target" : "Lead";
+			// $db = DBManagerFactory::getInstance();
+
+			// if(empty($this->getContentAndUser($bean)) && empty($this->getContentAndUser($bean)['users'])) {
+			// 	$managers_dev = $db->query("SELECT `user_id`, `first_name`, `last_name` FROM `users` INNER JOIN `acl_roles_users` ON(`user_id`=`users`.`id`) WHERE `acl_roles_users`.deleted=0 AND `status`='Active' AND `employee_status`='Active' AND `role_id`='6bc49a11-9d89-3ca7-eed9-5936b2efb20f'");
+			// 	while($row = $db->fetchByAssoc($managers_dev)) {
+			// 		$notifi_bean = BeanFactory::newBean('Notifications');
+	  //               $notifi_bean->parent_type = $suite_parent_type;
+	  //               $notifi_bean->severity = "notification";
+	  //               $notifi_bean->is_read = 0;
+	  //               $notifi_bean->confirmation = 1; $notifi_bean->deleted = 0;
+	  //               $notifi_bean->name = $row['first_name'] ." ". $row['last_name'] .' added post on '. $notifi_name;
+	  //               $notifi_bean->parent_id = $suite_parent_id;
+	  //               $notifi_bean->assigned_user_id = $row['user_id'];
+	  //               $notifi_bean->description = "";
+	  //               $notifi_bean->save();
+	  //               $notifi_bean = null;
+	  //               unset($notifi_bean);		
+			// 	}
+
+			// }
+		}
+	}
 
 	/*
 	 * Function gets content from the post/comment and 
@@ -108,7 +142,7 @@ class SugarNotifyUser
 	function getContentAndUser($bean)
 	{
 		$returnValue = array();
-		$decoded = json_decode($bean->data); // decode from json format
+		$decoded = json_decode($bean->data);
 
 		if($decoded) {
 			if(!empty($decoded->tags)) {
@@ -123,17 +157,17 @@ class SugarNotifyUser
 
 								if($i == 0) { $returnValue['post'] = str_replace($search, '', $contents); }
 								else { $returnValue['post'] = str_replace($search, '', $returnValue['post']); }
-							} // for
-						} // if
+							}
+						}
 
 						$returnValue['post'] = trim($returnValue['post']);
 						$returnValue['users'][] = (!empty($tag->id)) ? $tag->id: null;
-					} // if
-				} // foreach
-			} // if
-		} // if
+					}
+				}
+			}
+		}
 
 		return $returnValue;
-	} // function
-} // class
+	}
+}
 ?>
