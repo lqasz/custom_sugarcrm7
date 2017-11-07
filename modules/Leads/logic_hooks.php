@@ -6,6 +6,6 @@ $hook_array = Array();
 // position, file, function 
 
 $hook_array['after_save'] = Array();
-$hook_array['after_save'][] = Array(1,'createPerson','custom/modules/Leads/customlogic.php','Leads_CustomLogic','createPerson',);
+$hook_array['after_save'][] = Array(1,'associatePerson','custom/modules/Leads/customlogic.php','Leads_CustomLogic','associatePerson',);
 $hook_array['after_save'][] = Array(2,'businessLogic','custom/modules/Leads/customlogic.php','Leads_CustomLogic','businessLogic',);
 ?>

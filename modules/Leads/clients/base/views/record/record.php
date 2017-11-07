@@ -151,13 +151,13 @@ array (
                 'name' => 'client_position_c',
                 'label' => 'LBL_CLIENT_POSITION',
               ),
-              2 => 'website',
-              3 => 'title',
-              4 => 
+              2 => 
               array (
                 'name' => 'company_type_c',
                 'label' => 'LBL_COMPANY_TYPE',
               ),
+              3 => 'title',
+              4 => 'website',
               5 => 
               array (
                 'name' => 'status',
@@ -177,8 +177,8 @@ array (
               ),
               9 => 
               array (
-                'name' => 'assigned_user_name',
-                'link' => false,
+                'name' => 'facebook_c',
+                'label' => 'LBL_FACEBOOK',
               ),
               10 => 
               array (
@@ -192,41 +192,32 @@ array (
               ),
               12 => 
               array (
-                'name' => 'refered_by',
-                'comment' => 'Identifies who refered the lead',
-                'label' => 'LBL_REFERED_BY',
-              ),
-              13 => 
-              array (
-                'name' => 'report_to_name',
-                'label' => 'LBL_REPORTS_TO',
-              ),
-              14 => 
-              array (
                 'name' => 'hobby_c',
                 'label' => 'LBL_HOBBY',
               ),
-              15 => 
+              13 => 
               array (
                 'name' => 'birthdate',
                 'comment' => 'The birthdate of the contact',
                 'label' => 'LBL_BIRTHDATE',
               ),
-              16 => 
+              14 => 
               array (
                 'name' => 'client_for_c',
                 'label' => 'LBL_CLIENT_FOR',
               ),
-              17 => 
+              15 => 
               array (
-                'name' => 'date_entered',
-                'comment' => 'Date record created',
-                'studio' => 
-                array (
-                  'portaleditview' => false,
-                ),
-                'readonly' => true,
-                'label' => 'LBL_DATE_ENTERED',
+                'name' => 'assigned_user_name',
+                'link' => false,
+              ),
+              16 =>
+              array (
+                'name' => 'related_contact_c'
+              ),
+              17 =>
+              array (
+                'name' => 'related_target_c'
               ),
             ),
           ),

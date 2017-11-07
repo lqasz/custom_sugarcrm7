@@ -48,42 +48,47 @@ array (
               3 => 
               array (
                 'name' => 'rsc_c',
+                'label' => 'LBL_RSC',
                 'enabled' => true,
                 'default' => true,
+                'width' => 'xsmall',
                 'readonly' => true,
-                'sortable' => false,
               ),
               4 => 
               array (
                 'name' => 'pkig_c',
+                'label' => 'LBL_PKIG',
                 'enabled' => true,
                 'default' => true,
+                'width' => 'xsmall',
                 'readonly' => true,
-                'sortable' => false,
               ),
               5 => 
               array (
                 'name' => 'ats_c',
+                'label' => 'LBL_ATS',
                 'enabled' => true,
                 'default' => true,
+                'width' => 'xsmall',
                 'readonly' => true,
-                'sortable' => false,
               ),
               6 => 
               array (
                 'name' => 'rwt_c',
+                'label' => 'LBL_RWT',
                 'enabled' => true,
                 'default' => true,
+                'width' => 'xsmall',
                 'readonly' => true,
-                'sortable' => false,
               ),
               7 => 
               array (
                 'name' => 'rdsg_c',
+                'label' => 'LBL_RDSG',
                 'enabled' => true,
                 'default' => true,
+                'width' => 'xsmall',
                 'readonly' => true,
-                'sortable' => false,
               ),
               8 => 
               array (
@@ -93,6 +98,7 @@ array (
                 'id' => 'ASSIGNED_USER_ID',
                 'link' => false,
                 'default' => true,
+                'width' => 'medium',
               ),
               9 => 
               array (
@@ -111,7 +117,8 @@ array (
             ),
           ),
         ),
-        'orderBy' => array (
+        'orderBy' => 
+        array (
           'field' => 'date_of_last_comment_c',
           'direction' => 'desc',
         ),

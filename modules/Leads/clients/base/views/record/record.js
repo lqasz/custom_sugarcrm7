@@ -2,7 +2,8 @@
     extendsFrom: 'RecordView',
     id: "LeadRecord",
     events: _.extend({}, this.events, {
-        'click .history-button': 'showHistoryClicked'
+        'click .history-button': 'showHistoryClicked',
+        'click a[name=cancel_button]': 'cancelClicked',
     }),
 
     initialize: function(options) {
@@ -45,6 +46,7 @@
             toLowerModule = module.toLowerCase(),
             prefill = app.data.createBean(module);
 
+        prefill.set("from_target_c", 1);
         prefill.set("leads_"+ toLowerModule +"_1_name", self.model.get("full_name"));
         prefill.set("leads_"+ toLowerModule +"_1leads_ida", self.model.get("id"));
         
@@ -56,5 +58,10 @@
                 module: module
             }
         });
-    }
+    },
+
+    cancelClicked: function() {
+        this._super('cancelClicked');
+        this.render();
+    },
 })

@@ -12,7 +12,8 @@
     extendsFrom: 'RecordView',
     id: 'TargetRecord',
     events: _.extend({}, this.events, {
-        'click .history-button': 'showHistoryClicked'
+        'click .history-button': 'showHistoryClicked',
+        'click a[name=cancel_button]': 'cancelClicked',
     }),
 
     initialize: function(options) {
@@ -45,6 +46,7 @@
             prefill = app.data.createBean('Leads');
         prefill.copy(this.model);
 
+        prefill.set("prospect_id_c", self.model.get('id'));
         prefill.set("accounts_leads_1_name", self.model.get("accounts_prospects_1_name"));
         prefill.set("accounts_leads_1accounts_ida", self.model.get("accounts_prospects_1accounts_ida"));
 
@@ -68,5 +70,10 @@
                 });
             }
         }, this));
-    }
+    },
+
+    cancelClicked: function() {
+        this._super('cancelClicked');
+        this.render();
+    },
 })
