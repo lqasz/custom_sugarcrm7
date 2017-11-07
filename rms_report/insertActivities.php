@@ -12,7 +12,7 @@ class InsertActivities
 		$db = DBManagerFactory::getInstance();
 		$next_tasks = $t_data['Tomorrow Tasks'] + $t_data['Next Tasks'];
 
-		$combined_indicator = ($next_tasks != 0) ? -1 * $a_data['Notifications']['Number of all Notifications'] / $next_tasks : -1 * $a_data['Notifications']['Number of all Notifications']; // max from this indicator is 0
+		$combined_indicator = ($next_tasks != 0) ? -1 * $a_data['Notifications'] / $next_tasks : -1 * $a_data['Notifications']; // max from this indicator is 0
 
 		$modules_indicator = array(
 			"Contacts" => 0,
