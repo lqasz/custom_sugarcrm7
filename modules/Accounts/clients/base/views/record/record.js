@@ -1,6 +1,5 @@
 ({
 	extendsFrom: "RecordView",
-	pclOpinions: undefined,
 
     id: 'CompanyRecord',
     events: _.extend({}, this.events, {
@@ -38,19 +37,6 @@
 
 		// this.before('render', this.addRow, this);
 		this.context.on('button:refresh_all_subpanels:click', this.refresh_all_subpanels, this);
-
-		self.collection.on('data:sync:complete', function() {
-            app.api.call('GET', 'index.php?entryPoint=getData&getPCLComments=1&parent_id='+self.model.get('id'), null,{
-                success: _.bind(function(data) {
-                    self.pclOpinions = data;
-                    self.model.trigger('addShowPCLComments');
-                })
-            });
-        }, self);
-
-        self.model.on('addShowPCLComments', function() {
-            self.render();
-        }, self);
 	},
 
 	render: function() {
@@ -83,10 +69,6 @@
 
 		$user.parent().parent().parent().find('td').last().hide(0);
 		$user.removeAttr("href");
-
-		if(this.pclOpinions !== undefined) {
-            this.addPCLFields();
-        }
 	},
 
 	_doValidatePhoneNumber: function(fields, errors, callback) {  
@@ -340,25 +322,6 @@
 	// 	return result;
 	// },
 
-	addPCLFields: function() {
-        var string = '<div class="row-fluid fee-naglowek">'+
-                        '<strong class="span4">Osoba:</strong>'+
-                        '<strong class="span8">Opinia:</strong>'+
-                    '</div>';
-        _.each(this.pclOpinions, function(value, key) {
-            string += '<div class="span12 row-fluid first pcl-opinion">'+
-                '<span class="span4">'+
-                    key+
-                '</span>'+
-                '<span class="span8">'+
-                    value+
-                '</span>'+
-            '</div>';
-        });
-
-        this.$el.find('.record-cell[data-name="comments"]').html(string);
-    },
-	
 	_dispose: function() {
 		this._super('_dispose');
 	},

@@ -101,24 +101,10 @@ array (
                   'keyup' => 'update:account',
                 ),
               ),
-              2 => array (
+              2 => 
+              array (
                 'name' => 'category_service_c',
                 'span' => 4,
-              ),
-              3 => 
-              array (
-                'name' => 'favorite',
-                'label' => 'LBL_FAVORITE',
-                'type' => 'favorite',
-                'dismiss_label' => true,
-              ),
-              4 => 
-              array (
-                'name' => 'follow',
-                'label' => 'LBL_FOLLOW',
-                'type' => 'follow',
-                'readonly' => true,
-                'dismiss_label' => true,
               ),
             ),
           ),
@@ -138,6 +124,7 @@ array (
                 'name' => 'billing_address',
                 'type' => 'fieldset',
                 'css_class' => 'address',
+                'span' => 6,
                 'label' => 'LBL_BILLING_ADDRESS',
                 'fields' => 
                 array (
@@ -173,7 +160,6 @@ array (
                     'placeholder' => 'LBL_BILLING_ADDRESS_COUNTRY',
                   ),
                 ),
-                'span' => 6,
               ),
               1 => 
               array (
@@ -236,6 +222,7 @@ array (
                 'name' => 'phones_office',
                 'type' => 'fieldset',
                 'css_class' => 'office-phone',
+                'span' => 4,
                 'fields' => 
                 array (
                   0 => 
@@ -257,13 +244,13 @@ array (
                     'placeholder' => 'Office Phone',
                   ),
                 ),
-                'span' => 4,
               ),
               3 => 
               array (
                 'name' => 'other_contact_data',
                 'type' => 'fieldset',
                 'css_class' => 'contact-data others',
+                'span' => 4,
                 'fields' => 
                 array (
                   0 => 
@@ -287,13 +274,13 @@ array (
                     'css_class' => 'other-data',
                   ),
                 ),
-                'span' => 4,
               ),
               4 => 
               array (
                 'name' => 'company_data',
                 'type' => 'fieldset',
                 'css_class' => 'company-data',
+                'span' => 4,
                 'fields' => 
                 array (
                   0 => 
@@ -318,40 +305,39 @@ array (
                     'span' => 3,
                   ),
                 ),
-                'span' => 4,
               ),
               5 => 
               array (
                 'name' => 'owner_c',
                 'studio' => 'visible',
                 'css_class' => 'owner',
+                'span' => 3,
               ),
               6 => 
               array (
                 'name' => 'proxy_c',
                 'studio' => 'visible',
                 'css_class' => 'proxy',
+                'span' => 3,
               ),
               7 => 
               array (
                 'name' => 'query_c',
                 'studio' => 'visible',
                 'css_class' => 'query',
+                'span' => 3,
               ),
               8 => 
               array (
                 'name' => 'reesco_curator_c',
                 'studio' => 'visible',
                 'css_class' => 'query',
+                'span' => 3,
               ),
               9 => 
               array (
                 'name' => 'description',
-                'span' => 9,
-              ),
-              10 => 
-              array (
-                'span' => 3,
+                'span' => 12,
               ),
             ),
           ),
@@ -366,11 +352,10 @@ array (
             'placeholders' => 1,
             'fields' => 
             array (
-              0 =>  
+              0 => 
               array (
                 'name' => 'comments',
                 'label' => '',
-                'span' => 12,
                 'link' => false,
               ),
             ),
@@ -386,7 +371,7 @@ array (
             'placeholders' => 1,
             'fields' => 
             array (
-              0 =>
+              0 => 
               array (
                 'name' => 'engineers_c',
                 'label' => 'LBL_ENGINEERS',
@@ -406,15 +391,15 @@ array (
               array (
                 'name' => 'cilent_type_c',
                 'label' => 'LBL_CILENT_TYPE',
-                'span' => 4,
                 'hide' => true,
+                'span' => 4,
               ),
               4 => 
               array (
                 'name' => 'contractor_type_c',
                 'label' => 'LBL_CONTRACTOR_TYPE',
-                'span' => 4,
                 'hide' => true,
+                'span' => 4,
               ),
               5 => 
               array (
@@ -432,7 +417,7 @@ array (
               array (
                 'span' => 4,
               ),
-              8 =>  
+              8 => 
               array (
                 'name' => 'company_tags_c',
                 'label' => 'LBL_COMPANY_TAGS',
@@ -444,33 +429,25 @@ array (
                 'label' => 'Country',
                 'span' => 4,
               ),
-              10 =>
-              array (
-                'span' => 2,
-              ),
-              11 => 
+              10 => 
               array (
                 'name' => 'lcc_c',
                 'label' => 'LBL_LCC',
-                'span' => 4,
+                'span' => 6,
               ),
-              12 => 
+              11 => 
               array (
                 'name' => 'state_c',
                 'label' => 'State',
                 'span' => 4,
               ),
-              13 =>
-              array (
-                'span' => 2,
-              ),
-              14 => 
+              12 => 
               array (
                 'name' => 'city_c',
                 'label' => 'City',
-                'span' => 6,
+                'span' => 4,
               ),
-              15 => 
+              13 => 
               array (
                 'name' => 'opening_days_c',
                 'label' => 'LBL_OPENING_DAYS',
@@ -489,30 +466,30 @@ array (
             'placeholders' => 1,
             'fields' => 
             array (
-              0 =>
+              0 => 
               array (
                 'name' => 'cash_flow_c',
                 'label' => 'LBL_CASH_FLOW',
-                'span' => 5,
+                'span' => 4,
               ),
               1 => 
               array (
                 'name' => 'trade_credit_c',
                 'label' => 'LBL_TRADE_CREDIT',
-                'span' => 5,
+                'span' => 4,
               ),
               2 => 
               array (
                 'name' => 'date_of_payment_c',
                 'label' => 'LBL_DATE_OF_PAYMENT',
-                'span' => 2,
+                'span' => 4,
               ),
               3 => 
               array (
                 'name' => 'complited_projects_c',
                 'label' => 'LBL_COMPLITED_PROJECTS_C',
                 'readonly' => true,
-                'span' => 2,
+                'span' => 4,
               ),
               4 => 
               array (
@@ -520,7 +497,7 @@ array (
                 'name' => 'min_value_c',
                 'label' => 'LBL_MIN_VALUE',
                 'readonly' => true,
-                'span' => 2,
+                'span' => 4,
               ),
               5 => 
               array (
@@ -528,7 +505,7 @@ array (
                 'name' => 'max_value_c',
                 'label' => 'LBL_MAX_VALUE',
                 'readonly' => true,
-                'span' => 2,
+                'span' => 4,
               ),
               6 => 
               array (
@@ -536,7 +513,7 @@ array (
                 'name' => 'average_orders_c',
                 'label' => 'LBL_AVERAGE_ORDERS',
                 'readonly' => true,
-                'span' => 3,
+                'span' => 6,
               ),
               7 => 
               array (
@@ -544,7 +521,7 @@ array (
                 'name' => 'average_value_c',
                 'label' => 'LBL_AVERAGE_VALUE',
                 'readonly' => true,
-                'span' => 3,
+                'span' => 6,
               ),
             ),
           ),
