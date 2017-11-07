@@ -292,8 +292,11 @@
             	name: self.model.get('name'),
             	date_from: self.model.get('date_start_c'),
             	date_to: self.model.get('date_end_c'),
+            	getRelated: false,
             },
             success: function(data) {
+            	// self.model.set('date_end_c', data.date_end);
+            	// self.model.set('name', data.name);
                 self.view = "detail";
                 self._super('saveClicked');
             },

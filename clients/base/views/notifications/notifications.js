@@ -309,7 +309,6 @@
                         if( model.get('severity')==='holidays'){
                             return true; }else{return false; } 
                     });
-                    console.log('holidays');
 
                     if(self.holidayNotify.length>0){
                         self.stopPulling();
@@ -320,22 +319,6 @@
                     }
                     return this;
                 }
-
-                // getQuestions
-                self.oldOne = _.filter(self.collection.models, function(model){
-                    if(model.get('severity')==='education'){
-                        lastReviewDate = new Date(model.get('date_entered'));
-                        lastReviewDate.setHours(0, 0, 0, 0);
-
-                        if(lastReviewDate.getTime() < now.getTime()) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                });
 
                 self.oldTimeSheet = _.filter(self.collection.models, function(model){
                     if(model.get('severity') === 'time sheet' && model.get('confirmation') == 0){
@@ -356,55 +339,72 @@
                     self.stopPulling();
                     self.showTimeSheetView(self.oldTimeSheet[0]);
                     self.render();
-                }
+                } else {
+                    // getQuestions
+                    self.oldOne = _.filter(self.collection.models, function(model){
+                        if(model.get('severity')==='education'){
+                            lastReviewDate = new Date(model.get('date_entered'));
+                            lastReviewDate.setHours(0, 0, 0, 0);
 
-                if(self.oldOne.length>0) {
-                    self.stopPulling();
-                    
-                    var ii = 0,
-                        question_id = self.oldOne[ii].get('parent_id'),
-                        qform = _.clone(self),
-                        link = 'aa_questions_aa_answers_1',
-                        qmodel = app.data.createBean('AA_Questions');
+                            if(lastReviewDate.getTime() < now.getTime()) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    });
 
-                    qmodel.set("id", question_id);
-                    qform.collection = new Backbone.Collection();
-                    qform.context = App.context.getContext("AA_Answers");
-                    
-                    model2 = qform.createLinkModel(qmodel, link);
-                    quickCreateView = qform.layout.getComponent('quick-create');
+                    if(self.oldOne.length>0) {
+                        self.stopPulling();
+                        
+                        var ii = 0,
+                            question_id = self.oldOne[ii].get('parent_id'),
+                            qform = _.clone(self),
+                            link = 'aa_questions_aa_answers_1',
+                            qmodel = app.data.createBean('AA_Questions');
 
-                    if(!quickCreateView) {
-                        var context = qform.context.getChildContext({
-                            module: 'AA_Answers',
-                            forceNew: true,
-                            create: true,
-                            model: model2,
-                            link: link,
-                            collection: qform.collection,
-                        });
-                        context.prepare();
-                        context.set('parentModule', 'AA_Questions');
-                       
-                        // /** Create a new view object */
-                        quickCreateView = app.view.createView({
-                            context: context,
-                            name: 'quick-create',
-                            layout: qform.layout,
-                            module: context.module,
-                        });
+                        qmodel.set("id", question_id);
+                        qform.collection = new Backbone.Collection();
+                        qform.context = App.context.getContext("AA_Answers");
+                        
+                        model2 = qform.createLinkModel(qmodel, link);
+                        quickCreateView = qform.layout.getComponent('quick-create');
 
-                        self.layout._components.push(quickCreateView);
-                        self.layout.$el.append(quickCreateView.$el);
+                        if(!quickCreateView) {
+                            var context = qform.context.getChildContext({
+                                module: 'AA_Answers',
+                                forceNew: true,
+                                create: true,
+                                model: model2,
+                                link: link,
+                                collection: qform.collection,
+                            });
+                            context.prepare();
+                            context.set('parentModule', 'AA_Questions');
+                           
+                            // /** Create a new view object */
+                            quickCreateView = app.view.createView({
+                                context: context,
+                                name: 'quick-create',
+                                layout: qform.layout,
+                                module: context.module,
+                            });
+
+                            self.layout._components.push(quickCreateView);
+                            self.layout.$el.append(quickCreateView.$el);
+                        }
+
+                        self.layout.trigger("app:view:quick-create");
+                        self.render();
                     }
-
-                    self.layout.trigger("app:view:quick-create");
                 }
 
                 self.render();
 
                 if(self.disposed || self.isOpen()) { //|| self.oldOne==undefined
-                   return this;
+                   return self;
                 }
                 
             },
@@ -422,8 +422,8 @@
         }
         
         // this.layout._components[index2].render();
-        this.render();
-        return this;
+        self.render();
+        return self;
     },
 
     /**
@@ -592,8 +592,9 @@
     },
 
     showTimeSheetView: function(model) {
-        var that = this,
-        TimeSheetPanel = Backbone.View.extend({
+        var $qwer = this;
+
+        var TimeSheetPanel = Backbone.View.extend({
             dataFetched: {},
             listOfProjects: [],
             events: {
@@ -601,7 +602,6 @@
                 'click #saveButtonMonit':'saveClicked',
                 'click .add-project-monit': 'addProjectRow',
                 'click .remove-project-monit': 'removeProjectRow',
-                'click .project-monit-item': 'setProjectItem',
                 'focus .project-monit-name': 'searchProjectByName',
                 'keyup .project-monit-name': 'searchProjectByName',
             },
@@ -609,16 +609,15 @@
             initialize: function() {
                 var self = this;
 
-                that.collection.on('data:sync:complete', function() {
-                    // get all data from db
-                    app.api.call('POST', 'index.php?entryPoint=getData&getAllTimeSheetData=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id, null,{
-                        success: _.bind(function(data) {
-                            self.dataFetched = data.time_sheet;
-                            self.listOfProjects = data.projects;
-                            self.trigger('rebuildFields'); // trigger event in model
-                        })
-                    });
-                }, that);
+                // get all data from db
+                app.api.call('GET', 'index.php?entryPoint=getData&getAllTimeSheetData=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id, null,{
+                    success: _.bind(function(data) {
+                        self.dataFetched = data.time_sheet;
+                        self.listOfProjects = data.projects;
+                        // self.render();
+                        self.trigger('rebuildFields'); // trigger event in model
+                    })
+                });
 
                 self.on('rebuildFields', function() {
                     self.render();
@@ -626,7 +625,12 @@
             },
 
             render: function() {
-                this.addPanel();
+                if(!_.isEmpty(this.dataFetched)) {
+                    this.addPanel();
+
+                    var width = (_.isEmpty($('.project-monit-name').outerWidth())) ? 338 : $('.project-monit-name').outerWidth();
+                    $("body").append('<style>.ui-autocomplete li {list-style: none;background:white;max-width:'+ width +'px;border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd;}.ui-autocomplete li a {color: black;padding-left:10px;display:block;max-width:'+ width +'px;}.ui-autocomplete li a.ui-state-hover{background:#ccc;}</style>');
+                }
             },
 
             addPanel: function() {
@@ -704,50 +708,30 @@
             },
 
             searchProjectByName: function(e) {
-                var results = [],
-                    $input = $(e.currentTarget),
-                    toSearch = $input.val(),
-                    $list = $input.next('.select2-results');
-
-                $list.html("");
-
-                for(key in this.listOfProjects) {
-                    if(this.listOfProjects[key].indexOf(toSearch)!=-1) {
-                        results.push(this.listOfProjects[key]);
-                    }
-                }
-
-                if(!_.isEmpty(results)) {
-                    _.each(results, function(el) {
-                        var listItem = '<li class="project-monit-item">'+el+'</li>';
-                        $list.append(listItem);
+                var self = this,
+                    $element = $(e.currentTarget),
+                    $parentElement = $element.parents('.project-monit-row'),
+                    projectData = $parentElement.data(),
+                    array = $.map(self.listOfProjects, function(value, index) {
+                        return [value];
                     });
 
-                    $input.addClass('big-element');
-                    $list.removeClass('hide');
-                }
-            },
+                $element.autocomplete({
+                    minLength: 2,
+                    source: array,
+                    select: function(event, ui) {
+                        $parentElement.find('.slider-text').removeAttr('disabled');
 
-            setProjectItem: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
+                        var projectID = Object.keys(self.listOfProjects).find(key => self.listOfProjects[key] === ui.item.value);
+                        $element.parent().parent().attr('data-projectid', projectID);
 
-                var $element = $(e.currentTarget),
-                    $parentElement = $element.parents('.project-monit-row'),
-                    projectData = $parentElement.data();
+                        if(self.dataFetched.data[projectData.userid][projectData.id]['new'] == undefined) {
+                            self.dataFetched.data[projectData.userid][projectData.id]['updated'] = 1;
+                        }
 
-                $parentElement.find('.slider-text').removeAttr('disabled');
-                $parentElement.find('.project-monit-name').val($element.text());
-                $element.parent().addClass('hide');
-
-                var projectID = Object.keys(this.listOfProjects).find(key => this.listOfProjects[key] === $element.text());
-                $element.parent().parent().attr('data-projectid', projectID);
-
-                if(this.dataFetched.data[projectData.userid][projectData.id]['new'] == undefined) {
-                    this.dataFetched.data[projectData.userid][projectData.id]['updated'] = 1;
-                }
-
-                this.dataFetched.data[projectData.userid][projectData.id]['id'] = projectID;
+                        self.dataFetched.data[projectData.userid][projectData.id]['id'] = projectID;
+                    }
+                });
             },
 
             setValue: function(e) {
@@ -765,101 +749,62 @@
             saveClicked: function() {
                 var self = this,
                     error = {
-                        'users': "",
                         'validation': true,
-                        'project': false,
-                        'time_sheet': false,
-                        'same_project': false,
+                        'message': "",
                     };
 
                 _.each(this.dataFetched.data, function(timeSheet, userID) {
                     var sum = 0;
 
                     if(_.isEmpty(timeSheet)) {
-                        error['validation'] = false;
-                        error['time_sheet'] = true;
-                        error['project'] = false;
-                        error['users'] = '';
-                        error['same_project'] = false;
+                        error = {
+                            'validation': false,
+                            'message': 'Proszę o rozpisanie czasu pracy dla '+ self.dataFetched.users[userID],
+                        };
                     }
 
                     var projects = [];
                     _.each(timeSheet, function(projectData, timeSheetID) {
-
                         if(projectData['deleted'] == 0) {
                             sum += parseInt(projectData['value']);
-                        }
 
-                        if(sum > 100) {
-                            if(error['users'] != "") {
-                                error['users'] += " and ";
+                            if(_.isEmpty(projectData['id'])) {
+                                error = {
+                                    'validation': false,
+                                    'message': 'Proszę o wybór projektu',
+                                };
                             }
 
-                            error['validation'] = false;
-                            error['users'] += self.dataFetched.users[userID];
+                            if(projects.indexOf(projectData['id']) != -1) {
+                                error = {
+                                    'validation': false,
+                                    'message': 'Wybrałeś ten sam projekt więcej niż jeden raz dla pracownika '+ self.dataFetched.users[userID],
+                                };
+                            } else {
+                                projects.push(projectData['id']);
+                            }
                         }
-
-                        if(_.isEmpty(projectData['id'])) {
-                            error['validation'] = false;
-                            error['project'] = true;
-                            error['same_project'] = false;
-                            error['users'] = '';
-                        }
-
-                        if(_.indexOf(projects, projectData['id'])) {
-                            error['same_project'] = true;
-                            error['validation'] = false;
-                            error['project'] = false;
-                            error['users'] = '';
-                            error['users'] = self.dataFetched.users[userID];
-                        }
-
-                        projects.push(projectData['id']);
                     });
 
                     if(sum < 100) {
-                        error['validation'] = false;
-                        error['time_sheet'] = true;
-                        error['project'] = false;
-                        error['same_project'] = false;
-                        error['users'] = '';
+                        error = {
+                            'validation': false,
+                            'message': 'Suma nie może być mniejsza niż 100 dla pracownika '+ self.dataFetched.users[userID],
+                        };
+                    }
+
+                    if(sum > 100) {
+                        error = {
+                            'validation': false,
+                            'message': 'Suma nie może być większa niż 100 dla pracownika '+ self.dataFetched.users[userID],
+                        };
                     }
                 });
 
-                if(!error['validation'] && error['same_project']) {
+                if(!error['validation']) {
                     app.alert.show('message-id', {
                         level: 'confirmation',
-                        messages: 'You choose the same project for '+error['users']+' more then one time',
-                        autoClose: false,
-                    });
-
-                    return;
-                }
-
-                if(!error['validation'] && error['project']) {
-                    app.alert.show('message-id', {
-                        level: 'confirmation',
-                        messages: 'Please choose a project',
-                        autoClose: false,
-                    });
-
-                    return;
-                }
-
-                if(!error['validation'] && error['users'] != "") {
-                    app.alert.show('message-id', {
-                        level: 'confirmation',
-                        messages: 'Sum couldn`t be greater then 100% for '+ error['users'],
-                        autoClose: false,
-                    });
-
-                    return;
-                }
-
-                if(!error['validation'] && error['time_sheet']) {
-                    app.alert.show('message-id', {
-                        level: 'confirmation',
-                        messages: 'Please fill a Time Sheet'+ error['users'],
+                        messages: error['message'],
                         autoClose: false,
                     });
 
@@ -872,9 +817,11 @@
                     data: {
                         updated: self.dataFetched.data,
                         users: self.dataFetched.users,
+                        getRelated: true,
                     },
                     success: function(data) {
                         $('#timeSheetMonit').remove();
+                        $qwer.startPulling();
                     },
                 }); // ajax
             },

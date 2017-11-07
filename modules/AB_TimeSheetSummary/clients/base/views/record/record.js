@@ -170,7 +170,7 @@
         html += '<div class="span3">'+
                   '<span class="normal">'+
                     '<span class="detail">'+
-                      (parseInt(value) / 2)+
+                      value+
                     '%</span>'+
                   '</span>'+
                 '</div>';
@@ -383,6 +383,6 @@
   },
 
   generateSheetCSV: function() {
-    window.open('https://'+ window.location.hostname +'/index.php?entryPoint=userRepair&generateReportFromTimeSheet&summary_id='+this.model.get('id'));
+    window.open('https://'+ window.location.hostname +'/timesheets_csv.php');
   },
 })
