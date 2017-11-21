@@ -3,9 +3,11 @@
   id: "timeSheetForQS",
 
   data: {},
+  view: undefined,
 	events: _.extend({}, this.events, {
     'click .add-row': 'addRow',
     'click .fa-remove': 'removeRow',
+    'click a[name="cancel_button"]':'cancelClicked',
     'change .slider': 'setTimeSheetValue',
     'blur .slider-text': 'setTimeSheetValue',
     'keyup input[name="select-type"]': 'searchType',
@@ -16,6 +18,7 @@
     this._super('initialize', [options]);
 
     var self = this;
+    self.view = options.context.get("action");
     self.collection.on('data:sync:complete', function() {
 
       // get all data from db
@@ -53,21 +56,31 @@
         html += this.addHeaderSection("Projekty");
         html += this.addContentSection("Projekty");
       html += '</div>';
-    
+      
+      html += '<div class="span12 first container">';
+        html += this.showTeamTimeSheets();
+      html += '</div>';
+
     html += '</div>';
 
     return html;
   },
 
   addHeaderSection: function(name) {
-    var lowerName = name.toLowerCase(),
-        html =  '<div class="span12 first header-row">'+
+    var buttonHTML = '',
+        lowerName = name.toLowerCase();
+
+    if(this.view == "edit") {
+      buttonHTML =  '<div class="span1 button-element">'+
+                      '<button data-type="'+lowerName+'" class="btn add-row">+</button>'+
+                    '</div>';
+    }
+
+    var html =  '<div class="span12 first header-row">'+
                   '<div class="span11 first type-element ellipsis_inline">'+
                     name+
                   '</div>'+
-                  '<div class="span1 button-element">'+
-                    '<button data-type="'+lowerName+'" class="btn add-row">+</button>'+
-                  '</div>'+
+                  buttonHTML+
                 '</div>';
 
     return html;
@@ -77,9 +90,9 @@
     var self = this,
         lowerName = name.toLowerCase(),
         html =  '<div class="span12 first content" data-type="'+lowerName+'">';
-    
-    _.each(this.data.fetched[lowerName], function(v, k) {
-      
+
+    _.each(this.data.fetched[lowerName], function(data, recordID) {
+      html += self.returnHTMLRow(recordID, lowerName, self.data.type[lowerName][data.parent_id], data.value);
     });
 
     html += '</div>';
@@ -90,24 +103,39 @@
   addRow: function(e) {
     var recordID = app.utils.generateUUID(),
         type =  ($(e.currentTarget).data()).type,
-        html =  this.returnHTMLRow(recordID, type);
+        html =  this.returnHTMLRow(recordID, type, "", 0);
 
     $('.content[data-type="'+type+'"]').append(html);
   },
 
-  returnHTMLRow: function(recordID, type, value) {
+  returnHTMLRow: function(recordID, type, parentName, value) {
+    var parentNameHTML =  '<span>'+parentName+'</span>',
+        textValueHTML = '<span>'+value+'%</span>',
+        removeRowHRML = '',
+        disabled = 'disabled';
+
+    if(this.view == "edit") {
+      if(parentName != "") {
+        disabled = '';
+      }
+
+      removeRowHRML = '<i class="fa-remove fa red-color"></i>';
+      parentNameHTML = '<input type="text" name="select-type" value="'+parentName+'"/>';
+      textValueHTML = '<input type="text" value="'+value+'" name="set-range" class="slider-text" '+disabled+'/>';
+    }
+
     var html =  '<div class="span12 timesheet-row" data-typeid="" data-id="'+ recordID +'" data-type="'+ type +'">'+
                   '<div class="span5">'+
-                    '<input type="text" name="select-type"/>'+
+                    parentNameHTML+
                   '</div>'+
                   '<div class="span4 range-input">'+
-                    '<input type="range" value="'+value+'" name="select-range" class="slider" disabled/>'+
+                    '<input type="range" value="'+value+'" name="select-range" class="slider" '+disabled+'/>'+
                   '</div>'+
                   '<div class="span1">'+
-                    '<input type="text" value="'+value+'" name="set-range" class="slider-text" disabled/>'+
+                    textValueHTML+
                   '</div>'+
                   '<div class="span1 remove-row">'+
-                    '<i class="fa-remove fa red-color"></i>'+
+                    removeRowHRML+
                   '</div>'+
                 '</div>';
 
@@ -119,7 +147,11 @@
         data = $parentElement.data();
 
     if(!_.isEmpty(this.data.fetched[data.type][data.id])) {
-      this.data.fetched[data.type][data.id]['deleted'] = 1;
+      if(this.data.fetched[data.type][data.id]['is_new'] == 0) {
+        this.data.fetched[data.type][data.id]['deleted'] = 1;
+      } else {
+        delete this.data.fetched[data.type][data.id];
+      }
     }
     
     $parentElement.remove();
@@ -168,6 +200,10 @@
           self.data.fetched[timeSheetData.type][timeSheetData.id]['parent_id'] = typeID;
           self.data.fetched[timeSheetData.type][timeSheetData.id]['updated'] = 1;
         } else {
+          if(_.isEmpty(self.data.fetched[timeSheetData.type])) {
+            self.data.fetched[timeSheetData.type] = {};
+          } 
+          
           self.data.fetched[timeSheetData.type][timeSheetData.id] = {
             "parent_id": typeID,
             'value': 0,
@@ -181,10 +217,67 @@
   },
 
   showTeamTimeSheets: function() {
+    var self = this,
+        string = '<div class="span12 first header-row">'+
+                    '<div class="span11 first type-element ellipsis_inline">'+
+                      'Podwladni'+
+                    '</div>'+
+                  '</div>';
+
+    string += '<div class="span12 first">';
+
+    _.each(self.data.subordinates, function(data, userID) {
+        string += '<div class="span12 first" data>'+
+                    data.user_name+
+                  '</div>';
+
+        string += '<div>';
+      _.each(data.time_sheet_data, function(timeSheetData, time_sheet_id) {
+        string += '<div class="span12">';
+        
+        _.each(data.time_sheet_data, function(v, k) {
+          string += '<div class="span6">'+k+'</div>';
+          string += '<div class="span6">'+v+'</div>';
+        });
+
+        string += '</div>';
+      });
+      string += '</div>';
+
+      string += '</div>';
+    });
+
+    string += '</div>';
+
+    return string;
+  },
+
+  saveClicked: function() {
     var self = this;
 
-    _.each(self.data.subordinates, function(user, id) {
+    $.ajax({
+      url: 'index.php?entryPoint=getData&updateTimeSheetQS=1&time_sheet_id='+self.model.get('id')+'&user_id='+app.user.id,
+      type: 'POST',
+      data: {
+        myData: self.data.fetched,
+        subordinatesData: self.data.subordinates,
+      },
+      success: function(msg) {
+        self._super('saveClicked');
+        self.view = "detail";
+      },
+    }); // ajax
+  },
 
-    });
+  editClicked: function() {
+    this.view = "edit";
+    this.render();
+    this._super('editClicked');
+  },
+
+  cancelClicked: function() {
+    this.view = "detail";
+    this._super('cancelClicked');
+    this.render();
   },
 })
