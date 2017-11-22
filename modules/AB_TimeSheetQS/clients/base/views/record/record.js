@@ -57,9 +57,11 @@
         html += this.addContentSection("Projekty");
       html += '</div>';
       
-      html += '<div class="span12 first container">';
-        html += this.showTeamTimeSheets();
-      html += '</div>';
+      if(!_.isEmpty(this.data.subordinates)) {
+        html += '<div id="TeamData" class="span12 first container">';
+          html += this.showTeamTimeSheets();
+        html += '</div>';
+      }
 
     html += '</div>';
 
@@ -218,7 +220,7 @@
 
   showTeamTimeSheets: function() {
     var self = this,
-        string = '<div class="span12 first header-row">'+
+        string = '<div class="span12 first header-team-row">'+
                     '<div class="span11 first type-element ellipsis_inline">'+
                       'Podwladni'+
                     '</div>'+
@@ -232,14 +234,22 @@
                   '</div>';
 
         string += '<div>';
-      _.each(data.time_sheet_data, function(timeSheetData, time_sheet_id) {
-        string += '<div class="span12">';
-        
-        _.each(data.time_sheet_data, function(v, k) {
-          string += '<div class="span6">'+k+'</div>';
-          string += '<div class="span6">'+v+'</div>';
-        });
 
+      // console.info("data: ", data);
+
+      _.each(data.time_sheet_data, function(timeSheetData, data_type) {
+        string += '<div class="span12 first">';
+        string += '<div class="span12 first">'+
+                    data_type.toLowerCase() +
+                  '</div>'; 
+        
+        string += '<div class="span12 first">';
+        _.each(timeSheetData, function(v, k) {
+          string += '<div class="span4 first">'+self.data.type[data_type][v.parent_id]+'</div>';
+          string += '<div class="span2">'+v.value+'</div>';
+        });
+        string += '</div>';
+        
         string += '</div>';
       });
       string += '</div>';
