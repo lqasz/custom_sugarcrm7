@@ -49,7 +49,7 @@ array (
           array (
             'name' => 'panel_body',
             'label' => 'LBL_RECORD_BODY',
-            'columns' => 2,
+            'columns' => 3,
             'labelsOnTop' => true,
             'placeholders' => true,
             'newTab' => false,
@@ -58,6 +58,7 @@ array (
             array (
               0 => array (
                 'name' => 'assigned_user_name',
+                'span' => 4,
                 'readonly' => true,
                 'link' => false,
               ),
@@ -65,8 +66,17 @@ array (
               array (
                 'name' => 'accepted_by_tl_c',
                 'label' => 'LBL_ACCEPTED_BY_TL',
+                'span' => 4,
+                'readonly' => true,
               ),
               2 => 
+              array (
+                'name' => 'rejected_by_tl_c',
+                'label' => 'LBL_REJECTED_BY_TL',
+                'span' => 4,
+                'readonly' => true,
+              ),
+              3 => 
               array (
                 'name' => 'subordinates_c',
                 'span' => 12,
