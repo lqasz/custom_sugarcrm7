@@ -9,8 +9,7 @@
     'click .add-row': 'addRow',
     'click .fa-remove': 'removeRow',
     'click a[name="cancel_button"]':'cancelClicked',
-    'click input[name="accepted"]':'checkBoxClicked',
-    'click input[name="rejected"]':'checkBoxClicked',
+    'click a[name="accept_ts"]':'acceptTSClicked',
     'change .slider': 'setTimeSheetValue',
     'blur .slider-text': 'setTimeSheetValue',
     'keyup input[name="select-type"]': 'searchType',
@@ -24,7 +23,7 @@
     self.view = options.context.get("action");
     self.collection.on('data:sync:complete', function() {
       // get all data from db
-      app.api.call('POST', 'index.php?entryPoint=getData&getTimeSheetQSData=1&time_sheet_id='+self.model.get('id')+'&user_id='+app.user.id, null,{
+      app.api.call('POST', 'index.php?entryPoint=getData&getTimeSheetQSData=1&time_sheet_id='+self.model.get('id')+'&user_id='+self.model.get('assigned_user_id'), null,{
         success: _.bind(function(data) {
           self.data = data;
           self.model.trigger('rebuildFields'); // trigger event in model
@@ -43,12 +42,31 @@
     if(!_.isEmpty(this.data)) {
       this.sum['wyceny'] = 0;
       this.sum['projekty'] = 0;
-      $('.record-cell[data-name="subordinates_c"]').html(this.rebuildSubordinatiesField());
+
+      if(this.model.get('assigned_user_id') == app.user.id) {
+        var checked = (this.model.get('accepted_by_tl_c') == 1) ? "checked" : "";
+
+        html =  '<span class="detail">'+
+                  '<input type="checkbox" disabled="disabled" aria-label="Accepted by TL" '+checked+'>'+
+                '</span>';
+
+        $('.record-cell[data-name="accepted_by_tl_c"]').find('.normal[data-fieldname="accepted_by_tl_c"]').html(html);
+
+        checked = (this.model.get('rejected_by_tl_c') == 1) ? "checked" : "";
+        html =  '<span class="detail">'+
+                  '<input type="checkbox" disabled="disabled" aria-label="Rejected by TL" '+checked+'>'+
+                '</span>';
+        
+        $('a[name="accept_ts"]').hide(); 
+        $('.record-cell[data-name="rejected_by_tl_c"]').find('.normal[data-fieldname="rejected_by_tl_c"]').html(html);
+      }
+
+      $('.record-cell[data-name="subordinates_c"]').html(this.rebuildSubordinatesField());
       $("body").append('<style>.ui-autocomplete li {list-style: none;background:white;max-width: 483px;border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd;}.ui-autocomplete li a {color: black;padding-left:10px;display:block;max-width: 483px;}.ui-autocomplete li a.ui-state-hover{background:#ccc;}</style>');
     }
   },
 
-  rebuildSubordinatiesField: function() {
+  rebuildSubordinatesField: function() {
     var html = '<div class="span12 record-cell">';
 
       html += '<div class="span12 first container">';
@@ -60,12 +78,11 @@
         html += this.addHeaderSection("Projekty");
         html += this.addContentSection("Projekty");
       html += '</div>';
-      
-      if(!_.isEmpty(this.data.subordinates)) {
-        html += '<div id="TeamData" class="span12 first container">';
-          html += this.showTeamTimeSheets();
-        html += '</div>';
-      }
+
+      html += '<div class="span12 first container">';
+        html += '<hr></hr>';
+        html += this.returnSumHTML();
+      html += '</div>';
 
     html += '</div>';
 
@@ -101,7 +118,6 @@
       self.sum[lowerName] += parseInt(data.value);
       html += self.returnHTMLRow(recordID, lowerName, self.data.type[lowerName][data.parent_id], data.value, false);
     });
-    html += self.returnHTMLRow('qs-team-sum', lowerName, 'sum', this.sum[lowerName], true);
 
     html += '</div>';
 
@@ -114,6 +130,20 @@
         html =  this.returnHTMLRow(recordID, type, "", 0, false);
 
     $('.content[data-type="'+type+'"]').prepend(html);
+  },
+
+  returnSumHTML: function() {
+    return this.returnHTMLRow('qs-team-sum', 'sum', 'SUM', this.returnSumValue(), true);
+  },
+
+  returnSumValue: function() {
+    var sumValue = 0;
+
+    _.each(this.sum, function(value, parent_type) {
+      sumValue += value;
+    });
+
+    return sumValue;
   },
 
   returnHTMLRow: function(recordID, type, parentName, value, sum) {
@@ -163,7 +193,8 @@
         delete this.data.fetched[data.type][data.id];
       }
     }
-    
+      
+    this.setSumValues(data.type);
     $parentElement.remove();
   },
 
@@ -182,13 +213,21 @@
     this.data.fetched[data.type][data.id]['value'] = $element.val();
     this.data.fetched[data.type][data.id]['updated'] = 1;
 
-    this.sum[data.type] = 0;
-    _.each(this.data.fetched[data.type], function(sheet, key) {
-      self.sum[data.type] += parseInt(sheet.value);
+    this.setSumValues(data.type);
+  },
+
+  setSumValues: function(parent_type) {
+    var self = this;
+
+    this.sum[parent_type] = 0;
+    _.each(this.data.fetched[parent_type], function(sheet, key) {
+      if(sheet.deleted == 0) {
+        self.sum[parent_type] += parseInt(sheet.value);
+      }
     });
 
-    $('.content[data-type="'+data.type+'"]').find('.timesheet-row[data-id="qs-team-sum"]').find('.slider').val(this.sum[data.type]);
-    $('.timesheet-row[data-id="qs-team-sum"]').find('.'+data.type+'-sum').text(this.sum[data.type]+'%');
+    $('.timesheet-row[data-id="qs-team-sum"]').find('input[name="select-range"]').val(this.returnSumValue());
+    $('.sum-sum').text(this.returnSumValue() +"%");
   },
 
   searchType: function(e) {
@@ -234,96 +273,32 @@
     });
   },
 
-  showTeamTimeSheets: function() {
-    var self = this,
-        disabled = 'disabled';
-        string = '<div class="span12 first header-team-row">'+
-                    '<div class="span11 first type-element ellipsis_inline">'+
-                      'Podwladni'+
-                    '</div>'+
-                  '</div>';
-
-    if(this.view == "edit") {
-      disabled = '';
-    }
-
-    string += '<div class="span12 first">';
-
-    _.each(self.data.subordinates, function(data, userID) {
-      var checkedAccepted = (self.data.subordinates[userID].accepted == 1) ? 'checked' : '',
-          checkedRejected = (self.data.subordinates[userID].rejected == 1) ? 'checked' : '';
-
-      string += '<div class="span12 first subordinate-data">'+
-                  '<div class="span8 first subordinate-name">'+
-                    data.user_name+
-                  '</div>'+
-                  '<div class="span2">'+
-                    'Accept '+
-                    '<input type="checkbox" name="accepted" data-user_id="'+userID+'" '+disabled+' '+checkedAccepted+'>'+
-                  '</div>'+
-                  '<div class="span2">'+
-                    'Reject '+
-                    '<input type="checkbox" name="rejected" data-user_id="'+userID+'" '+disabled+' '+checkedRejected+'>'+
-                  '</div>'+
-                '</div>';
-
-      string += '<div class="span12">'+
-                  data.date_entered+
-                '</div>';
-
-      string += '<div class="span12 subordinate-container">'+
-                  '<div class="span12 first subordinate-row">'+
-                    '<div class="span3"><b>Parent Type:</b></div>'+
-                    '<div class="span4 first"><b>Parent Name:</b></div>'+
-                    '<div class="span3"><b>Value:</b></div>'+
-                  '</div>';
-
-      _.each(data.time_sheet_data, function(timeSheetData, data_type) {
-        string += '<div class="span12 first subordinate-row">';
-
-        _.each(timeSheetData, function(v, k) {
-          string += '<div class="span3">'+data_type.toLowerCase()+'</div>'+
-                    '<div class="span4 first">'+self.data.type[data_type][v.parent_id]+'</div>'+
-                    '<div class="span3">'+v.value+'%</div>';
-        });
-        
-        string += '</div>';
-      });
-
-      string += '</div>';
-    });
-
-    string += '</div>';
-
-    return string;
-  },
-
-  checkBoxClicked: function(e) {
-    var $element = $(e.currentTarget),
-        name = $element.attr('name'),
-        userID = ($element.data()).user_id,
-        elements = {
-          'rejected': 'accepted',
-          'accepted': 'rejected',
-        };
-
-    this.data.subordinates[userID][name] = !(this.data.subordinates[userID][name]);
-  },
-
   saveClicked: function() {
     var self = this,
-        myData = self.data.fetched,
-        subordinatesData = self.data.subordinates;
+        myData = self.data.fetched;
 
-    if(self.formValidator(myData, subordinatesData)) {
+    if(self.formValidator(myData)) {
       $.ajax({
         url: 'index.php?entryPoint=getData&updateTimeSheetQS=1&time_sheet_id='+self.model.get('id')+'&user_id='+app.user.id,
         type: 'POST',
         data: {
           myData: myData,
-          subordinatesData: subordinatesData,
+          accepted: self.model.get('accepted_by_tl_c'),
+          rejected: self.model.get('rejected_by_tl_c'),
+          assignedUserID: self.model.get('assigned_user_id'),
+          assignedUserName: self.model.get('assigned_user_name'),
+          absent: self.model.get('absent_c'),
         },
         success: function(msg) {
+          msg = JSON.parse(msg);
+          if(msg.rejected.changed) {
+            self.model.set('rejected_by_tl_c', msg.rejected.value);
+          }
+
+          if(msg.accepted.changed) {
+            self.model.set('accepted_by_tl_c', msg.accepted.value);
+          }
+          
           self._super('saveClicked');
           self.view = "detail";
         },
@@ -343,17 +318,15 @@
     this.render();
   },
 
-  formValidator: function(myData, subordinatesData) {
+  formValidator: function(myData) {
     var self = this,
         error = "",
         validation = true;
 
-    _.each(this.sum, function(value, type) {
-      if(value > 100) {
-        error += "sum bigger then 100%";
-        validation = false;
-      }
-    });
+    if(this.returnSumValue() > 100) {
+      error += "sum bigger then 100%";
+      validation = false;
+    }
 
     var selectedType = {
       'wyceny': [],
@@ -384,5 +357,23 @@
     }
 
     return validation;
+  },
+
+  acceptTSClicked: function(e) {
+    var self = this;
+
+    $.ajax({
+      url: 'index.php?entryPoint=getData&acceptTimeSheetQS=1&time_sheet_id='+self.model.get('id')+'&user_id='+app.user.id,
+      type: 'POST',
+      data: {
+        assignedUserID: self.model.get('assigned_user_id'),
+        assignedUserName: self.model.get('assigned_user_name'),
+      },
+      success: function(msg) {
+        self.model.set('accepted_by_tl_c', true);
+        self._super('saveClicked');
+        self.view = "detail";
+      },
+    }); // ajax
   },
 })

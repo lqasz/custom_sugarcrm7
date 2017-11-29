@@ -55,7 +55,7 @@
 
 		            addPanel: function() {
 	                    this.setElement($('body').append('<div id="DepartmentStructureMonit"><div id="DepartmentStructurePanel" class="modal"></div><div class="modal-backdrop"></div></div>') );
-	                    var html = '<div class="modal-header"><h3><i class="fa fa-sitemap"></i> Struktura dla Dzialu QS</h3></div>'+
+	                    var html = '<div class="modal-header"><h3><i class="fa fa-sitemap"></i> QS Department</h3></div>'+
 	                                '<div class="modal-body">'+
 	                                    '<div class="panel-main">'+
 	                                        '<div class="row-fluid department-users">'+
@@ -74,14 +74,21 @@
 		                var self = this,
 		                    string = '<div class="span12 first department-users" >';
 		                
+						string += '<div class="span12 first single-user">';
+						string += '<div class="span6 first"><b>Employee:</b></div>';
+						string += '<div class="span6 first"><b>Team Leader:</b></div>';
+						string += '</div>';
+
+						var iter = 1;
 		                _.each(data, function(user, id) {
 		                	if(user.e_type == "employee") {
 			                    string += '<div data-user_id="'+id+'" class="span12 first single-user">';
-			                    string += '<div class="span6 first">'+user.user_name+'</div>';
+			                    string += '<div class="span6 first">'+iter+'. '+user.user_name+'</div>';
 			                    string += '<div class="span6 first">'+select(user.reports_to)+'</div>';
 			                    string += '</div>';
 		                	}
 		                    
+		                    iter++;
 		                });
 
 		                string += '</div>';
