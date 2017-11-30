@@ -337,7 +337,12 @@
 
                 if(self.oldTimeSheet.length > 0) {
                     self.stopPulling();
-                    self.showTimeSheetView(self.oldTimeSheet[0]);
+                    if(self.oldTimeSheet[0].get('description') == "QS") {
+                        self.showTimeSheetQSView(self.oldTimeSheet[0]);
+                    } else {
+                        self.showTimeSheetView(self.oldTimeSheet[0]);
+                    }
+
                     self.render();
                 } else {
                     // getQuestions
@@ -824,6 +829,287 @@
                         $qwer.startPulling();
                     },
                 }); // ajax
+            },
+        });
+
+        var timeSheetPanel = new TimeSheetPanel();
+    },
+
+    showTimeSheetQSView: function(model) {
+        var that = this;
+
+        var TimeSheetPanel = Backbone.View.extend({
+            sum: {},
+            data: {},
+            events: {
+                'click .add-row': 'addRow',
+                'click .fa-remove': 'removeRow',
+                // 'click a[name="accept_ts"]':'acceptTSClicked',
+                'blur .slider-text': 'setTimeSheetValue',
+                'keyup input[name="select-type"]': 'searchType',
+                'focus input[name="select-type"]': 'searchType',
+            },
+
+            initialize: function() {
+                var self = this;
+
+                // get all data from db
+                app.api.call('GET', 'index.php?entryPoint=getData&getTimeSheetQSData=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id, null,{
+                    success: _.bind(function(data) {
+                        self.data = data;
+                        self.render();
+                    })
+                });
+            },
+
+            render: function() {
+                if(!_.isEmpty(this.data)) {
+                    this.sum['wyceny'] = 0;
+                    this.sum['projekty'] = 0;
+                    this.addPanel();
+
+                    var width = (_.isEmpty($('.project-monit-name').outerWidth())) ? 338 : $('.project-monit-name').outerWidth();
+                    $("body").append('<style>.ui-autocomplete li {list-style: none;background:white;max-width:'+ width +'px;border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd;}.ui-autocomplete li a {color: black;padding-left:10px;display:block;max-width:'+ width +'px;}.ui-autocomplete li a.ui-state-hover{background:#ccc;}</style>');
+                }
+            },
+
+            addRow: function(e) {
+                var recordID = app.utils.generateUUID(),
+                type =  ($(e.currentTarget).data()).type,
+                html =  this.returnHTMLRow(recordID, type, "", 0, false);
+
+                $('.content[data-type="'+type+'"]').prepend(html);
+            },
+
+            removeRow: function(e) {
+                var $parentElement = $(e.currentTarget).parents('.timesheet-row'),
+                data = $parentElement.data();
+
+                if(!_.isEmpty(this.data.fetched[data.type][data.id])) {
+                    if(this.data.fetched[data.type][data.id]['is_new'] == 0) {
+                        this.data.fetched[data.type][data.id]['deleted'] = 1;
+                    } else {
+                        delete this.data.fetched[data.type][data.id];
+                    }
+                }
+
+                this.setSumValues(data.type);
+                $parentElement.remove();
+            },
+
+            searchType: function(e) {
+                var self = this,
+                    $element = $(e.currentTarget),
+                    $parentElement = $element.parents('.timesheet-row'),
+                    timeSheetData = $parentElement.data(),
+                    array = $.map(self.data.type[timeSheetData.type], function(value, index) {
+                        return [value];
+                    });
+
+                console.info($element);
+                $element.autocomplete({
+                    minLength: 2,
+                    source: array,
+                    select: function(event, ui) {
+                        $parentElement.find('.slider-text').removeAttr('disabled');
+
+                        var typeID = Object.keys(self.data.type[timeSheetData.type]).find(key => self.data.type[timeSheetData.type][key] === ui.item.value);
+                        $parentElement.attr('data-typeid', typeID);
+
+                        if(!_.isEmpty(self.data.fetched[timeSheetData.type][timeSheetData.id])) {
+                            self.data.fetched[timeSheetData.type][timeSheetData.id]['value'] = $('.slider').val();
+                            self.data.fetched[timeSheetData.type][timeSheetData.id]['parent_id'] = typeID;
+                            self.data.fetched[timeSheetData.type][timeSheetData.id]['updated'] = 1;
+                        } else {
+                            if(_.isEmpty(self.data.fetched[timeSheetData.type])) {
+                                self.data.fetched[timeSheetData.type] = {};
+                            } 
+
+                            self.data.fetched[timeSheetData.type][timeSheetData.id] = {
+                                "parent_id": typeID,
+                                'value': 0,
+                                'updated': 0,
+                                'is_new': 1,
+                                'deleted': 0,
+                            };
+                        }
+                    }
+                });
+            },
+
+            addPanel: function() {
+                if($('#limitInvoice').length == 0) {
+                    this.setElement($('body').append('<div id="timeSheetMonit"><div id="timeSheetPanel" class="modal"></div><div class="modal-backdrop"></div></div>') );
+                    var html = '<div class="modal-header"><h3><i class="fa fa-file-text-o"></i> '+model.get('name')+'</h3></div>'+
+                                '<div class="modal-body">'+
+                                    '<div class="panel-main">'+
+                                        '<div class="row-fluid">'+
+                                            (this.addUsersForm())+
+                                        '</div>'+
+                                    '</div>'+
+                                '</div>'+
+                                '<div class="modal-footer">'+
+                                    '<button id="saveButtonMonit" class="btn btn-primary">Save</button>'+
+                                '</div>';
+
+                    $('#timeSheetPanel').html(html);
+                }
+            },
+
+            addUsersForm: function() {
+                var self = this,
+                    string = '<div class="span12 first time-sheet-qs">';
+                
+                _.each(self.data.fetched, function(typeData, type) {
+                    string += self.addHeaderSection(type.toUpperCase());
+
+                    string += '<div class="span12 first content" data-type="'+type+'">';
+                    _.each(typeData, function(timeSheetData, timeSheetID) {
+                        string += self.returnHTMLRow(timeSheetID, type, self.data.type[type][timeSheetData.parent_id], timeSheetData.value, false);
+                    });
+
+                    string += '</div>';
+                });
+
+                string += this.returnHTMLRow('qs-team-sum', 'sum', 'SUM', this.returnSumValue(), true);
+                string += '</div>';
+
+                return string;
+            },
+
+            addHeaderSection: function(name) {
+                var html =  '<div class="span12 first header-row">'+
+                                '<div class="span11 first type-element ellipsis_inline">'+
+                                    name+
+                                '</div>'+
+                                '<div class="span1 button-element">'+
+                                    '<button data-type="'+name.toLowerCase()+'" class="btn add-row">+</button>'+
+                                '</div>'+
+                            '</div>';
+
+                return html;
+            },
+
+            setSumValues: function(parent_type) {
+                var self = this;
+
+                this.sum[parent_type] = 0;
+                _.each(this.data.fetched[parent_type], function(sheet, key) {
+                    if(sheet.deleted == 0) {
+                        self.sum[parent_type] += parseInt(sheet.value);
+                    }
+                });
+
+                $('.timesheet-row[data-id="qs-team-sum"]').find('input[name="select-range"]').val(this.returnSumValue());
+                $('.sum-sum').text(this.returnSumValue() +"%");
+            },
+
+            setTimeSheetValue: function(e) {
+                var self = this,
+                $element = $(e.currentTarget),
+                $parentElement = $element.parents('.timesheet-row'),
+                data = $parentElement.data();
+                $parentElement.find('.slider-text').val($element.val());
+
+                this.data.fetched[data.type][data.id]['value'] = $element.val();
+                this.data.fetched[data.type][data.id]['updated'] = 1;
+
+                this.setSumValues(data.type);
+            },
+
+            returnSumValue: function() {
+                var sumValue = 0;
+
+                _.each(this.sum, function(value, parent_type) {
+                    sumValue += value;
+                });
+
+                return sumValue;
+            },
+
+            returnHTMLRow: function(recordID, type, parentName, value, sum) {
+                var parentNameHTML =  '<span>'+parentName+'</span>',
+                    textValueHTML = '<span class="'+type+'-sum">'+value+'%</span>',
+                    removeRowHRML = '';
+
+                if(!sum) {
+                    parentNameHTML = '<input type="text" name="select-type" value="'+parentName+'"/>';
+                    textValueHTML = '<input type="text" value="'+value+'" name="set-range" class="slider-text" disabled/>';
+                    removeRowHRML = '<i class="fa-remove fa red-color"></i>';
+                }
+
+                var html =  '<div class="span12 timesheet-row first" data-id="'+ recordID +'" data-type="'+ type +'">'+
+                              '<div class="span8">'+
+                                parentNameHTML+
+                              '</div>'+
+                              '<div class="span1">'+
+                                textValueHTML+
+                              '</div>'+
+                              '<div class="span1 remove-row">'+
+                                removeRowHRML+
+                              '</div>'+
+                            '</div>';
+
+                return html;
+            },
+
+            saveClicked: function() {
+                var self = this;
+
+                $.ajax({
+                    url: 'index.php?entryPoint=getData&updateTimeSheet=1&time_sheet_id='+ model.get('parent_id') +'&noCache='+ (new Date().getTime()),
+                    type: 'POST',
+                    data: {
+                        updated: self.dataFetched.data,
+                        users: self.dataFetched.users,
+                        getRelated: true,
+                    },
+                    success: function(data) {
+                        $('#timeSheetMonit').remove();
+                        that.startPulling();
+                    },
+                }); // ajax
+            },
+
+            formValidator: function(myData) {
+                var self = this,
+                    error = "",
+                    validation = true;
+
+                if(this.returnSumValue() > 100) {
+                    error += "sum bigger then 100%";
+                    validation = false;
+                }
+
+                var selectedType = {
+                    'wyceny': [],
+                    'projekty': []
+                };
+                _.each(myData, function(type_data, parent_type) {
+                    _.each(type_data, function(data, id) {
+                        if(selectedType[parent_type].indexOf(data['parent_id']) != -1) {
+                            error += self.data.type[data['parent_id']] +" the same";
+                            validation = false;
+                        } else {
+                            selectedType[parent_type].push(data['parent_id']);
+                        }
+
+                        if(data['value'] == 0) {
+                            error += self.data.type[parent_type][data['parent_id']] +" rowne 0";
+                            validation = false;
+                        }
+                    });
+                });
+
+                if(!validation) {
+                    app.alert.show('message-id', {
+                        level: 'confirmation',
+                        messages: error,
+                        autoClose: false,
+                    });
+                }
+
+                return validation;
             },
         });
 
