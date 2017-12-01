@@ -661,7 +661,6 @@
                 var self = this,
                     string = '';
                 
-                console.info("dataFetched: ", self.dataFetched);
                 _.each(self.dataFetched.data, function(timeSheet, userID) {
                     string += '<div class="span12 first user-timesheets-monit">';
                     string += '<div class="span12 first" data-name="employee-name" data-userid="'+userID+'"><div class="span8 first">'+self.dataFetched.users[userID]+'</div><div class="span1 first"><a data-userid="'+userID+'" class="add-project-monit"><i class="fa-plus fa"></i></a></div></div>';
@@ -841,10 +840,11 @@
         var TimeSheetPanel = Backbone.View.extend({
             sum: {},
             data: {},
+            actions: {},
             events: {
                 'click .add-row': 'addRow',
                 'click .fa-remove': 'removeRow',
-                // 'click a[name="accept_ts"]':'acceptTSClicked',
+                'change .action-checkbox':'checkboxClicked',
                 'blur .slider-text': 'setTimeSheetValue',
                 'keyup input[name="select-type"]': 'searchType',
                 'focus input[name="select-type"]': 'searchType',
@@ -854,9 +854,10 @@
                 var self = this;
 
                 // get all data from db
-                app.api.call('GET', 'index.php?entryPoint=getData&getTimeSheetQSData=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id, null,{
+                app.api.call('GET', 'index.php?entryPoint=getData&getTimeSheetQSData=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id+'&getModelData=1', null,{
                     success: _.bind(function(data) {
-                        self.data = data;
+                        self.data = data.timeSheet;
+                        self.actions = data.modelData;
                         self.render();
                     })
                 });
@@ -906,7 +907,6 @@
                         return [value];
                     });
 
-                console.info($element);
                 $element.autocomplete({
                     minLength: 2,
                     source: array,
@@ -940,10 +940,35 @@
             addPanel: function() {
                 if($('#limitInvoice').length == 0) {
                     this.setElement($('body').append('<div id="timeSheetMonit"><div id="timeSheetPanel" class="modal"></div><div class="modal-backdrop"></div></div>') );
+
+                    var absent = (this.actions['absent_c'] == 1) ? "checked" : "",
+                        acceptedTL = (this.actions['accepted_by_tl_c'] == 1) ? "checked" : "", 
+                        rejectedTL = (this.actions['rejected_by_tl_c'] == 1) ? "checked" : "";
+
                     var html = '<div class="modal-header"><h3><i class="fa fa-file-text-o"></i> '+model.get('name')+'</h3></div>'+
                                 '<div class="modal-body">'+
                                     '<div class="panel-main">'+
                                         '<div class="row-fluid">'+
+                                            '<div class="action-menu">'+
+                                                '<div class="span4">'+
+                                                    '<label for="absent_c">Absent</label>'+
+                                                    '<span class="edit">'+
+                                                        '<input id="absent_c" class="action-checkbox" name="absent_c" type="checkbox" aria-label="Absent" '+absent+'>'+
+                                                    '</span>'+
+                                                '</div>'+
+                                                '<div class="span4">'+
+                                                    '<label for="accepted_by_tl_c">Accepted by TL</label>'+
+                                                    '<span class="edit">'+
+                                                        '<input id="accepted_by_tl_c" class="action-checkbox" name="accepted_by_tl_c" type="checkbox" aria-label="Accepted by TL" '+acceptedTL+'>'+
+                                                    '</span>'+
+                                                '</div>'+
+                                                '<div class="span4">'+
+                                                    '<label for="rejected_by_tl_c">Rejected by TL</label>'+
+                                                    '<span class="edit">'+
+                                                        '<input id="rejected_by_tl_c" class="action-checkbox" name="rejected_by_tl_c" type="checkbox" aria-label="Rejected by TL" '+rejectedTL+'>'+
+                                                    '</span>'+
+                                                '</div>'+
+                                            '</div>'+
                                             (this.addUsersForm())+
                                         '</div>'+
                                     '</div>'+
@@ -953,6 +978,10 @@
                                 '</div>';
 
                     $('#timeSheetPanel').html(html);
+
+                    if(this.returnSumValue() > 0) {
+                        $('.slider-text').removeAttr('disabled');
+                    }
                 }
             },
 
@@ -965,6 +994,7 @@
 
                     string += '<div class="span12 first content" data-type="'+type+'">';
                     _.each(typeData, function(timeSheetData, timeSheetID) {
+                        self.sum[type] += parseInt(timeSheetData.value);
                         string += self.returnHTMLRow(timeSheetID, type, self.data.type[type][timeSheetData.parent_id], timeSheetData.value, false);
                     });
 
@@ -1000,7 +1030,6 @@
                     }
                 });
 
-                $('.timesheet-row[data-id="qs-team-sum"]').find('input[name="select-range"]').val(this.returnSumValue());
                 $('.sum-sum').text(this.returnSumValue() +"%");
             },
 
@@ -1015,6 +1044,12 @@
                 this.data.fetched[data.type][data.id]['updated'] = 1;
 
                 this.setSumValues(data.type);
+            },
+
+            checkboxClicked: function(e) {
+                var name = $(e.currentTarget).attr('name');
+
+                this.actions[name] = (this.actions[name] == 1) ? 0 : 1;
             },
 
             returnSumValue: function() {
@@ -1057,14 +1092,17 @@
                 var self = this;
 
                 $.ajax({
-                    url: 'index.php?entryPoint=getData&updateTimeSheet=1&time_sheet_id='+ model.get('parent_id') +'&noCache='+ (new Date().getTime()),
+                    url: 'index.php?entryPoint=getData&updateTimeSheetQS=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id+'&setModelData=1',
                     type: 'POST',
                     data: {
-                        updated: self.dataFetched.data,
-                        users: self.dataFetched.users,
-                        getRelated: true,
+                      myData: self.data,
+                      accepted: self.actions.accepted_by_tl_c,
+                      rejected: self.actions.rejected_by_tl_c,
+                      assignedUserID: model.get('assigned_user_id'),
+                      assignedUserName: model.get('assigned_user_name'),
+                      absent: self.actions.absent_c,
                     },
-                    success: function(data) {
+                    success: function(msg) {
                         $('#timeSheetMonit').remove();
                         that.startPulling();
                     },
