@@ -161,6 +161,8 @@
                 'parent_id',
                 'description',
                 'confirmation',
+                'assigned_user_id',
+                'assigned_user_name',
             ],
             apiOptions: {
                 skipMetadataHash: true
@@ -278,9 +280,13 @@
 
         var self = this;
         var lastReviewDate = null;
-        var now = new Date();
+        var now = new Date(),
+            lastDay = new Date();
         now.setDate(now.getDate() );
         now.setHours(0, 0, 0, 0);
+
+        lastDay.setDate(lastDay.getDate() - 1);
+        lastDay.setHours(0, 0, 0, 0);
         var isQuestion;
 
         // console.info("W pull: "+ this.collection.length);
@@ -351,7 +357,7 @@
                             lastReviewDate = new Date(model.get('date_entered'));
                             lastReviewDate.setHours(0, 0, 0, 0);
 
-                            if(lastReviewDate.getTime() < now.getTime()) {
+                            if(lastReviewDate.getTime() < lastDay.getTime()) {
                                 return true;
                             } else {
                                 return false;
@@ -821,6 +827,7 @@
                     data: {
                         updated: self.dataFetched.data,
                         users: self.dataFetched.users,
+                        assigned_user_id: model.get('assigned_user_id'),
                         getRelated: true,
                     },
                     success: function(data) {
@@ -844,6 +851,8 @@
             events: {
                 'click .add-row': 'addRow',
                 'click .fa-remove': 'removeRow',
+                'click #saveButtonMonit': 'saveClicked',
+                'click #acceptTSButtonMonit': 'acceptTSClicked',
                 'change .action-checkbox':'checkboxClicked',
                 'blur .slider-text': 'setTimeSheetValue',
                 'keyup input[name="select-type"]': 'searchType',
@@ -917,7 +926,7 @@
                         $parentElement.attr('data-typeid', typeID);
 
                         if(!_.isEmpty(self.data.fetched[timeSheetData.type][timeSheetData.id])) {
-                            self.data.fetched[timeSheetData.type][timeSheetData.id]['value'] = $('.slider').val();
+                            self.data.fetched[timeSheetData.type][timeSheetData.id]['value'] = $('.slider-text').val();
                             self.data.fetched[timeSheetData.type][timeSheetData.id]['parent_id'] = typeID;
                             self.data.fetched[timeSheetData.type][timeSheetData.id]['updated'] = 1;
                         } else {
@@ -941,9 +950,11 @@
                 if($('#limitInvoice').length == 0) {
                     this.setElement($('body').append('<div id="timeSheetMonit"><div id="timeSheetPanel" class="modal"></div><div class="modal-backdrop"></div></div>') );
 
-                    var absent = (this.actions['absent_c'] == 1) ? "checked" : "",
-                        acceptedTL = (this.actions['accepted_by_tl_c'] == 1) ? "checked" : "", 
-                        rejectedTL = (this.actions['rejected_by_tl_c'] == 1) ? "checked" : "";
+                    var absent = (this.actions.absent_c == 1) ? "checked" : "",
+                        acceptedTL = (this.actions.accepted_by_tl_c == 1) ? "checked" : "", 
+                        rejectedTL = (this.actions.rejected_by_tl_c == 1) ? "checked" : "",
+                        disabled = (this.actions.report_to != app.user.id) ? "disabled" : "",
+                        acceptButton = (this.actions.assigned_user_id != app.user.id) ? '<button id="acceptTSButtonMonit" class="btn btn-primary">Accept</button>' : '';
 
                     var html = '<div class="modal-header"><h3><i class="fa fa-file-text-o"></i> '+model.get('name')+'</h3></div>'+
                                 '<div class="modal-body">'+
@@ -959,13 +970,13 @@
                                                 '<div class="span4">'+
                                                     '<label for="accepted_by_tl_c">Accepted by TL</label>'+
                                                     '<span class="edit">'+
-                                                        '<input id="accepted_by_tl_c" class="action-checkbox" name="accepted_by_tl_c" type="checkbox" aria-label="Accepted by TL" '+acceptedTL+'>'+
+                                                        '<input id="accepted_by_tl_c" class="action-checkbox" name="accepted_by_tl_c" type="checkbox" aria-label="Accepted by TL" '+acceptedTL+' '+disabled+'>'+
                                                     '</span>'+
                                                 '</div>'+
                                                 '<div class="span4">'+
                                                     '<label for="rejected_by_tl_c">Rejected by TL</label>'+
                                                     '<span class="edit">'+
-                                                        '<input id="rejected_by_tl_c" class="action-checkbox" name="rejected_by_tl_c" type="checkbox" aria-label="Rejected by TL" '+rejectedTL+'>'+
+                                                        '<input id="rejected_by_tl_c" class="action-checkbox" name="rejected_by_tl_c" type="checkbox" aria-label="Rejected by TL" '+rejectedTL+' '+disabled+'>'+
                                                     '</span>'+
                                                 '</div>'+
                                             '</div>'+
@@ -974,6 +985,7 @@
                                     '</div>'+
                                 '</div>'+
                                 '<div class="modal-footer">'+
+                                    acceptButton+
                                     '<button id="saveButtonMonit" class="btn btn-primary">Save</button>'+
                                 '</div>';
 
@@ -1089,18 +1101,38 @@
             },
 
             saveClicked: function() {
+                var self = this,
+                    myData = this.data.fetched;
+
+                if(this.formValidator(myData)) {
+                    $.ajax({
+                        url: 'index.php?entryPoint=getData&updateTimeSheetQS=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id+'&setModuleValue=1',
+                        type: 'POST',
+                        data: {
+                          myData: myData,
+                          accepted: self.actions.accepted_by_tl_c,
+                          rejected: self.actions.rejected_by_tl_c,
+                          assignedUserID: model.get('assigned_user_id'),
+                          assignedUserName: model.get('assigned_user_name'),
+                          absent: self.actions.absent_c,
+                        },
+                        success: function(msg) {
+                            $('#timeSheetMonit').remove();
+                            that.startPulling();
+                        },
+                    }); // ajax
+                }
+            },
+
+            acceptTSClicked: function(e) {
                 var self = this;
 
                 $.ajax({
-                    url: 'index.php?entryPoint=getData&updateTimeSheetQS=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id+'&setModelData=1',
+                    url: 'index.php?entryPoint=getData&acceptTimeSheetQS=1&time_sheet_id='+model.get('parent_id')+'&user_id='+app.user.id+'&setModuleValue=1',
                     type: 'POST',
                     data: {
-                      myData: self.data,
-                      accepted: self.actions.accepted_by_tl_c,
-                      rejected: self.actions.rejected_by_tl_c,
-                      assignedUserID: model.get('assigned_user_id'),
-                      assignedUserName: model.get('assigned_user_name'),
-                      absent: self.actions.absent_c,
+                        assignedUserID: model.get('assigned_user_id'),
+                        assignedUserName: model.get('assigned_user_name'),
                     },
                     success: function(msg) {
                         $('#timeSheetMonit').remove();
@@ -1114,30 +1146,32 @@
                     error = "",
                     validation = true;
 
-                if(this.returnSumValue() > 100) {
-                    error += "sum bigger then 100%";
-                    validation = false;
-                }
+                if(this.actions['absent_c'] == 0) {
+                    if(this.returnSumValue() > 100) {
+                        error += "sum bigger then 100%";
+                        validation = false;
+                    }
 
-                var selectedType = {
-                    'wyceny': [],
-                    'projekty': []
-                };
-                _.each(myData, function(type_data, parent_type) {
-                    _.each(type_data, function(data, id) {
-                        if(selectedType[parent_type].indexOf(data['parent_id']) != -1) {
-                            error += self.data.type[data['parent_id']] +" the same";
-                            validation = false;
-                        } else {
-                            selectedType[parent_type].push(data['parent_id']);
-                        }
+                    var selectedType = {
+                        'wyceny': [],
+                        'projekty': []
+                    };
+                    _.each(myData, function(type_data, parent_type) {
+                        _.each(type_data, function(data, id) {
+                            if(selectedType[parent_type].indexOf(data['parent_id']) != -1) {
+                                error += self.data.type[data['parent_id']] +" the same";
+                                validation = false;
+                            } else {
+                                selectedType[parent_type].push(data['parent_id']);
+                            }
 
-                        if(data['value'] == 0) {
-                            error += self.data.type[parent_type][data['parent_id']] +" rowne 0";
-                            validation = false;
-                        }
+                            if(data['value'] == 0) {
+                                error += self.data.type[parent_type][data['parent_id']] +" rowne 0";
+                                validation = false;
+                            }
+                        });
                     });
-                });
+                }
 
                 if(!validation) {
                     app.alert.show('message-id', {
