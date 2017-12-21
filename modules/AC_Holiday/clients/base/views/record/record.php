@@ -111,7 +111,6 @@ array (
               array (
                 'name' => 'assigned_user_name',
                 'link' => false,
-                'readonly' => true,
               ),
               10 => 
               array (
