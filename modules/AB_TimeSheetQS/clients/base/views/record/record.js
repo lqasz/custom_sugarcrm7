@@ -299,6 +299,7 @@
             self.model.set('accepted_by_tl_c', msg.accepted.value);
           }
           
+          self.model.set('filled_c', msg.filled);
           self._super('saveClicked');
           self.view = "detail";
         },
@@ -323,30 +324,32 @@
         error = "",
         validation = true;
 
-    if(this.returnSumValue() > 100) {
-      error += "sum bigger then 100%";
-      validation = false;
-    }
+    if(!self.model.get('absent_c')) {
+      if(this.returnSumValue() > 100) {
+        error += "sum bigger then 100%";
+        validation = false;
+      }
 
-    var selectedType = {
-      'wyceny': [],
-      'projekty': []
-    };
-    _.each(myData, function(type_data, parent_type) {
-       _.each(type_data, function(data, id) {
-        if(selectedType[parent_type].indexOf(data['parent_id']) != -1) {
-          error += self.data.type[data['parent_id']] +" the same";
-          validation = false;
-        } else {
-          selectedType[parent_type].push(data['parent_id']);
-        }
+      var selectedType = {
+        'wyceny': [],
+        'projekty': []
+      };
+      _.each(myData, function(type_data, parent_type) {
+         _.each(type_data, function(data, id) {
+          if(selectedType[parent_type].indexOf(data['parent_id']) != -1) {
+            error += self.data.type[data['parent_id']] +" the same";
+            validation = false;
+          } else {
+            selectedType[parent_type].push(data['parent_id']);
+          }
 
-        if(data['value'] == 0) {
-          error += self.data.type[parent_type][data['parent_id']] +" rowne 0";
-          validation = false;
-        }
+          if(data['value'] == 0) {
+            error += self.data.type[parent_type][data['parent_id']] +" rowne 0";
+            validation = false;
+          }
+        });
       });
-    });
+    }
 
     if(!validation) {
       app.alert.show('message-id', {
@@ -371,6 +374,7 @@
       },
       success: function(msg) {
         self.model.set('accepted_by_tl_c', true);
+        self.model.set('rejected_by_tl_c', false);
         self._super('saveClicked');
         self.view = "detail";
       },

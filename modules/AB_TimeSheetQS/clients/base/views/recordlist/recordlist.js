@@ -30,9 +30,9 @@
       success: function(data) {
         let csvContent = "data:text/csv;charset=utf-8,\ufeff";
         
-        csvContent += "Imie i Nazwisko; Typ; Rekord; Wartość\r\n";
+        csvContent += "Imie i Nazwisko; Data dodania; Typ; Rekord; Wartość\r\n";
         _.each(JSON.parse(data), function(sheet, key) {
-          csvContent += sheet.user_name +"; "+ sheet.parent_type +"; "+ sheet.parent_name +"; "+ sheet.value +"\r\n";
+          csvContent += sheet.user_name +"; "+sheet.date_entered +"; "+ sheet.parent_type +"; "+ sheet.parent_name +"; "+ sheet.value +"\r\n";
         });
 
         var encodedUri = encodeURI(csvContent);
