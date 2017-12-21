@@ -15,6 +15,7 @@ class Leads_CustomLogic
                 $contact_bean->website_c = $bean->website;
                 $contact_bean->phone_mobile = $bean->phone_mobile;
                 $contact_bean->linkedin_c = $bean->linkedin_c;
+                $contact_bean->facebook_c = $bean->facebook_c;
                 $contact_bean->lead_id_c = $bean->id;
                 $contact_bean->contact_stage_c = "lead";
                 $contact_bean->description = "";
@@ -41,6 +42,7 @@ class Leads_CustomLogic
                 $contact_bean->website_c = $bean->website;
                 $contact_bean->phone_mobile = $bean->phone_mobile;
                 $contact_bean->linkedin_c = $bean->linkedin_c;
+                $contact_bean->facebook_c = $bean->facebook_c;
                 $contact_bean->contact_stage_c = "lead";
                 $contact_bean->lead_id_c = $bean->id;
                 $contact_bean->syncWithContact = 1;
@@ -81,5 +83,16 @@ class Leads_CustomLogic
         }
 
         unset($bean->syncWithContact);
+    }
+
+    function deleteLead(&$bean, $event, $arguments)
+    {
+        if(!empty($bean->contact_id_c)) {
+            $contact_bean = BeanFactory::getBean("Contacts", $bean->contact_id_c);
+            $contact_bean->contact_stage_c = "contact";
+            $contact_bean->syncWithContact = 1;
+            $contact_bean->save();
+            unset($contact_bean);
+        }
     }
 }

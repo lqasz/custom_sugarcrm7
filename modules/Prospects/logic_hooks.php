@@ -10,4 +10,13 @@ $hook_array['before_save'][] = Array(1,'businessLogic','custom/modules/Prospects
 
 $hook_array['after_save'] = Array();
 $hook_array['after_save'][] = Array(1,'associatePerson','custom/modules/Prospects/customlogic.php','Prospects_CustomLogic','associatePerson',);
+
+$hook_array['after_delete'] = Array();
+$hook_array['after_delete'][] = Array(
+	1,
+	'delete Prospect',
+	'custom/modules/Prospects/customlogic.php',
+	'Prospects_CustomLogic',
+	'deleteProspect'
+);
 ?>

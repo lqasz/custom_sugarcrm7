@@ -8,4 +8,13 @@ $hook_array = Array();
 $hook_array['after_save'] = Array();
 $hook_array['after_save'][] = Array(1,'associatePerson','custom/modules/Leads/customlogic.php','Leads_CustomLogic','associatePerson',);
 $hook_array['after_save'][] = Array(2,'businessLogic','custom/modules/Leads/customlogic.php','Leads_CustomLogic','businessLogic',);
+
+$hook_array['after_delete'] = Array();
+$hook_array['after_delete'][] = Array(
+	1,
+	'delete Lead',
+	'custom/modules/Leads/customlogic.php',
+	'Leads_CustomLogic',
+	'deleteLead'
+);
 ?>
